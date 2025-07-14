@@ -23,6 +23,13 @@ This will set up the CLI environment by initiating the virtual environment and m
 
 > **Note**: After you have finished using the CLI, you can deactivate the virtual environment by running `deactivate` in your terminal.
 
+
+**Prepare the CLI before its usage:**
+
+In general, remember to always run `source prepare_cli.sh` before using the CLI to ensure that the environment is set up correctly.
+This should be done not only when you first install the CLI, but also whenever you open a new terminal session where you want to use the CLI.
+
+
 ### Basic Command Structure
 
 The basic structure of the CLI commands is as follows:
@@ -139,6 +146,18 @@ Once authenticated, you can create, list, and download provenance documents.
         ```bash
         yprov documents download <your_document_pid> --output /path/to/my_doc.json
         ```
+
+### Troubleshooting CLI
+
+If you encounter this issue when running the CLI:
+
+```
+command not found: yprov
+```
+
+It means that the `yprov` command is not recognized in your terminal. This can happen if the virtual environment is not activated or if the CLI was not set up correctly.
+To resolve this, ensure you have run `source prepare_cli.sh` script as described in the [Installation](#installation) section.
+
 
 ## Local Development
 
