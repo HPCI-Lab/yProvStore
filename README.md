@@ -6,6 +6,142 @@ yProv is a joint project between [University of Trento](https://www.unitn.it) an
 
 **yProvStore** is the backend service of yProv, built with FastAPI and designed to handle the storage and retrieval of provenance data. It provides a RESTful API for interacting with provenance information, allowing users to create and read provenance records.
 
+## yProv-CLI
+
+Of course. Here is a clear and concise Markdown section for your `README.md` file explaining how to use the CLI.
+
+This command-line interface (CLI) allows you to interact with the yProv API directly from your terminal.
+
+### Installation
+
+To install the CLI and its dependencies, navigate to the repository root directory and run the following commands.
+
+```bash
+chmod +x prepare_cli.sh
+source prepare_cli.sh
+```
+
+This will set up the CLI environment by initiating the virtual environment and making the `yprov` command available in your terminal.
+
+> **Note**: After you have finished using the CLI, you can deactivate the virtual environment by running `deactivate` in your terminal.
+
+### Basic Command Structure
+
+The basic structure of the CLI commands is as follows:
+
+```bash
+yprov <command> [options]
+```
+
+Where `<command>` is the specific action you want to perform, such as `auth`, `documents`, etc., and `[options]` are additional parameters for that command.
+
+### Available Commands
+
+```bash
+yprov auth signup
+yprov auth login
+yprov auth verify
+yprov auth logout
+yprov documents create --json-file <path/to/document.json> [--parent-pid <parent_pid>]
+yprov documents list
+yprov documents get <document_pid>
+yprov documents download <document_pid> [--output-folder <path>] [--output <file_path>]
+```
+
+Each of these commands is better explained below.
+
+However, you can also examine the help message for each command by running:
+
+```bash
+yprov <command> --help
+```
+
+-----
+
+### Configuration
+
+The CLI defaults to connecting to `http://127.0.0.1:8000`. You can specify a different API server URL in two ways:
+
+1.  **Using the `--api-url` option:**
+
+    ```bash
+    yprov --api-url http://your-api-server.com documents list
+    ```
+
+2.  **Setting an environment variable:**
+
+    ```bash
+    export YPROV_API_URL="http://your-api-server.com"
+    ```
+
+-----
+
+### Authentication
+
+First, you need to register and log in to get an access token. The token is stored locally and used for all authenticated requests.
+
+  * **Sign up** for a new account.
+    ```bash
+    yprov auth signup
+    ```
+  * **Log in** to your account to get an access token.
+    ```bash
+    yprov auth login
+    ```
+  * **Verify** that your token is valid and see which user you are logged in as.
+    ```bash
+    yprov auth verify
+    ```
+  * **Log out** by deleting your local access token.
+    ```bash
+    yprov auth logout
+    ```
+
+-----
+
+### Managing Documents
+
+Once authenticated, you can create, list, and download provenance documents.
+
+  * **Create a new document** from a JSON file.
+
+    ```bash
+    yprov documents create --json-file path/to/your/document.json
+    ```
+
+    You can also specify a parent document:
+
+    ```bash
+    yprov documents create --json-file new_doc.json --parent-pid <parent_pid_here>
+    ```
+
+  * **List all available documents**.
+
+    ```bash
+    yprov documents list
+    ```
+
+  * **Get detailed information** for a specific document by its PID.
+
+    ```bash
+    yprov documents get <your_document_pid>
+    ```
+
+  * **Download a document's file**.
+
+      * Save to the current directory (e.g., `<pid>.prov`):
+        ```bash
+        yprov documents download <your_document_pid>
+        ```
+      * Save to a specific folder:
+        ```bash
+        yprov documents download <your_document_pid> --output-folder /path/to/downloads
+        ```
+      * Save with a specific file name and path:
+        ```bash
+        yprov documents download <your_document_pid> --output /path/to/my_doc.json
+        ```
+
 ## Local Development
 
 This section provides instructions for setting up the yProvStore project for local development. It covers the prerequisites, dependencies installation, database setup, and how to run the application.

@@ -9,3 +9,4 @@
 * Implemented `SQL` storage for users and provenance document records using `SQLite`.
 * Added basic error handling and logging.
 * Set up `Alembic` for database migrations.
+* Added basic CLI for interacting with the API.

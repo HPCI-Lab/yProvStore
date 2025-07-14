@@ -8,7 +8,7 @@ from application.exceptions.types import UnauthorizedException, NotFoundExceptio
 from application.exceptions.responses import EXCEPTION_SCHEMA
 from services.file_storage.service import FileStorageService
 from services.document_storage.service import DocumentRecordStorageService
-from services.permission_storage.service import DocumentPermissionStorageService
+# from services.permission_storage.service import DocumentPermissionStorageService
 from routers.common.dependencies import LoggedUser
 
 
@@ -47,7 +47,7 @@ async def download_document(
     pid: str,
     file_storage_service: FromDishka[FileStorageService],
     document_storage_service: FromDishka[DocumentRecordStorageService],
-    permission_storage_service: FromDishka[DocumentPermissionStorageService],
+    # permission_storage_service: FromDishka[DocumentPermissionStorageService],
     logged_user: LoggedUser
 ) -> StreamingResponse:
     """

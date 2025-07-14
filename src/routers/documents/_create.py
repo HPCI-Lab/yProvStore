@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, status, UploadFile, Form, Request
 from pydantic import BaseModel
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
@@ -126,14 +128,14 @@ async def create_document(
 
     new_document_record = DocumentRecord(
         pid=new_pid,
-        version=1,  # Assuming the first version is always 1
+        version=0,  # Version will be set later after storing the file
         storage_id=new_pid,
         owner_id=logged_user.id,
         parent_doc_pid=parent_document_pid,
     )
 
     if data and data.document_data:
-        document_data_bytes = bytes(str(data.document_data), 'utf-8')
+        document_data_bytes = json.dumps(data.document_data).encode('utf-8')
     else:
         try:
             if document_file.content_type not in ['application/json', 'text/plain']:
@@ -145,9 +147,10 @@ async def create_document(
             raise BadRequestException(f"Failed to read document file: {e}")
     await file_storage_service.store_file(new_document_record.storage_id, document_data_bytes)
 
-    new_document_record = await document_record_storage.save_document(new_document_record)
+    new_pid_record = await pid_service.new_pid_record_from_document(new_pid, new_document_record.storage_url, parent_doc_pid=parent_document_pid)
 
-    await pid_service.new_pid_record_from_document(new_pid, new_document_record.storage_url, parent_doc_pid=parent_document_pid)
+    new_document_record.version = new_pid_record.version
+    new_document_record = await document_record_storage.save_document(new_document_record)
 
     # TODO: manage metadata
 
