@@ -8,8 +8,6 @@ yProv is a joint project between [University of Trento](https://www.unitn.it) an
 
 ## yProv-CLI
 
-Of course. Here is a clear and concise Markdown section for your `README.md` file explaining how to use the CLI.
-
 This command-line interface (CLI) allows you to interact with the yProv API directly from your terminal.
 
 ### Installation
