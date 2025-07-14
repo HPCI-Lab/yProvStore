@@ -21,3 +21,6 @@ source .venv/bin/activate
 
 # Install the required packages
 uv pip install src/cli/
+
+# Export the PYTHONPATH
+export PYTHONPATH="${PWD}/src/cli/"
