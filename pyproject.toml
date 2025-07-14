@@ -1,0 +1,18 @@
+[project]
+name = "yProvStore"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi[all]",
+  "dishka",
+  "passlib",
+  "pyjwt",
+  "sqlalchemy",
+  "alembic",
+  "bcrypt==4.0.1"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest", "flake8"
+]

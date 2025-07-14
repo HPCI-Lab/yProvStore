@@ -1,0 +1,139 @@
+from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy.orm import relationship
+
+from models import User, DocumentRecord, DocumentPermission, PermissionLevel
+from services.db.sql.base import BaseDBModel
+
+
+class DBUser(BaseDBModel):
+    """
+    Database model for User.
+    """
+    __tablename__ = "users"
+
+    id = Column(String, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+
+    documents = relationship("DBDocumentRecord", back_populates="owner")
+    permissions = relationship("DBDocumentPermission", back_populates="user")
+
+    @classmethod
+    def model_name(cls) -> str:
+        """
+        Return the name of the model.
+        This is used for logging and response formatting.
+        """
+        return "User"
+
+    @classmethod
+    def from_user(cls, db_user: User) -> 'DBUser':
+        """
+        Convert a User instance to a DBUser instance.
+        """
+        return cls(id=db_user.id, email=db_user.email, password_hash=db_user.password_hash)
+
+    def to_user(self) -> User:
+        """
+        Convert this DBUser instance to a User instance.
+        """
+        return User(id=self.id, email=self.email, password_hash=self.password_hash)
+
+    def __repr__(self):
+        return f"<User(id={self.id}, email={self.email})>"
+
+    def __str__(self):
+        return self.email
+
+
+class DBDocumentRecord(BaseDBModel):
+    """
+    Database model for DocumentRecord.
+    """
+    __tablename__ = "document_records"
+
+    id = Column(String, primary_key=True, index=True)
+    version = Column(String, nullable=False)
+    storage_id = Column(String, nullable=False)
+    owner_id = Column(String, ForeignKey('users.id'), nullable=False)
+    parent_doc_pid = Column(String, nullable=True)
+
+    owner = relationship("DBUser", back_populates="documents")
+    permissions = relationship("DBDocumentPermission", back_populates="document_record")
+
+    @classmethod
+    def model_name(cls) -> str:
+        """
+        Return the name of the model.
+        This is used for logging and response formatting.
+        """
+        return "Provenance document record"
+
+    def to_document_record(self) -> DocumentRecord:
+        """
+        Convert this DBDocumentRecord instance to a DocumentRecord instance.
+        """
+        return DocumentRecord(
+            pid=self.id,
+            version=self.version,
+            storage_id=self.storage_id,
+            owner_id=self.owner_id,
+            parent_doc_pid=self.parent_doc_pid
+        )
+
+    @classmethod
+    def from_document_record(cls, document_record: DocumentRecord) -> 'DBDocumentRecord':
+        """
+        Convert a DocumentRecord instance to a DBDocumentRecord instance.
+        """
+        return cls(
+            id=document_record.pid,
+            version=document_record.version,
+            storage_id=document_record.storage_id,
+            owner_id=document_record.owner_id,
+            parent_doc_pid=document_record.parent_doc_pid
+        )
+
+
+class DBDocumentPermission(BaseDBModel):
+    """
+    Database model for DocumentPermission.
+    """
+    __tablename__ = "document_permissions"
+
+    id = Column(String, primary_key=True, index=True)
+    pid = Column(String, ForeignKey('document_records.id'), nullable=False)
+    user_id = Column(String, ForeignKey('users.id'), nullable=False)
+    permission_level = Column(String, nullable=False)
+
+    document_record = relationship("DBDocumentRecord", back_populates="permissions")
+    user = relationship("DBUser", back_populates="permissions")
+
+    @classmethod
+    def model_name(cls) -> str:
+        """
+        Return the name of the model.
+        This is used for logging and response formatting.
+        """
+        return "Document permission"
+
+    @classmethod
+    def from_document_permission(cls, permission: DocumentPermission) -> 'DBDocumentPermission':
+        """
+        Convert a DocumentPermission instance to a DBDocumentPermission instance.
+        """
+        return cls(
+            pid=permission.pid,
+            user_id=permission.user_id,
+            permission_level=permission.permission_level.value
+        )
+
+    def to_document_permission(self) -> DocumentPermission:
+        """
+        Convert this DBDocumentPermission instance to a DocumentPermission instance.
+        """
+        return DocumentPermission(
+            pid=self.pid,
+            user_id=self.user_id,
+            permission_level=PermissionLevel(self.permission_level)
+        )
