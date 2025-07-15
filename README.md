@@ -43,6 +43,7 @@ Where `<command>` is the specific action you want to perform, such as `auth`, `d
 ### Available Commands
 
 ```bash
+yprov check
 yprov auth signup
 yprov auth login
 yprov auth verify
@@ -70,13 +71,19 @@ The CLI defaults to connecting to `http://127.0.0.1:8000`. You can specify a dif
 1.  **Using the `--api-url` option:**
 
     ```bash
-    yprov --api-url http://your-api-server.com documents list
+    yprov --api-url http://your-api-server.com:8000 check
     ```
 
 2.  **Setting an environment variable:**
 
     ```bash
-    export YPROV_API_URL="http://your-api-server.com"
+    export YPROV_API_URL="http://your-api-server.com:8000"
+    ```
+
+    You can then check the status of the API server with:
+
+    ```bash
+    yprov check
     ```
 
 -----

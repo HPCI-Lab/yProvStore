@@ -1,9 +1,37 @@
 import click
+import json
 from rich.console import Console
 from utils.api_client import make_request, save_token, clear_token
 
-
 console = Console()
+
+
+def get_credentials(email, password, file):
+    """
+    Helper function to determine credentials from provided options.
+    - Prioritizes file if provided.
+    - Then checks for email/password flags.
+    - Returns None if no options are given, to trigger interactive prompts.
+    """
+    # Check for mutually exclusive options
+    if file and (email or password):
+        raise click.UsageError("Cannot use --file with --email or --password.")
+
+    if file:
+        try:
+            with open(file, 'r') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            raise click.BadParameter(f"Could not read or parse JSON file: {e}")
+
+    if email and password:
+        return {"email": email, "password": password}
+
+    # If only one of email/password is provided, it's an error
+    if email or password:
+        raise click.UsageError("Both --email and --password must be provided together.")
+
+    return None  # No options provided, will trigger interactive mode
 
 
 @click.group()
@@ -13,15 +41,24 @@ def auth():
 
 
 @auth.command()
-@click.option('--email', prompt=True, help="User's email address.")
-@click.option('--password', prompt=True, hide_input=True, help="User's password.")
+@click.option('--email', help="User's email address.")
+@click.option('--password', help="User's password.")
+@click.option('--file', type=click.Path(exists=True, dir_okay=False, readable=True), help="Path to a JSON file with credentials.")
 @click.pass_context
-def login(ctx, email, password):
-    """Log in to get an access token."""
+def login(ctx, email, password, file):
+    """Log in with flags, a file, or interactively."""
     api_url = ctx.obj['API_URL']
-    data = {"email": email, "password": password}
 
-    console.print(f"Attempting to log in as [cyan]{email}[/cyan]...")
+    # Get credentials from options or set to None for interactive mode
+    data = get_credentials(email, password, file)
+
+    # If no credentials were passed via options, prompt interactively
+    if data is None:
+        email_prompt = click.prompt("User's email address")
+        password_prompt = click.prompt("User's password", hide_input=True)
+        data = {"email": email_prompt, "password": password_prompt}
+
+    console.print(f"Attempting to log in as [cyan]{data['email']}[/cyan]...")
     response = make_request("POST", api_url, "/auth/login", json=data)
 
     if response and response.status_code == 200:
@@ -32,13 +69,21 @@ def login(ctx, email, password):
 
 
 @auth.command()
-@click.option('--email', prompt=True, help="Your desired email address.")
-@click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True, help="Your desired password.")
+@click.option('--email', help="Your desired email address.")
+@click.option('--password', help="Your desired password.")
+@click.option('--file', type=click.Path(exists=True, dir_okay=False, readable=True), help="Path to a JSON file with credentials.")
 @click.pass_context
-def signup(ctx, email, password):
-    """Register a new user account."""
+def signup(ctx, email, password, file):
+    """Sign up with flags, a file, or interactively."""
     api_url = ctx.obj['API_URL']
-    data = {"email": email, "password": password}
+
+    data = get_credentials(email, password, file)
+
+    # Interactive mode if no options are provided
+    if data is None:
+        email_prompt = click.prompt("Your desired email address")
+        password_prompt = click.prompt("Your desired password", hide_input=True, confirmation_prompt=True)
+        data = {"email": email_prompt, "password": password_prompt}
 
     response = make_request("POST", api_url, "/auth/signup", json=data)
 

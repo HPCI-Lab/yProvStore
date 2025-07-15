@@ -18,6 +18,15 @@ async def redirect_to_docs() -> RedirectResponse:
     return RedirectResponse(url="docs/")
 
 
+@root_router.get("/status", tags=["General"], summary="Get API Status", description="Returns the current status of the API.",
+                 responses={200: {"description": "Successful Response", "content": {"application/json": {"example": {"status": "ok"}}}}})
+async def status() -> dict[str, str]:
+    """
+    Returns the status of the API.
+    """
+    return {"status": "ok"}
+
+
 root_sub_routers: tuple[APIRouter, ...] = (
     authentication_router,
     documents_router,
