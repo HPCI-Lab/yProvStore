@@ -23,4 +23,4 @@ source .venv/bin/activate
 uv pip install src/cli/
 
 # Export the PYTHONPATH
-export PYTHONPATH="${PWD}/src/cli/"
+export PYTHONPATH="${PYTHONPATH}:${PWD}/src/cli/"

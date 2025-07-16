@@ -1,10 +1,14 @@
+import os
 import uuid
 import json
+
 from dishka import Provider, provide, Scope
 
-from application.settings import PID_PREFIX, TMP_PATH
+from application.settings import PID_PREFIX, TMP_PATH, PID_SERVER_URL
 from application.exceptions.types import ConflictException, NotFoundException, IntegrityException
 from models import PidRecord, PidType
+from services.pid.handle.authenticator import HandleAuthenticator
+from services.pid.handle.record import HandleRecord
 
 
 class PidService:
@@ -109,7 +113,6 @@ class LocalPidServiceImpl(PidService):
     """
 
     def __init__(self):
-        print("Initializing LocalPidServiceImpl")
         self.documents_path = TMP_PATH / "pid"
         if not self.documents_path.exists():
             self.documents_path.mkdir(parents=True, exist_ok=True)
@@ -162,7 +165,55 @@ class LocalPidServiceImpl(PidService):
             json.dump({p.pid: p.to_dict() for p in self.pids.values()}, f, indent=4)
 
 
-# TODO: implement correct PID service integration
+class PidServiceImpl(PidService, HandleAuthenticator):
+    """
+    Implementation of the PidService that interacts with a real Handle System server.
+    This class contains all the logic for HTTP communication and authentication.
+    """
+
+    async def new_pid(self, prefix: str = None) -> str:
+        if prefix is None:
+            prefix = self.prefix
+        return f"{prefix}/{uuid.uuid4()}"
+
+    async def save_pid_record(self, pid_record: PidRecord) -> PidRecord:
+        await self.ensure_authenticated()
+        url = f"{PID_SERVER_URL}/api/handles/{pid_record.pid}?overwrite=false"
+        handle_record_body = HandleRecord.from_pid_record(pid_record).record_values
+        try:
+            await self._send_http_request("PUT", url, data=handle_record_body, headers=self._get_session_auth_header())
+            return pid_record
+        except IntegrityException as e:
+            if "handle already exists" in str(e).lower():
+                raise ConflictException(f"PID record with ID '{pid_record.pid}' already exists.")
+            raise
+
+    async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord:
+        await self.ensure_authenticated()
+        url = f"{PID_SERVER_URL}/api/handles/{pid}"
+        try:
+            response = await self._send_http_request("GET", url, headers=self._get_session_auth_header())
+            pid_record = HandleRecord.from_record_values(pid, response["values"])
+
+            if not pid_record:
+                # This case happens if the handle exists but doesn't have our custom record type
+                raise NotFoundException(f"Handle '{pid}' exists but is not a valid document record.")
+            return pid_record
+        except IntegrityException as e:
+            if "handle not found" in str(e).lower() or "404" in str(e):
+                 if raise_not_found:
+                     raise NotFoundException(f"PID record with ID '{pid}' not found.")
+                 return None
+            raise
+
+    async def update_pid_record(self, pid_record: PidRecord) -> PidRecord:
+        await self.ensure_authenticated()
+        url = f"{PID_SERVER_URL}/api/handles/{pid_record.pid}"
+        handle_record_body = HandleRecord.from_pid_record(pid_record).record_values
+        
+        # We don't check for existence first to make the update atomic (let the server handle it)
+        await self._send_http_request("PUT", url, data=handle_record_body, headers=self._get_session_auth_header())
+        return pid_record
 
 
 class PidServiceProvider(Provider):

@@ -21,4 +21,11 @@ TMP_PATH = Path(os.getenv("TMP_PATH", os.path.join(os.path.dirname(__file__), ".
 if not TMP_PATH.exists():
     TMP_PATH.mkdir(parents=True, exist_ok=True)
 
+# === PID Service Settings === #
 PID_PREFIX = os.getenv("PID_PREFIX", "")
+PID_SERVER_URL = os.getenv("PID_SERVER_URL", "https://pidhs.disi.unitn.it:8000")
+PID_ADMIN_VALUE_INDEX = int(os.getenv("PID_ADMIN_VALUE_INDEX", 100))
+PID_PRIVATE_KEY_PATH = os.getenv("PID_PRIVATE_KEY_PATH", "keys/admpriv.pem")
+PID_ADMIN_HANDLE = os.getenv("PID_ADMIN_HANDLE", "0.NA/21.T11961")
+PID_ADMIN_HANDLE_INDEX = int(os.getenv("PID_ADMIN_HANDLE_INDEX", 300))
+PID_ADMIN_HANDLE_PERMISSIONS = os.getenv("PID_ADMIN_HANDLE_PERMISSIONS", "011111110011")  # TODO: Verify permissions

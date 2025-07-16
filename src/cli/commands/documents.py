@@ -52,6 +52,8 @@ def get_document(ctx, pid):
         console.print_json(data=response.json())
 
 
+# TODO: add --value to pass a JSON string instead
+
 @documents.command(name="create")
 @click.option(
     '--json-file',
