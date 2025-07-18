@@ -1,6 +1,9 @@
+import os
 import logging
 
 from uvicorn.logging import DefaultFormatter
+
+from application.settings import ON_WINDOWS
 
 
 class CustomFormatter(DefaultFormatter):
@@ -23,6 +26,10 @@ class CustomFormatter(DefaultFormatter):
     }
 
     def format(self, record):
-        log_fmt = self.FORMATS.get(record.levelno)
+        if ON_WINDOWS:
+            # On Windows, remove color codes
+            log_fmt = self.LOG_FORMAT
+        else:
+            log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
