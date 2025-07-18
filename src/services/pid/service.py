@@ -1,4 +1,3 @@
-import os
 import uuid
 import json
 
@@ -7,7 +6,7 @@ from dishka import Provider, provide, Scope
 from application.settings import PID_PREFIX, TMP_PATH, PID_SERVER_URL
 from application.exceptions.types import ConflictException, NotFoundException, IntegrityException
 from models import PidRecord, PidType
-from services.pid.handle.authenticator import HandleAuthenticator
+from services.pid.handle.connector import HandleConnector
 from services.pid.handle.record import HandleRecord
 
 
@@ -165,7 +164,7 @@ class LocalPidServiceImpl(PidService):
             json.dump({p.pid: p.to_dict() for p in self.pids.values()}, f, indent=4)
 
 
-class PidServiceImpl(PidService, HandleAuthenticator):
+class PidServiceImpl(PidService, HandleConnector):
     """
     Implementation of the PidService that interacts with a real Handle System server.
     This class contains all the logic for HTTP communication and authentication.
@@ -181,7 +180,7 @@ class PidServiceImpl(PidService, HandleAuthenticator):
         url = f"{PID_SERVER_URL}/api/handles/{pid_record.pid}?overwrite=false"
         handle_record_body = HandleRecord.from_pid_record(pid_record).record_values
         try:
-            await self._send_http_request("PUT", url, data=handle_record_body, headers=self._get_session_auth_header())
+            await self.send_http_request("PUT", url, data=handle_record_body)
             return pid_record
         except IntegrityException as e:
             if "handle already exists" in str(e).lower():
@@ -192,7 +191,7 @@ class PidServiceImpl(PidService, HandleAuthenticator):
         await self.ensure_authenticated()
         url = f"{PID_SERVER_URL}/api/handles/{pid}"
         try:
-            response = await self._send_http_request("GET", url, headers=self._get_session_auth_header())
+            response = await self.send_http_request("GET", url)
             pid_record = HandleRecord.from_record_values(pid, response["values"])
 
             if not pid_record:
@@ -212,7 +211,7 @@ class PidServiceImpl(PidService, HandleAuthenticator):
         handle_record_body = HandleRecord.from_pid_record(pid_record).record_values
         
         # We don't check for existence first to make the update atomic (let the server handle it)
-        await self._send_http_request("PUT", url, data=handle_record_body, headers=self._get_session_auth_header())
+        await self.send_http_request("PUT", url, data=handle_record_body)
         return pid_record
 
 
