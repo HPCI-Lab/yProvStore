@@ -23,7 +23,7 @@ if not TMP_PATH.exists():
     TMP_PATH.mkdir(parents=True, exist_ok=True)
 
 # === PID Service Settings === #
-PID_PREFIX = os.getenv("PID_PREFIX", "")
+PID_PREFIX = os.getenv("PID_PREFIX", "21.T11961")
 PID_SERVER_URL = os.getenv("PID_SERVER_URL", "https://pidhs.disi.unitn.it:8000")
 PID_ADMIN_VALUE_INDEX = int(os.getenv("PID_ADMIN_VALUE_INDEX", 100))
 PID_PRIVATE_KEY_PATH = os.getenv("PID_PRIVATE_KEY_PATH", "keys/admpriv.pem")

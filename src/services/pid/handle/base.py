@@ -14,7 +14,6 @@ class HandleValueType(Enum):
     # Document PID record attributes
     TYPE = "TYPE"
     VERSION = "VERSION"
-    LOCATION = "LOCATION"
     PARENT_DOC_PID = "PARENT_DOC_PID"
     TREE_PID = "TREE_PID"
 
@@ -122,6 +121,8 @@ class HandleValue:
     index: int
     type: HandleValueType
     data: str | HandleValueObject
+
+    # TODO: Check if 'ttl' and 'timestamp' need to be set as well.
 
     # `permissions` is a string representing the bitmask of permissions.
     # Generally this is "1110" (admin read, admin write, public read, not public write) in which case it is omitted.
