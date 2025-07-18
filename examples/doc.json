@@ -1,0 +1,34 @@
+{
+    "activity": {
+        "activity1": {
+            "prov:startedAtTime": "2023-10-01T12:00:00Z",
+            "prov:endedAtTime": "2023-10-01T12:05:00Z"
+        }
+    },
+    "entity": {
+        "entity1": {
+            "prov:location": "https://example.com/entity1",
+            "yprov:pid": "entity1_pid"
+        },
+        "entity2": {
+            "prov:location": "https://example.com/entity2",
+            "yprov:pid": "entity2_pid"
+        }
+    },
+    "experiment": {
+        "title": "Sample Experiment",
+        "description": "This is a sample experiment."
+    },
+    "used": {
+        "_:id1": {
+            "prov:entity": "entity1",
+            "prov:activity": "activity1"
+        }
+    },
+    "wasGeneratedBy": {
+        "_:id2": {
+            "prov:entity": "entity2",
+            "prov:activity": "activity1"
+        }
+    }
+}

@@ -7,9 +7,10 @@ APP_VERSION = os.getenv("APP_VERSION", "2.0.0")
 APP_DESCRIPTION = os.getenv("APP_DESCRIPTION", "yProv is a provenance service aimed at addressing multi-level provenance as well as reproducibility challenges in climate analytics experiments.")
 APP_URL = os.getenv("APP_URL", "http://127.0.0.1:8000")
 
+ON_WINDOWS = os.name == "nt"
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
-
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO" if not DEBUG else "DEBUG")
+print(f"Log level set to: {LOG_LEVEL}")
 
 JWT_ENCODING_ALGORITHM = os.getenv("JWT_ENCODING_ALGORITHM", "HS256")
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "jwt-secret-key")
