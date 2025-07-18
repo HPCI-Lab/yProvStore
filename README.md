@@ -214,13 +214,13 @@ Once authenticated, you can create, list, and download provenance documents.
   * **Create a new document** from a JSON file.
 
     ```bash
-    yprov documents create --json-file path/to/your/document.json
+    yprov documents create --json-file examples/doc.json
     ```
 
     You can also specify a parent document:
 
     ```bash
-    yprov documents create --json-file new_doc.json --parent-pid <parent_pid_here>
+    yprov documents create --json-file examples/doc.json --parent-pid <parent_pid_here>
     ```
 
   * **List all available documents**.
@@ -237,7 +237,21 @@ Once authenticated, you can create, list, and download provenance documents.
 
   * **Download a document's file**.
 
+      ```bash
+      Usage: yprov documents download [OPTIONS] PID
+      
+      Download a document file by its PID.
+      
+      Options:
+        -o, --output FILE          Full path to save the file (e.g.,
+                                  'my_dir/my_doc.json'). This overrides --output-
+                                  folder.
+        --output-folder DIRECTORY  Folder to save the file in. The filename will
+                                  default to the document's PID.
+      ```
+      
       * Save to the current directory (e.g., `<pid>.prov`):
+      
         ```bash
         yprov documents download <your_document_pid>
         ```
