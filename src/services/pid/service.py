@@ -1,13 +1,17 @@
 import uuid
 import json
+import logging
 
 from dishka import Provider, provide, Scope
 
-from application.settings import PID_PREFIX, TMP_PATH, PID_SERVER_URL
+from application.settings import PID_PREFIX, TMP_PATH
 from application.exceptions.types import ConflictException, NotFoundException, IntegrityException
 from models import PidRecord, PidType
-from services.pid.handle.connector import HandleConnector
+from services.pid.handle.connector import HandleConnector, HandlePaths
 from services.pid.handle.record import HandleRecord
+
+
+logger = logging.getLogger(__name__)
 
 
 class PidService:
@@ -58,8 +62,11 @@ class PidService:
         pid_tree_record = None
         new_version = 1
         if parent_doc_pid:
-            parent_doc_record = await self.get_pid_record(parent_doc_pid)
+            parent_doc_record = await self.get_pid_record(parent_doc_pid, raise_not_found=False)
+            if not parent_doc_record:
+                raise NotFoundException(f"Parent document PID {parent_doc_pid} not found in handle server.")
             pid_tree_record = await self.get_pid_record(parent_doc_record.tree_pid, raise_not_found=False)
+            logger.info(f"Parent document record: {parent_doc_record}")
 
             if not pid_tree_record:
                 # Valid if parent_doc version is 1
@@ -67,8 +74,8 @@ class PidService:
                     raise IntegrityException(f"PID tree record for parent document PID {parent_doc_pid} not found.")
                 else:
                     # If parent version is 1 then this is the first document update -> create a new tree PID
-                    parent_doc_pid = await self.new_pid()
-                    pid_tree_record = PidRecord(pid=parent_doc_pid, type=PidType.PID_TREE, first_document_pid=pid, latest_document_pid=pid, latest_version=new_version)
+                    tree_pid = await self.new_pid()
+                    pid_tree_record = PidRecord(pid=tree_pid, type=PidType.PID_TREE, first_document_pid=pid, latest_document_pid=pid, latest_version=new_version)
                     pid_tree_record = await self.save_pid_record(pid_tree_record)
 
                     # Update the parent document record with the new tree PID
@@ -173,11 +180,12 @@ class PidServiceImpl(PidService, HandleConnector):
     async def new_pid(self, prefix: str = None) -> str:
         if prefix is None:
             prefix = self.prefix
-        return f"{prefix}/{uuid.uuid4()}"
+        new_uuid = str(uuid.uuid4())
+        return f"{prefix}/{new_uuid}" if prefix else new_uuid
 
     async def save_pid_record(self, pid_record: PidRecord) -> PidRecord:
         await self.ensure_authenticated()
-        url = f"{PID_SERVER_URL}/api/handles/{pid_record.pid}?overwrite=false"
+        url = HandlePaths.HANDLE.format(pid=pid_record.pid) + "?overwrite=false"
         handle_record_body = HandleRecord.from_pid_record(pid_record).record_values
         try:
             await self.send_http_request("PUT", url, data=handle_record_body)
@@ -189,25 +197,15 @@ class PidServiceImpl(PidService, HandleConnector):
 
     async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord:
         await self.ensure_authenticated()
-        url = f"{PID_SERVER_URL}/api/handles/{pid}"
-        try:
-            response = await self.send_http_request("GET", url)
-            pid_record = HandleRecord.from_record_values(pid, response["values"])
-
-            if not pid_record:
-                # This case happens if the handle exists but doesn't have our custom record type
-                raise NotFoundException(f"Handle '{pid}' exists but is not a valid document record.")
-            return pid_record
-        except IntegrityException as e:
-            if "handle not found" in str(e).lower() or "404" in str(e):
-                 if raise_not_found:
-                     raise NotFoundException(f"PID record with ID '{pid}' not found.")
-                 return None
-            raise
+        url = HandlePaths.HANDLE.format(pid=pid)
+        response = await self.send_http_request("GET", url, raise_not_found=raise_not_found)
+        logger.info(f"Retrieved handle record for PID: {pid}")
+        handle_record = HandleRecord.from_record_values(pid, response["values"]) if response else None
+        return handle_record.to_pid_record() if handle_record else None
 
     async def update_pid_record(self, pid_record: PidRecord) -> PidRecord:
         await self.ensure_authenticated()
-        url = f"{PID_SERVER_URL}/api/handles/{pid_record.pid}"
+        url = HandlePaths.HANDLE.format(pid=pid_record.pid)
         handle_record_body = HandleRecord.from_pid_record(pid_record).record_values
         
         # We don't check for existence first to make the update atomic (let the server handle it)
@@ -217,4 +215,4 @@ class PidServiceImpl(PidService, HandleConnector):
 
 class PidServiceProvider(Provider):
 
-    pid_service = provide(source=LocalPidServiceImpl, scope=Scope.APP, provides=PidService)
+    pid_service = provide(source=PidServiceImpl, scope=Scope.APP, provides=PidService)

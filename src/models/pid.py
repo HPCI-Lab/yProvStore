@@ -14,6 +14,9 @@ class PidType(Enum):
     ARTIFACT = "artifact"
     PID_TREE = "pid_tree"
 
+    def __str__(self):
+        return self.value
+
 
 @dataclass
 class PidRecord:
@@ -34,6 +37,10 @@ class PidRecord:
     def __post_init__(self):
         if isinstance(self.type, str):
             self.type = PidType(self.type)
+        if isinstance(self.version, str):
+            self.version = int(self.version)
+        if isinstance(self.latest_version, str):
+            self.latest_version = int(self.latest_version)
         required_fields = {
             PidType.PID_TREE: ["first_document_pid", "latest_document_pid", "latest_version"],
             PidType.DOCUMENT: ["location", "version"],

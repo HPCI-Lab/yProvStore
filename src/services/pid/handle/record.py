@@ -43,8 +43,8 @@ class HandleRecord:
         """
         Returns a dictionary representation of the handle record values.
         """
-        values = [asdict(value) for value in self.values]
-        values.append(asdict(self.admin_value))
+        values = [value.to_dict() for value in self.values]
+        values.append(self.admin_value.to_dict())
         return values
     
     @classmethod
@@ -82,15 +82,15 @@ class HandleRecord:
         Converts a PidRecord to a HandleRecord.
         """
         values = []
-        for attribute_name, attribute_value in enumerate(pid_record.__dict__.items()):
+        for idx, (attribute_name, attribute_value) in enumerate(pid_record.__dict__.items()):
             if attribute_name.startswith('_') or attribute_name == 'pid':
                 continue
             if attribute_value is None:
                 continue
             handle_value_type = HandleValueType.from_pid_record_attribute(attribute_name)
             values.append(MetadataHandleValue(
-                index=attribute_name,
-                type=handle_value_type,
+                index=idx,
+                type=handle_value_type.value,
                 data_value=str(attribute_value)
             ))
 
@@ -100,7 +100,7 @@ class HandleRecord:
         """
         Converts the HandleRecord back to a PidRecord.
         """
-        pid_record_data = {value.type.value: value.data.value for value in self.values}
+        pid_record_data = {value.type.value.lower(): value.data.value for value in self.values}
         pid_record_data['pid'] = self.pid
         try:
             return PidRecord(**pid_record_data)

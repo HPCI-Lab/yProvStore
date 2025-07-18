@@ -21,6 +21,13 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+class HandlePaths:
+    SESSIONS = PID_SERVER_URL + "/api/sessions"
+    SESSION_THIS = PID_SERVER_URL + "/api/sessions/this"
+    HANDLES = PID_SERVER_URL + "/api/handles"
+    HANDLE = PID_SERVER_URL + "/api/handles/{pid}"
+
+
 class HandleConnector:
 
     def __init__(self):
@@ -33,19 +40,28 @@ class HandleConnector:
         with open(path, "r") as key_file:
             return RSA.import_key(key_file.read())
 
-    async def send_http_request(self, method: str, url: str, data: dict | None = None, headers: dict | None = None):
+    async def send_http_request(self, method: str, url: str, data: dict | None = None, headers: dict | None = None, raise_not_found: bool = True) -> dict | None:
         if method not in ["GET", "POST", "PUT", "DELETE"]:
             raise Exception(f"Unsupported HTTP method: {method}")
         try:
-            if headers is not None:
+            if headers is None:
                 headers = self._get_session_auth_header()
+            logger.debug(f"Sending {method} request to {url} with headers: {headers} and data: {data}")
             response = await self.http_client.request(method, url, json=data, headers=headers, timeout=10.0)
+            # In case of error the response has the following properties:
+            # - "responseCode": Handle protocol response code for the message. (handle coders are described in README.md inside this file folder)
+            # - "message": For error responses, an error message.
+            if response.status_code == 404 and not raise_not_found:
+                return None
             response.raise_for_status() # Raise an exception for 4xx/5xx responses
             return response.json()
         except httpx.HTTPStatusError as e:
             # Re-raise with more context from the server's response if available
             error_details = e.response.json()
-            logger.error(f"Handle Server Error: {e.response.status_code} - {error_details.get('message', e.response.text)}")
+            logger.debug(f"Handle Server response details: {error_details}")
+            response_code = error_details.get("responseCode", "Unknown")
+            message = error_details.get("message", "No message provided")
+            logger.error(f"Handle Server Error: {e.response.status_code} - {response_code}: {message}")
             raise IntegrityException("Failed to communicate with Handle Server")
         except httpx.RequestError as e:
             logger.error(f"HTTP Request Error: {e}")
@@ -63,7 +79,7 @@ class HandleConnector:
         client_nonce_string = base64.b64encode(client_nonce_bytes).decode()
 
         # 2. Start session to get server nonce
-        session_url = f"{PID_SERVER_URL}/api/sessions"
+        session_url = HandlePaths.SESSIONS
         init_response = await self.send_http_request("POST", session_url, headers={})
         server_nonce_string = init_response["nonce"]
         self.session_id = init_response["sessionId"]
@@ -77,7 +93,7 @@ class HandleConnector:
         signature_string = base64.b64encode(signature_bytes).decode()
 
         # 4. Complete authentication
-        auth_url = f"{PID_SERVER_URL}/api/sessions/this"
+        auth_url = HandlePaths.SESSION_THIS
         id_str = f'{PID_ADMIN_HANDLE_INDEX}:{PID_ADMIN_HANDLE}'
         auth_header_str = (
             f'Handle version="0", sessionId="{self.session_id}", cnonce="{client_nonce_string}", '

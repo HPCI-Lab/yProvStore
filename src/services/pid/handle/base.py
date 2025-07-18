@@ -34,13 +34,13 @@ class HandleValueType(Enum):
         """
         Convert a PID record attribute to a HandleValueType.
         """
-        if attribute not in cls.__members__:
+        if attribute.upper() not in cls.__members__:
             raise AttributeError(f"Attribute '{attribute}' is not a valid storable metadata.")
-        return cls[attribute]
+        return cls[attribute.upper()]
 
     def __str__(self):
         return self.value
-
+    
 
 # Allowed values:
 # string, base64, vlist, admin, hex, site, key (of which some are not used)
@@ -88,6 +88,33 @@ class HandleValueObject:
     format: HandleValueDataFormat
     value: str | HandleValueDataListItem | HandleValueDataAdmin
 
+    def to_dict(self) -> dict:
+        """
+        Converts the HandleValueObject to a dictionary representation.
+        """
+        if isinstance(self.value, HandleValueDataListItem):
+            return {
+                "format": self.format.value,
+                "value": {
+                    "handle": self.value.handle,
+                    "list": self.value.list
+                }
+            }
+        elif isinstance(self.value, HandleValueDataAdmin):
+            return {
+                "format": self.format.value,
+                "value": {
+                    "handle": self.value.handle,
+                    "index": self.value.index,
+                    "permissions": self.value.permissions
+                }
+            }
+        else:
+            return {
+                "format": self.format.value,
+                "value": str(self.value)
+            }
+
 
 @dataclass
 class HandleValue:
@@ -102,6 +129,8 @@ class HandleValue:
     # permissions: str = "1110"
 
     def __post_init__(self):
+        if isinstance(self.type, str):
+            self.type = HandleValueType(self.type)
         if type == HandleValueType.HS_ADMIN:
             if not isinstance(self.data, HandleValueObject) or self.data.format != HandleValueDataFormat.ADMIN \
                 or not isinstance(self.data.value, HandleValueDataAdmin):
@@ -110,3 +139,17 @@ class HandleValue:
             if not isinstance(self.data, HandleValueObject) or self.data.format != HandleValueDataFormat.VLIST \
                 or not isinstance(self.data.value, list) or not all(isinstance(item, HandleValueDataListItem) for item in self.data.value):
                 raise ValueError("HS_VLIST type must have data in HandleValueObject format with VLIST value type containing a list of HandleValueDataListItem.")
+            
+    def to_dict(self) -> dict:
+        """
+        Converts the HandleValue to a dictionary representation.
+        """
+        result = {
+            "index": self.index,
+            "type": self.type.value
+        }
+        if isinstance(self.data, str):
+            result["data"] = self.data
+        else:
+            result["data"] = self.data.to_dict()
+        return result
