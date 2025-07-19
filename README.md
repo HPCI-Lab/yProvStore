@@ -72,6 +72,19 @@ uv run alembic upgrade head
 
 This command will apply all pending migrations to your database, ensuring that it is up-to-date with the latest schema changes.
 
+### Environment Variables (Optional)
+
+If you need to change any environment variables, you can create a `.env` file in the root directory of the project. This file can contain any environment-specific configurations, such as database connection strings or API keys. Some usefule environment variables are:
+
+```env
+LOG_LEVEL=DEBUG  # Default: INFO
+PID_PRIVATE_KEY_PATH=/path/to/private/key.pem  # Path to the private key for PID service (will throw an error if not set and USE_LOCAL_PID_SERVICE is False)
+USE_LOCAL_PID_SERVICE=True  # Set to True to use the local PID service for testing purposes (default is False)
+```
+
+The other environment variables can be seen in the `src/application/settings.py` file, where they are defined with default values. You can override these defaults by setting them in your `.env` file.
+
+
 ### Running the Application
 
 To run the application, go to the root directory of the cloned repository and use the following command:
@@ -94,6 +107,20 @@ Exception: Database is empty (no tables), verify your configuration and migratio
 
 It means that the database has not been initialized yet. To resolve this, ensure you have run the Alembic migrations as described in the [Database Setup](#database-setup) section above.
 
+-----
+
+If you encounter this error when running the application:
+
+```
+FileNotFoundError: PID private key file not found: keys/admpriv.pem. Please provide it or set USE_LOCAL_PID_SERVICE to True if you only need to test locally.
+```
+
+It means that the application is trying to use the PID service, but the private key file is missing. To resolve this, you have two options:
+
+1. Provide the missing private key file at the specified path (`keys/admpriv.pem`) - or set the key path `PID_PRIVATE_KEY_PATH` in your `.env` file.
+2. Set the `USE_LOCAL_PID_SERVICE` environment variable to `True` in your `.env` file if you only need to test locally.
+
+More details on this can be found in the [Environment Variables](#environment-variables-optional) section above.
 
 ## yProv-CLI
 
