@@ -55,37 +55,53 @@ def get_document(ctx, pid):
 @documents.command(name="create")
 @click.option(
     '--json-file',
-    required=True,  # Make this option mandatory
     type=click.Path(exists=True, dir_okay=False, readable=True),
     help="Path to a JSON file with the document data."
 )
-@click.option('--parent-pid', help="PID of the parent document, if any.")
+@click.option(
+    '-v', '--value',
+    help="A JSON string containing the document data."
+)
+@click.option(
+    '--parent-pid',
+    help="PID of the parent document, if any."
+)
 @click.pass_context
-def create_document(ctx, json_file, parent_pid):
-    """Publish a new document from a JSON data file."""
+def create_document(ctx, json_file, value, parent_pid):
+    """Publish a new document, from a JSON file or a JSON string."""
+    # Enforce exactly one input source
+    if bool(json_file) == bool(value):
+        console.print("❌ [bold red]Error:[/bold red] You must provide exactly one of --json-file or --value.")
+        return
+
     api_url = ctx.obj['API_URL']
     params = {'parent_document_pid': parent_pid} if parent_pid else {}
 
-    console.print(f"Uploading document from JSON file: [cyan]{json_file}[/cyan]")
-
-    # Read and validate the JSON file
+    # Load document_data from file or string
     try:
-        with open(json_file, 'r') as f:
-            document_data = json.load(f)
-    except json.JSONDecodeError:
-        console.print(f"❌ [bold red]Error:[/bold red] The file '{json_file}' does not contain valid JSON.")
+        if json_file:
+            console.print(f"Uploading document from JSON file: [cyan]{json_file}[/cyan]")
+            with open(json_file, 'r') as f:
+                document_data = json.load(f)
+        else:
+            console.print("Uploading document from JSON string.")
+            document_data = json.loads(value)
+    except json.JSONDecodeError as e:
+        console.print(f"❌ [bold red]Error:[/bold red] Invalid JSON provided: {e}")
         return
-    except IOError:
-        console.print(f"❌ [bold red]Error:[/bold red] Could not read the file '{json_file}'.")
+    except IOError as e:
+        console.print(f"❌ [bold red]Error:[/bold red] Cannot read file '{json_file}': {e}")
         return
 
-    # Prepare the payload and make the API request
+    # Make the API request
     payload = {"document_data": document_data}
     response = make_request("POST", api_url, "/documents", params=params, json=payload)
 
     if response and response.status_code == 200:
         console.print("✅ [bold green]Document created successfully![/bold green]")
         console.print_json(data=response.json())
+    else:
+        console.print(f"❌ [bold red]Error[/bold red] {response.status_code if response else ''}: {response.text if response else 'No response.'}")
 
 
 @documents.command(name="download")
@@ -108,15 +124,27 @@ def download_document(ctx, pid, output, output_folder):
     if output:
         # If a full output path is given, it takes precedence
         output_path = output
+        output_folder = os.path.dirname(output_path)
     elif output_folder:
         # If only a folder is given, construct the path using the PID as the filename
         output_path = os.path.join(output_folder, f"{pid}.prov")
     else:
         # If no location is specified, save the file in the current directory
         output_path = f"{pid}.prov"
+        output_folder = os.getcwd()
 
     api_url = ctx.obj['API_URL']
     console.print(f"Downloading document [cyan]{pid}[/cyan] to [yellow]{output_path}[/yellow]...")
+
+    split = pid.split('/')
+    if len(split) == 2:
+        # If the PID includes a prefix, create the prefix folder it if it doesn't exist
+        prefix_path = os.path.join(output_folder, split[0])
+        if not os.path.exists(prefix_path):
+            os.makedirs(prefix_path)
+    elif (len(split) > 2):
+        console.print(f"❌ [bold red]Error:[/bold red] Invalid PID format '{pid}'. Expected format is 'prefix/pid' or 'pid'.")
+        return
 
     response = make_request("GET", api_url, f"/documents/{pid}/download", stream=True)
 

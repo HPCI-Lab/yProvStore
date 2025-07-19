@@ -1,6 +1,6 @@
 from fastapi.openapi.utils import get_openapi
 
-from application.settings import APP_TITLE, APP_VERSION, APP_DESCRIPTION, APP_URL
+from application.settings import APP_TITLE, APP_VERSION, APP_DESCRIPTION, APP_URL, PID_PREFIX
 
 
 def custom_openapi(app) -> dict:
@@ -27,7 +27,8 @@ def custom_openapi(app) -> dict:
     return openapi_schema
 
 
-EXAMPLE_UUID = "123e4567-e89b-12d3-a456-426614174000"
+EXAMPLE_UUID = f"{PID_PREFIX}/123e4567-e89b-12d3-a456-426614174000"
+EXAMPLE_UUID_2 = f"{PID_PREFIX}/123e4567-e89b-12d3-a456-426614174001"
 EXAMPLE_EMAIL = "user@example.com"
 EXAMPLE_DOCUMENT_VERSION = 1
 EXAMPLE_DOCUMENT_STORAGE = f"{APP_URL}/docs/{EXAMPLE_UUID}"

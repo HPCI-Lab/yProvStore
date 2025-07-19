@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 async def handle_exception(_: Request, exc: Exception) -> ORJSONResponse:
     status_code = resolve_status_code(exc)
     response = build_exception_response(exc, status_code)
-    log_exception(exc, status_code)
+    # log_exception(exc, status_code)
     return ORJSONResponse(status_code=status_code, content=jsonable_encoder(response))
 
 

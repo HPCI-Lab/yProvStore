@@ -3,8 +3,8 @@ from fastapi.responses import RedirectResponse
 from dishka.integrations.fastapi import DishkaRoute
 
 from routers.authentication.router import router as authentication_router
-from routers.documents.router import documents_router
-from routers.documents.router import document_router
+from routers.documents.router import documents_router, document_router
+from routers.pids.router import pids_router, pid_router
 # from routers.permissions.router import router as permissions_router
 
 __all__ = ('root_router',)
@@ -32,6 +32,8 @@ root_sub_routers: tuple[APIRouter, ...] = (
     documents_router,
     document_router,
     # permissions_router,
+    pids_router,
+    pid_router,
 )
 
 for router in root_sub_routers:

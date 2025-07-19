@@ -5,6 +5,7 @@ from rich.console import Console
 
 from commands.auth import auth
 from commands.documents import documents
+from commands.pids import pids
 from utils.api_client import make_request
 
 console = Console()
@@ -61,6 +62,7 @@ def check(ctx):
 # Add command groups to the main CLI
 cli.add_command(auth)
 cli.add_command(documents)
+cli.add_command(pids)
 
 
 if __name__ == '__main__':
