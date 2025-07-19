@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 router = APIRouter(
-    prefix="/{pid}",
+    prefix="",
     route_class=DishkaRoute
 )
 
@@ -64,7 +64,24 @@ documentation = {
 }
 
 
-@router.get("", **documentation)
+@router.get("/{prefix}/{pid}", **documentation)
+async def get_pid_prefix(
+    pid: str,
+    prefix: str,
+    pid_service: FromDishka[PidService]
+) -> dict:
+    """
+    Endpoint to retrieve a specific PID record from the PID service.
+    This endpoint retrieves the PID record for the specified PID.
+    """
+
+    pid = f"{prefix}/{pid}"
+    record_pid = await pid_service.get_document_pid(pid)
+
+    return record_pid
+
+
+@router.get("/{pid}", **documentation)
 async def get_pid(
     pid: str,
     pid_service: FromDishka[PidService]
@@ -73,8 +90,8 @@ async def get_pid(
     Endpoint to retrieve a specific PID record from the PID service.
     This endpoint retrieves the PID record for the specified PID.
     """
-
-    pid = f"{PID_PREFIX}/{pid}"
-    record_pid = await pid_service.get_document_pid(pid)
-
-    return record_pid
+    return await get_pid_prefix(
+        pid=pid,
+        prefix=PID_PREFIX,
+        pid_service=pid_service
+    )

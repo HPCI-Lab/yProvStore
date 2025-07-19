@@ -44,6 +44,14 @@ class LocalFileStorageServiceImpl(FileStorageService):
             raise ConflictException(f"File with ID '{storage_id}' already exists.")
 
         try:
+            split = storage_id.split('/')
+            if len(split) == 2:
+                # Create pid prefix directory if it doesn't exist
+                prefix_dir = self.documents_path / split[0]
+                if not prefix_dir.exists():
+                    prefix_dir.mkdir(parents=True, exist_ok=True)
+            elif len(split) > 2:
+                raise Exception("Invalid file path structure.")
             with open(file_path, 'wb') as f:
                 f.write(file_data)
         except Exception as e:

@@ -9,12 +9,13 @@ from application.exceptions.responses import EXCEPTION_SCHEMA
 from application.exceptions.types import NotFoundException, ServiceUnavailableException, UnauthorizedException, ForbiddenException
 from services.document_storage.service import DocumentRecordStorageService
 from services.user_storage.service import UserStorageService
+from application.settings import PID_PREFIX
 
 logger = logging.getLogger(__name__)
 
 
 router = APIRouter(
-    prefix="/{pid}",
+    prefix="",
     route_class=DishkaRoute
 )
 
@@ -44,16 +45,18 @@ documentation = {
 }
 
 
-@router.get("", **documentation)
-async def get_document(
+@router.get("/{prefix}/{pid}", **documentation)
+async def get_document_prefix(
+    prefix: str,
     pid: str,
     document_record_storage: FromDishka[DocumentRecordStorageService],
     user_storage_service: FromDishka[UserStorageService]
 ) -> DocumentRecordGet:
     """
-    Endpoint to retrieve a specific document record by its PID.
+    Endpoint to retrieve a specific document record by its PID and prefix.
     """
 
+    pid = f"{prefix}/{pid}"
     # Fetch the document record by PID
     record = await document_record_storage.get_document_by_pid(pid)
 
@@ -71,4 +74,19 @@ async def get_document(
         storage_url=record.storage_url,
         owner_email=owner_email,
         parent_document_pid=record.parent_doc_pid
+    )
+
+
+@router.get("/{pid}", **documentation)
+async def get_document(
+    pid: str,
+    document_record_storage: FromDishka[DocumentRecordStorageService],
+    user_storage_service: FromDishka[UserStorageService]
+) -> DocumentRecordGet:
+    """
+    Endpoint to retrieve a specific document record by its PID.
+    """
+
+    return await get_document_prefix(
+        pid=pid, prefix=PID_PREFIX, document_record_storage=document_record_storage, user_storage_service=user_storage_service
     )

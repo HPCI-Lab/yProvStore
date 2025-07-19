@@ -83,8 +83,9 @@ class PidService:
             parent_doc_record = await self.get_pid_record(parent_doc_pid, raise_not_found=False)
             if not parent_doc_record:
                 raise NotFoundException(f"Parent document PID {parent_doc_pid} not found in handle server.")
-            pid_tree_record = await self.get_pid_record(parent_doc_record.tree_pid, raise_not_found=False)
-            logger.info(f"Parent document record: {parent_doc_record}")
+            if parent_doc_record.tree_pid:
+                pid_tree_record = await self.get_pid_record(parent_doc_record.tree_pid, raise_not_found=False)
+                logger.debug(f"Parent document record: {parent_doc_record}")
 
             if not pid_tree_record:
                 # Valid if parent_doc version is 1
@@ -251,7 +252,7 @@ class PidServiceImpl(PidService, HandleConnector):
         await self.ensure_authenticated()
         url = HandlePaths.HANDLE.format(pid=pid)
         response = await self.send_http_request("GET", url, raise_not_found=True)
-        logger.info(f"Retrieved handle record for PID: {pid}: {response}")
+        logger.debug(f"Retrieved handle record for PID: {pid}: {response}")
         return response
 
 

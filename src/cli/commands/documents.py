@@ -110,15 +110,27 @@ def download_document(ctx, pid, output, output_folder):
     if output:
         # If a full output path is given, it takes precedence
         output_path = output
+        output_folder = os.path.dirname(output_path)
     elif output_folder:
         # If only a folder is given, construct the path using the PID as the filename
         output_path = os.path.join(output_folder, f"{pid}.prov")
     else:
         # If no location is specified, save the file in the current directory
         output_path = f"{pid}.prov"
+        output_folder = os.getcwd()
 
     api_url = ctx.obj['API_URL']
     console.print(f"Downloading document [cyan]{pid}[/cyan] to [yellow]{output_path}[/yellow]...")
+
+    split = pid.split('/')
+    if len(split) == 2:
+        # If the PID includes a prefix, create the prefix folder it if it doesn't exist
+        prefix_path = os.path.join(output_folder, split[0])
+        if not os.path.exists(prefix_path):
+            os.makedirs(prefix_path)
+    elif (len(split) > 2):
+        console.print(f"❌ [bold red]Error:[/bold red] Invalid PID format '{pid}'. Expected format is 'prefix/pid' or 'pid'.")
+        return
 
     response = make_request("GET", api_url, f"/documents/{pid}/download", stream=True)
 

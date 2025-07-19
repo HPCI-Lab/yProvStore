@@ -31,5 +31,5 @@ document_router = APIRouter(
 
 
 # Include the sub-routers for retrieving a document
-document_router.include_router(get_router)
 document_router.include_router(download_router)
+document_router.include_router(get_router)
