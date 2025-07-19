@@ -15,7 +15,7 @@ def pids():
 
 @pids.command(name="list")
 @click.option('--page', type=int, default=0, show_default=True,
-              help="Page number (zero indexed) to retrieve.")
+              help="Page number (zero-indexed) to retrieve.")
 @click.option('--page-size', type=int, default=25, show_default=True,
               help="Number of items per page.")
 @click.pass_context

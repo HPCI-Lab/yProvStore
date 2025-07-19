@@ -12,7 +12,7 @@ class DocumentRecordStorageService:
     Interface for document records storage operations.
     """
 
-    async def get_document_by_pid(self, pid: str) -> DocumentRecord:
+    async def get_document_by_pid(self, pid: str, raise_not_found: bool = True) -> DocumentRecord:
         """
         Retrieve a document record by their pid.
         """
@@ -39,8 +39,8 @@ class DocumentRecordStorageServiceImpl(DocumentRecordStorageService, SQLEntityDB
     def __init__(self, session: SessionType):
         super().__init__(session, model_type=DBDocumentRecord)
 
-    async def get_document_by_pid(self, pid: str) -> DocumentRecord:
-        db_document_record = await super()._get(pid)
+    async def get_document_by_pid(self, pid: str, raise_not_found: bool = True) -> DocumentRecord:
+        db_document_record = await super()._get(pid, raise_not_found=raise_not_found)
         return db_document_record.to_document_record()
 
     async def save_document(self, document_record: DocumentRecord) -> DocumentRecord:

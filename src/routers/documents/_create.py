@@ -37,14 +37,14 @@ documentation = {
     "summary": "Publish a Document Record",
     "description": ("This endpoint allows the user to publish a new document record with its associated data. "
                     "The document is stored in the system, and a unique identifier (PID) is generated for it."
-                    "\n\nTo upload a document, exectly one of the following fields must be provided: "
+                    "\n\nTo upload a document, exactly one of the following fields must be provided: "
                     "`document_data` in the request body, or `document_file` as a file upload."),
     "status_code": status.HTTP_200_OK,
     "response_description": "Returns the created document record",
     "responses": {
         status.HTTP_401_UNAUTHORIZED: EXCEPTION_SCHEMA[UnauthorizedException],
         status.HTTP_400_BAD_REQUEST: EXCEPTION_SCHEMA[BadRequestException, "Invalid document data provided as input."],
-        status.HTTP_403_FORBIDDEN: EXCEPTION_SCHEMA[ForbiddenException],
+        status.HTTP_403_FORBIDDEN: EXCEPTION_SCHEMA[ForbiddenException, "You do not have permission to create a document under the specified parent document lineage."],
         status.HTTP_404_NOT_FOUND: EXCEPTION_SCHEMA[NotFoundException, "The specified parent document PID does not exist."],
         status.HTTP_503_SERVICE_UNAVAILABLE: EXCEPTION_SCHEMA[ServiceUnavailableException]
     },

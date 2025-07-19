@@ -10,11 +10,11 @@ __all__ = ("router",)
 
 
 router = APIRouter(
-    prefix="/documents/{pid}",
+    prefix="/documents",
     tags=["Document Permissions"],
     responses={
         status.HTTP_401_UNAUTHORIZED: EXCEPTION_SCHEMA[UnauthorizedException],
-        status.HTTP_403_FORBIDDEN: EXCEPTION_SCHEMA[ForbiddenException, "You do not have permission to manage permissions for this document."],
+        status.HTTP_403_FORBIDDEN: EXCEPTION_SCHEMA[ForbiddenException, "You do not have permission to manage access for this document."],
         status.HTTP_404_NOT_FOUND: EXCEPTION_SCHEMA[NotFoundException, "The specified document PID does not exist."]
     }
 )

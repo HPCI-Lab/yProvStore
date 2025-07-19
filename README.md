@@ -149,7 +149,7 @@ This will set up the CLI environment by initiating the virtual environment and m
 
 **Prepare the CLI before its usage:**
 
-In general, remember to always run `source prepare_cli.sh` before using the CLI to ensure that the environment is set up correctly.
+In general, remember to always run `source prepare_cli.sh` (or `call prepare_cli.bat` on Windows) before using the CLI to ensure that the environment is set up correctly.
 This should be done not only when you first install the CLI, but also whenever you open a new terminal session where you want to use the CLI.
 
 
@@ -175,6 +175,8 @@ yprov documents create --json-file <path/to/document.json> [--parent-pid <parent
 yprov documents list
 yprov documents get <document_pid>
 yprov documents download <document_pid> [--output-folder <path>] [--output <file_path>]
+yprov documents permissions add <prefix/id> --user-email <email> --permission-level <level>
+yprov documents permissions list <prefix/id>
 yprov pids list [--page <page_number>] [--page-size <page_size>]
 yprov pids get <pid>
 ```
@@ -347,6 +349,36 @@ Once authenticated, you can create, list, and download provenance documents.
 
 -----
 
+### Managing Document Permissions
+
+You can grant or view permissions on documents. Internally, all permissions live on the *first version* of a document—adding or listing against any version will target that root document.
+
+* **Add a permission**
+
+  ```bash
+  yprov documents permissions add <prefix/id> \
+    --user-email user@example.com \
+    --permission-level write
+  ```
+
+  Notes:
+
+  * PID **must** be in `prefix/id` form.
+  * Permissions are always stored on the first version; granting on v2 or v3 still writes to v1.
+  * The first version document must already reside on this server instance.
+  * Although `read` is supported by the service, setting `read` on already‑public docs may result in an error.
+
+- **List permissions**
+
+  ```bash
+  yprov documents permissions list <pid>
+  ```
+
+  `<pid>` can be either `prefix/id` or just `id` (default prefix will be used). This shows every user and their permission level on that document’s first version.
+
+
+-----
+
 ### Managing PIDs
 
 `yProvStore` additionally provides some proxy methods to retrieve PID records directly from the underlying PID service (Handle System).
@@ -355,27 +387,27 @@ The `pids` group lets you list and retrieve PID records from your PID service.
 
 * **List PIDs** (with optional pagination)
 
-```bash
-  yprov pids list [OPTIONS]
-```
-
-Options:
-
-* `--page INTEGER`       Page number (zero‑indexed). Default: `0`
-* `--page-size INTEGER`   Number of items per page. Default: `25`
-
-Examples:
-
-* List the first page (25 items):
-
   ```bash
-  yprov pids list
+    yprov pids list [OPTIONS]
   ```
-* List page 2 (zero‑indexed, i.e. the third page) with 50 items per page:
 
-  ```bash
-  yprov pids list --page 2 --page-size 50
-  ```
+  Options:
+
+  * `--page INTEGER`       Page number (zero‑indexed). Default: `0`
+  * `--page-size INTEGER`   Number of items per page. Default: `25`
+
+  Examples:
+
+  * List the first page (25 items):
+
+    ```bash
+    yprov pids list
+    ```
+  * List page 2 (zero‑indexed, i.e. the third page) with 50 items per page:
+
+    ```bash
+    yprov pids list --page 2 --page-size 50
+    ```
 
 - **Get a PID record** (by prefix/id or by id only)
 
