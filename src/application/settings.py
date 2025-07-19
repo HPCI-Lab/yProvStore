@@ -22,6 +22,8 @@ TMP_PATH = Path(os.getenv("TMP_PATH", os.path.join(os.path.dirname(__file__), ".
 if not TMP_PATH.exists():
     TMP_PATH.mkdir(parents=True, exist_ok=True)
 
+USE_LOCAL_PID_SERVICE = os.getenv("USE_LOCAL_PID_SERVICE", "False").lower() in ("true", "1", "yes")
+
 # === PID Service Settings === #
 PID_PREFIX = os.getenv("PID_PREFIX", "21.T11961")
 PID_SERVER_URL = os.getenv("PID_SERVER_URL", "https://pidhs.disi.unitn.it:8000")

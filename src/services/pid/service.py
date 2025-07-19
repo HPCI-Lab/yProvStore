@@ -1,10 +1,11 @@
+import os
 import uuid
 import json
 import logging
 
 from dishka import Provider, provide, Scope
 
-from application.settings import PID_PREFIX, TMP_PATH
+from application.settings import PID_PREFIX, TMP_PATH, PID_PRIVATE_KEY_PATH, USE_LOCAL_PID_SERVICE
 from application.exceptions.types import ConflictException, NotFoundException, IntegrityException
 from models import PidRecord, PidType
 from services.pid.handle.connector import HandleConnector, HandlePaths
@@ -158,7 +159,7 @@ class LocalPidServiceImpl(PidService):
         """
         if prefix is None:
             prefix = self.prefix
-        return prefix + str(uuid.uuid4())
+        return f"{prefix}/{uuid.uuid4()}"
 
     async def save_pid_record(self, pid_record: PidRecord) -> PidRecord:
         if pid_record.pid in self.pids:
@@ -205,6 +206,10 @@ class PidServiceImpl(PidService, HandleConnector):
     Implementation of the PidService that interacts with a real Handle System server.
     This class contains all the logic for HTTP communication and authentication.
     """
+
+    def __init__(self):
+        if not os.path.exists(PID_PRIVATE_KEY_PATH):
+            raise FileNotFoundError(f"PID private key file not found: {PID_PRIVATE_KEY_PATH}")
 
     async def new_pid(self, prefix: str = None) -> str:
         if prefix is None:
@@ -258,4 +263,19 @@ class PidServiceImpl(PidService, HandleConnector):
 
 class PidServiceProvider(Provider):
 
-    pid_service = provide(source=PidServiceImpl, scope=Scope.APP, provides=PidService)
+    def __init__(self, *args, **kwargs):
+        super().__init__(scope=Scope.APP, *args, **kwargs)
+        if not USE_LOCAL_PID_SERVICE:
+            if not os.path.exists(PID_PRIVATE_KEY_PATH):
+                raise FileNotFoundError(f"PID private key file not found: {PID_PRIVATE_KEY_PATH}. Please provide it or "
+                                        f"set USE_LOCAL_PID_SERVICE to True if you only need to test locally.")
+        else:
+            logger.warning("Using local PID service")
+
+    @provide
+    def provide_pid_service(self) -> PidService:
+        """
+        Provides an instance of the PidService.
+        This method is used to inject the PidService into other components.
+        """
+        return PidServiceImpl() if not USE_LOCAL_PID_SERVICE else LocalPidServiceImpl()
