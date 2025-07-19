@@ -175,6 +175,8 @@ yprov documents create --json-file <path/to/document.json> [--parent-pid <parent
 yprov documents list
 yprov documents get <document_pid>
 yprov documents download <document_pid> [--output-folder <path>] [--output <file_path>]
+yprov pids list [--page <page_number>] [--page-size <page_size>]
+yprov pids get <pid>
 ```
 
 Each of these commands is better explained below.
