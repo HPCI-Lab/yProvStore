@@ -177,6 +177,7 @@ yprov documents get <document_pid>
 yprov documents download <document_pid> [--output-folder <path>] [--output <file_path>]
 yprov documents permissions add <prefix/id> --user-email <email> --permission-level <level>
 yprov documents permissions list <prefix/id>
+yprov documents permissions delete <prefix/id> --user-email <email>
 yprov pids list [--page <page_number>] [--page-size <page_size>]
 yprov pids get <pid>
 ```
@@ -376,6 +377,15 @@ You can grant or view permissions on documents. Internally, all permissions live
 
   `<pid>` can be either `prefix/id` or just `id` (default prefix will be used). This shows every user and their permission level on that document’s first version.
 
+- **Delete a permission**
+
+  ```bash
+  yprov documents permissions delete <prefix/id> --user-email user@example.com
+  ```
+
+  This command deletes the permission for the specified user on the document's first version. The `<prefix/id>` can be provided in the same way as in the list command.
+
+  You must be the owner of the first version of the document to delete permissions. If you are not the owner, you will receive a `403 Forbidden` error.
 
 -----
 

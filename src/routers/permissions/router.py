@@ -5,6 +5,7 @@ from application.exceptions.types import UnauthorizedException, ForbiddenExcepti
 
 from ._list import router as list_router
 from ._create import router as create_router
+from ._delete import router as delete_router
 
 __all__ = ("router",)
 
@@ -22,3 +23,4 @@ router = APIRouter(
 # Include the sub-routers for managing document permissions
 router.include_router(list_router)
 router.include_router(create_router)
+router.include_router(delete_router)

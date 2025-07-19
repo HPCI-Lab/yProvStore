@@ -1,9 +1,10 @@
 from dishka import Provider, provide, Scope
 from sqlalchemy.orm import Session as SessionType
 
-from application.exceptions.types import ConflictException, ForbiddenException, IntegrityException
+from application.exceptions.types import ConflictException, ForbiddenException, IntegrityException, NotFoundException
 from models import DocumentPermission, User, DocumentRecord, PermissionLevel, PidRecord
 from services.document_storage.service import DocumentRecordStorageService
+from services.user_storage.service import UserStorageService
 from services.db.sql.models import DBDocumentPermission
 from services.pid.service import PidService
 from services.db.sql.crud import SQLEntityDB
@@ -22,9 +23,9 @@ class DocumentPermissionStorageService:
         """
         raise NotImplementedError
 
-    async def list_permissions_for_doc_and_user(self, pid: str, user_id: str) -> list[DocumentPermission]:
+    async def get_permission_for_doc_and_user(self, pid: str, user_id: str) -> DocumentPermission:
         """
-        List permissions for a specific document and user.
+        Get permission for a specific document and user.
         """
         raise NotImplementedError
 
@@ -37,6 +38,12 @@ class DocumentPermissionStorageService:
     async def validate_user_permission(self, user: User, doc: DocumentRecord, permission_level: PermissionLevel) -> None:
         """
         Check if a user has a specific permission level for a document.
+        """
+        raise NotImplementedError
+    
+    async def delete_permission(self, pid: str, user_email: str) -> None:
+        """
+        Delete a specific permission for a document identified by its PID and a user email.
         """
         raise NotImplementedError
     
@@ -77,26 +84,44 @@ class DocumentPermissionStorageServiceImpl(DocumentPermissionStorageService, SQL
     Concrete implementation of DocumentPermissionStorageService that interacts with a database.
     """
 
-    def __init__(self, session: SessionType, pid_service: PidService, document_record_storage: DocumentRecordStorageService):
+    def __init__(self, session: SessionType, pid_service: PidService, document_record_storage: DocumentRecordStorageService, user_storage: UserStorageService):
         super().__init__(session, model_type=DBDocumentPermission)
         self.pid_service = pid_service
         self.document_record_storage = document_record_storage
+        self.user_storage = user_storage
 
     async def list_permissions_for_doc(self, pid: str) -> list[DocumentPermission]:
         db_permissions = await super()._filter(pid=pid)
         return [db_permission.to_document_permission() for db_permission in db_permissions]
 
-    async def list_permissions_for_doc_and_user(self, pid: str, user_id: str) -> list[DocumentPermission]:
-        db_permissions = await super()._filter(pid=pid, user_id=user_id)
-        return [db_permission.to_document_permission() for db_permission in db_permissions]
+    async def get_permission_for_doc_and_user(self, pid: str, user_id: str) -> DocumentPermission:
+        db_permission = await super()._filter(pid=pid, user_id=user_id)
+        if len(db_permission) > 1:
+            user_record = await self.user_storage.get_user_by_id(user_id)
+            raise ConflictException(f"Multiple permissions found for user '{user_record.email}' on document '{pid}'.")
+        elif len(db_permission) == 0:
+            user_record = await self.user_storage.get_user_by_id(user_id)
+            raise ConflictException(f"No permission found for user '{user_record.email}' on document '{pid}'.")
+        return db_permission[0].to_document_permission()
 
     async def save_permission(self, permission: DocumentPermission) -> DocumentPermission:
         existing_permissions = await super()._filter(pid=permission.pid, user_id=permission.user_id)
         if len(existing_permissions) > 0:
-            raise ConflictException(f"Permission for user '{permission.user_id}' on document '{permission.pid}' already exists.")
+            user_record = await self.user_storage.get_user_by_id(permission.user_id)
+            raise ConflictException(f"Permission for user '{user_record.email}' on document '{permission.pid}' already exists.")
         db_permission = DBDocumentPermission.from_document_permission(permission)
         created_db_permission = await super()._create(db_permission)
         return created_db_permission.to_document_permission()
+    
+    async def delete_permission(self, pid: str, user_email: str) -> None:
+        user_record: User = await self.user_storage.get_user_by_email(user_email)
+        document_record: DocumentRecord = await self.document_record_storage.get_document_by_pid(pid)
+        db_permissions = await super()._filter(pid=pid, user_id=user_record.id)
+        if len(db_permissions) == 0:
+            raise ForbiddenException(f"No permission found for user '{user_record.email}' on document '{document_record.pid}'.")
+        elif len(db_permissions) > 1:
+            raise ConflictException(f"Multiple permissions found for user '{user_record.email}' on document '{document_record.pid}'.")
+        await super().delete(db_permissions[0].id, soft_delete=False)
 
     async def validate_user_permission(self, user: User, doc: DocumentRecord, permission_level: PermissionLevel) -> None:
         """

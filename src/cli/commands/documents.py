@@ -185,22 +185,17 @@ def add_permission(ctx, pid, user_email, permission_level):
     Add a permission for USER_EMAIL on PID.
 
     Note:
-    - PID must be in prefix/id form.
     - Permissions are stored on the first version of the document.
     - The document must exist on this server instance.
     """
     api_url = ctx.obj["API_URL"]
-    # ensure prefix/id form
-    if "/" not in pid:
-        console.print("❌ [bold red]Error:[/bold red] PID must be 'prefix/id'.")
-        return
 
     params = {"pid": pid}
     body = {"user_email": user_email, "permission_level": permission_level.lower()}
 
     response = make_request("POST", api_url, "/documents/permissions", params=params, json=body)
     if not response:
-        console.print("[red]❌ Failed to reach permissions endpoint[/red]")
+        console.print("[red]❌ Failed to add permission[/red]")
         return
 
     if response.status_code == 200:
@@ -215,21 +210,18 @@ def add_permission(ctx, pid, user_email, permission_level):
 @click.pass_context
 def list_permissions(ctx, pid):
     """
-    List all permissions set on PID (or its first version).
+    List all permissions set on PID.
+    Permissions for documents are always stored on the first version of the document.
 
     PID may be 'prefix/id' or just 'id' (uses default prefix).
     """
     api_url = ctx.obj["API_URL"]
 
-    # choose endpoint form
-    if "/" in pid:
-        endpoint = f"/documents/{pid}/permissions"
-    else:
-        endpoint = f"/documents/{pid}/permissions"
+    endpoint = f"/documents/{pid}/permissions"
 
     response = make_request("GET", api_url, endpoint)
     if not response:
-        console.print("[red]❌ Failed to reach permissions endpoint[/red]")
+        console.print("[red]❌ Failed to list permissions[/red]")
         return
 
     if response.status_code == 200:
@@ -245,5 +237,36 @@ def list_permissions(ctx, pid):
         for p in perms:
             table.add_row(p["user_email"], p["permission_level"], p.get("pid", "N/A"))
         console.print(table)
+    else:
+        console.print(f"❌ [bold red]Error {response.status_code}:[/bold red] {response.text}")
+
+
+@permissions.command(name="delete")
+@click.argument("pid")
+@click.option("--user-email", required=True, help="Email of the user to revoke permission from.")
+@click.pass_context
+def delete_permission(ctx, pid, user_email):
+    """
+    Delete a permission for USER_EMAIL on PID.
+
+    Note:
+    - Permissions are stored on the first version of the document.
+    - The document must exist on this server instance.
+    """
+    api_url = ctx.obj["API_URL"]
+
+    params = {"pid": pid}
+    body = {"user_email": user_email}
+
+    endpoint = f"/documents/{pid}/permissions"
+
+    response = make_request("DELETE", api_url, endpoint, params=params, json=body)
+    if not response:
+        console.print("[red]❌ Failed to delete permission[/red]")
+        return
+
+    if response.status_code == 200:
+        console.print("✅ [bold green]Permission deleted![/bold green]")
+        console.print_json(data=response.json())
     else:
         console.print(f"❌ [bold red]Error {response.status_code}:[/bold red] {response.text}")

@@ -58,7 +58,7 @@ async def list_permissions(
 
     # Only owner of the document can manage permissions
     if first_document_record.owner_id != logged_user.id:
-        raise ForbiddenException("You do not have permission to manage permissions for this document.")
+        raise ForbiddenException("You do not have permission to manage access for this document.")
 
     # Fetch and return the list of permissions for the specified document PID
     perms = await permission_storage.list_permissions_for_doc(first_document_record.pid)

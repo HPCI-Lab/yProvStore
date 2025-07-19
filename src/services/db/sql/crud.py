@@ -147,7 +147,7 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
         Update an existing entity in the SQL database.
         """
         self._validate_entity(entity)
-        existing_entity = self._get(entity.id)
+        existing_entity = await self._get(entity.id)
         for key, value in entity.__dict__.items():
             setattr(existing_entity, key, value)
         self.session.commit()
@@ -158,7 +158,7 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
         """
         Delete an entity from the SQL database by its ID.
         """
-        entity = self._get(entity_id)
+        entity = await self._get(entity_id)
         if hasattr(entity, 'deleted') and soft_delete:
             entity.deleted = True
             self.session.commit()
