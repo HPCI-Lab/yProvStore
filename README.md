@@ -207,21 +207,73 @@ First, you need to register and log in to get an access token. The token is stor
 
 -----
 
+
 ### Managing Documents
 
 Once authenticated, you can create, list, and download provenance documents.
 
-  * **Create a new document** from a JSON file.
+  * **Create a new document** from a JSON file or a JSON string (only one of these options is allowed at a time).
 
     ```bash
+    # From a file:
     yprov documents create --json-file examples/doc.json
+
+    # Or from an inline JSON string:
+    yprov documents create --value "{\"title\":\"My Doc\",\"owner_email\":\"me@example.com\"}"
     ```
 
-    You can also specify a parent document:
+    You can also specify a parent document in either case:
 
     ```bash
-    yprov documents create --json-file examples/doc.json --parent-pid <parent_pid_here>
+    yprov documents create \
+      --json-file examples/doc.json \
+      --parent-pid <parent_pid_here>
     ```
+
+  * **List all available documents**.
+
+    ```bash
+    yprov documents list
+    ```
+
+  * **Get detailed information** for a specific document by its PID.
+
+    ```bash
+    yprov documents get <your_document_pid>
+    ```
+
+  * **Download a document's file**.
+
+    ```bash
+    Usage: yprov documents download [OPTIONS] PID
+
+    Download a document file by its PID.
+
+    Options:
+      -o, --output FILE          Full path to save the file (e.g.,
+                                'my_dir/my_doc.json'). This overrides --output-folder.
+      --output-folder DIRECTORY  Folder to save the file in. The filename will
+                                default to the document's PID.
+    ```
+
+    * Save to the current directory (e.g., `<pid>.prov`):
+
+      ```bash
+      yprov documents download <your_document_pid>
+      ```
+
+    * Save to a specific folder:
+
+      ```bash
+      yprov documents download <your_document_pid> --output-folder /path/to/downloads
+      ```
+
+    * Save with a specific file name and path:
+
+      ```bash
+      yprov documents download <your_document_pid> --output /path/to/my_doc.json
+      ```
+
 
   * **List all available documents**.
 
