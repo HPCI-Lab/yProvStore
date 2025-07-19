@@ -70,7 +70,7 @@ documentation.update({
 })
 
 
-@router.get("/{pid}/permissions", **documentation)
+@router.delete("/{pid}/permissions", **documentation)
 async def delete_permission(
     pid: str,
     data: DeletePermissionRequest,

@@ -71,6 +71,12 @@ async def list_permissions(
     ) for perm in perms]
 
 
+documentation.update({
+    "description": ("This endpoint retrieves a list of all permissions associated with a specific document (the first version of the document is used)."
+                    " PID prefix is set by default to the application PID prefix.")
+})
+
+
 @router.get("/{pid}/permissions", **documentation)
 async def list_permissions(
     pid: str,

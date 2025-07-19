@@ -81,6 +81,11 @@ async def get_pid_prefix(
     return record_pid
 
 
+documentation.update({
+    "description": "This endpoint retrieves a specific PID record from the PID service. PID prefix is set by default to the application PID prefix."
+})
+
+
 @router.get("/{pid}", **documentation)
 async def get_pid(
     pid: str,
