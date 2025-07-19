@@ -264,6 +264,63 @@ Once authenticated, you can create, list, and download provenance documents.
         yprov documents download <your_document_pid> --output /path/to/my_doc.json
         ```
 
+-----
+
+### Managing PIDs
+
+`yProvStore` additionally provides some proxy methods to retrieve PID records directly from the underlying PID service (Handle System).
+
+The `pids` group lets you list and retrieve PID records from your PID service.
+
+* **List PIDs** (with optional pagination)
+
+```bash
+  yprov pids list [OPTIONS]
+```
+
+Options:
+
+* `--page INTEGER`       Page number (zero‑indexed). Default: `0`
+* `--page-size INTEGER`   Number of items per page. Default: `25`
+
+Examples:
+
+* List the first page (25 items):
+
+  ```bash
+  yprov pids list
+  ```
+* List page 2 (zero‑indexed, i.e. the third page) with 50 items per page:
+
+  ```bash
+  yprov pids list --page 2 --page-size 50
+  ```
+
+- **Get a PID record** (by prefix/id or by id only)
+
+  ```bash
+  yprov pids get <PID>
+  ```
+
+  The `<PID>` argument can be provided in two ways:
+
+  * **`prefix/id`** — explicitly specify both prefix and identifier
+  * **`id`** — omit the prefix, and the service will use your application’s default prefix
+
+  Examples:
+
+  * Retrieve a record with an explicit prefix:
+
+    ```bash
+    yprov pids get myprefix/1234
+    ```
+  * Retrieve a record using the default prefix:
+
+    ```bash
+    yprov pids get 1234
+    ```
+
+
 ### Troubleshooting CLI
 
 If you encounter this issue when running the CLI:

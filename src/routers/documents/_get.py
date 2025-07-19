@@ -33,7 +33,7 @@ class DocumentRecordGet(BaseModel):
 
 documentation = {
     "summary": "Get Document Record info",
-    "description": "This endpoint retrieves a specific document record info by its PID.",
+    "description": "This endpoint retrieves a specific document record info by its PID and prefix.",
     "status_code": status.HTTP_200_OK,
     "response_description": "Returns the document record with its unique identifier (pid), version, storage URL, owner email, and optional parent document PID.",
     "responses": {
@@ -75,6 +75,11 @@ async def get_document_prefix(
         owner_email=owner_email,
         parent_document_pid=record.parent_doc_pid
     )
+
+
+documentation.update({
+    "description": "This endpoint retrieves a specific document record info by its PID. Prefix is set by default to the application PID prefix.",
+})
 
 
 @router.get("/{pid}", **documentation)

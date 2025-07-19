@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 router = APIRouter(
-    prefix="/all",
+    prefix="/pids",
     route_class=DishkaRoute
 )
 

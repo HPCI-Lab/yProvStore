@@ -25,7 +25,7 @@ router = APIRouter(
 documentation = {
     "summary": "Download a Document file by its PID",
     "description": ("This endpoint allows the user to download a document by its PID. "
-                    "The document is retrieved from the storage system using the provided PID."),
+                    "The document is retrieved from the storage system using the provided PID and prefix."),
     "status_code": status.HTTP_200_OK,
     "response_description": "Returns the requested document file.",
     "response_class": Response,
@@ -79,6 +79,11 @@ async def download_document_prefix(
         raise NotFoundException(f"Document with PID '{pid}' not found.")
     except ServiceUnavailableException as e:
         raise ServiceUnavailableException(f"Failed to retrieve document with PID '{pid}'") from e
+
+
+documentation.update({
+    "description": "This endpoint allows the user to download a document by its PID. Prefix is set by default to the application PID prefix.",
+})
 
 
 @router.get("/{pid}/download", **documentation)

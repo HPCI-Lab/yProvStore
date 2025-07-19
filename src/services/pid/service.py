@@ -94,7 +94,7 @@ class PidService:
                 else:
                     # If parent version is 1 then this is the first document update -> create a new tree PID
                     tree_pid = await self.new_pid()
-                    pid_tree_record = PidRecord(pid=tree_pid, type=PidType.PID_TREE, first_document_pid=pid, latest_document_pid=pid, latest_version=new_version)
+                    pid_tree_record = PidRecord(pid=tree_pid, type=PidType.PID_TREE, first_document_pid=parent_doc_pid, latest_document_pid=pid, latest_version=new_version)
                     pid_tree_record = await self.save_pid_record(pid_tree_record)
 
                     # Update the parent document record with the new tree PID
