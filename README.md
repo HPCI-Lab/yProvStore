@@ -4,7 +4,7 @@
 
 yProv is a joint project between [University of Trento](https://www.unitn.it) and [CMCC](https://www.cmcc.it).
 
-**yProvStore** is the backend service of yProv, built with FastAPI and designed to handle the storage and retrieval of provenance data. It provides a RESTful API for interacting with provenance information, allowing users to create and read provenance records.
+**yProvStore** is the backend service of yProv, built with FastAPI and designed to handle the storage and retrieval of provenance data. It provides a RESTful API for interacting with provenance information, allowing users to create and read provenance records, manage document metadata, and handle permissions.
 
 ## Table of Contents
 
@@ -14,6 +14,7 @@ yProv is a joint project between [University of Trento](https://www.unitn.it) an
     - [Python version](#python-version)
     - [Installing Dependencies](#installing-dependencies)
     - [Database Setup](#database-setup)
+    - [Environment Variables (Optional)](#environment-variables-optional)
     - [Running the Application](#running-the-application)
     - [Troubleshooting](#troubleshooting)
   - [yProv-CLI](#yprov-cli)
@@ -23,6 +24,9 @@ yProv is a joint project between [University of Trento](https://www.unitn.it) an
     - [Configuration](#configuration)
     - [Authentication](#authentication)
     - [Managing Documents](#managing-documents)
+    - [Managing Document Permissions](#managing-document-permissions)
+    - [Managing Document Metadata](#managing-document-metadata)
+    - [Managing PIDs](#managing-pids)
     - [Troubleshooting CLI](#troubleshooting-cli)
 
 ## Local Development
@@ -459,7 +463,7 @@ You can manage metadata for documents, including retrieving and updating it.
   │ keywords    │ list[string] │ No       │ ['keyword1', 'keyword2']               │
   └─────────────┴──────────────┴──────────┴────────────────────────────────────────┘
   ```
-  
+
 -----
 
 ### Managing PIDs

@@ -46,10 +46,8 @@ class PidRecord:
         self.type = type
         for key, value in kwargs.items():
             if hasattr(self, key):
-                print(f"Setting attribute {key} to {value}")
                 setattr(self, key, value)
             else:
-                print(f"Setting other attribute {key} to {value}")
                 if self.__other is None:
                     self.__other = {}
                 self.__other[key] = value
@@ -112,5 +110,5 @@ class PidRecord:
             "first_document_pid": self.first_document_pid,
             "latest_document_pid": self.latest_document_pid,
             "latest_version": self.latest_version,
-            **(self.other or {}),
+            **({k: v for k, v in self.other.items() if v} or {}),
         }

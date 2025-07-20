@@ -2,6 +2,7 @@ import os
 import uuid
 import json
 import logging
+from urllib.parse import urlencode
 
 from dishka import Provider, provide, Scope
 
@@ -50,6 +51,10 @@ class PidService:
         """
         List all document PIDs stored in the PID service.
         This method returns a list of all PIDs that represent documents.
+        
+        :param page: The page number for pagination (default is 0).
+        :param page_size: The number of items per page (default is 10).
+        :return: A list of document PIDs.
         """
         raise NotImplementedError
     
@@ -210,6 +215,7 @@ class PidServiceImpl(PidService, HandleConnector):
     def __init__(self):
         if not os.path.exists(PID_PRIVATE_KEY_PATH):
             raise FileNotFoundError(f"PID private key file not found: {PID_PRIVATE_KEY_PATH}")
+        super().__init__()
 
     async def new_pid(self, prefix: str = None) -> str:
         if prefix is None:
@@ -238,10 +244,15 @@ class PidServiceImpl(PidService, HandleConnector):
         handle_record_body = HandleRecord.from_pid_record(pid_record).record_values
         await self.send_http_request("PUT", url, data=handle_record_body)
         return pid_record
-    
+
     async def list_document_pids(self, page: int = 0, page_size: int = 10) -> list[str]:
         await self.ensure_authenticated()
-        url = HandlePaths.HANDLES + f"?prefix={PID_PREFIX}&page={page}&pageSize={page_size}"
+        query_params = {
+            "prefix": PID_PREFIX,
+            "page": page,
+            "pageSize": page_size
+        }
+        url = f"{HandlePaths.HANDLES}?{urlencode(query_params)}"
         response = await self.send_http_request("GET", url)
         return response['handles']
 

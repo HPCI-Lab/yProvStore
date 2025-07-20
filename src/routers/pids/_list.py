@@ -1,7 +1,6 @@
 import logging
 
 from fastapi import APIRouter, status
-from pydantic import BaseModel, Field
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
 from application.documentation.openapi_generation import EXAMPLE_UUID, EXAMPLE_UUID_2

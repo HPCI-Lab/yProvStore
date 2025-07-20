@@ -30,6 +30,9 @@ class HandlePaths:
 
 class HandleConnector:
 
+    session_id: str
+    _auth_lock: asyncio.Lock | None = None
+
     def __init__(self):
         self.http_client = httpx.AsyncClient(verify=False) # `verify=False` to allow self-signed certs
         self.private_key = self._load_private_key_file(PID_PRIVATE_KEY_PATH)
