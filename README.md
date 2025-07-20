@@ -175,9 +175,12 @@ yprov documents create --json-file <path/to/document.json> [--parent-pid <parent
 yprov documents list
 yprov documents get <document_pid>
 yprov documents download <document_pid> [--output-folder <path>] [--output <file_path>]
-yprov documents permissions add <prefix/id> --user-email <email> --permission-level <level>
-yprov documents permissions list <prefix/id>
-yprov documents permissions delete <prefix/id> --user-email <email>
+yprov documents permissions add <document_pid> --user-email <email> --permission-level <level>
+yprov documents permissions list <document_pid>
+yprov documents permissions delete <document_pid> --user-email <email>
+yprov documents metadata get <document_pid>
+yprov documents metadata update <document_pid> --key1 <key1> --key2 <value2>
+yprov documents metadata schema
 yprov pids list [--page <page_number>] [--page-size <page_size>]
 yprov pids get <pid>
 ```
@@ -207,6 +210,10 @@ The CLI defaults to connecting to `http://127.0.0.1:8000`. You can specify a dif
     ```bash
     export YPROV_API_URL="http://your-api-server.com:8000"
     ```
+    > Or on Windows:
+    > ```cmd
+    > set YPROV_API_URL="http://your-api-server.com:8000"
+    > ```
 
     You can then check the status of the API server with:
 
@@ -387,6 +394,72 @@ You can grant or view permissions on documents. Internally, all permissions live
 
   You must be the owner of the first version of the document to delete permissions. If you are not the owner, you will receive a `403 Forbidden` error.
 
+-----
+
+### Managing Document Metadata
+
+
+You can manage metadata for documents, including retrieving and updating it.
+
+- **Get metadata for a document**
+
+  ```bash
+  yprov documents metadata get <document_pid>
+  ```
+
+  This command retrieves the metadata associated with the specified document PID.
+
+- **Update metadata for a document**
+
+  ```bash
+  yprov documents metadata update <document_pid> --key <value>
+  ```
+
+  This command updates the metadata for the specified document PID.
+  You can specify multiple key-value pairs to update multiple metadata fields at once.
+  For example:
+
+  ```bash
+  yprov documents metadata update <document_pid> --title "New Title" --keywords keyword1 --keywords keyword2
+  
+  # This command will empty both title and keywords:
+  yprov documents metadata update <document_pid> --title "" --keywords ""
+  ```
+  
+  - The PID must be fully qualified (prefix/id).
+  - Only passed fields will be updated; existing fields not specified will remain unchanged.
+  - Before updating, the command will validate the provided fields against the metadata schema fetched from the server.
+  - Fields not defined in the schema will be ignored.
+  - To set an empty field, use an empty string
+  - To set a list field, use multiple invocations of the same option.
+  - To update a list field, you need to pass the entire list each time.
+  - If no fields are provided, the command will exit with a warning.
+  - To update metadata for a document, you must be the owner of the document or have write permissions on it.
+
+- **Get metadata schema**
+
+  You can retrieve the metadata schema, which defines the structure and fields of the metadata.
+
+  ```bash
+  yprov documents metadata schema
+  ```
+
+  The schema defines the structure and fields that can be used in document metadata.
+
+  Example output:
+
+  ```
+  > yprov documents metadata schema
+                              Document Metadata Schema
+  ┌─────────────┬──────────────┬──────────┬────────────────────────────────────────┐
+  │ Field       │ Type         │ Required │ Example                                │
+  ├─────────────┼──────────────┼──────────┼────────────────────────────────────────┤
+  │ title       │ string       │ No       │ Sample Document Title                  │
+  │ description │ string       │ No       │ This is a sample document description. │
+  │ keywords    │ list[string] │ No       │ ['keyword1', 'keyword2']               │
+  └─────────────┴──────────────┴──────────┴────────────────────────────────────────┘
+  ```
+  
 -----
 
 ### Managing PIDs

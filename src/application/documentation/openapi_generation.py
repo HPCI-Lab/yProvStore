@@ -69,3 +69,46 @@ EXAMPLE_DOCUMENT_DATA = {
 EXAMPLE_METADATA_TITLE = "Sample Document Title"
 EXAMPLE_METADATA_DESCRIPTION = "This is a sample document description."
 EXAMPLE_METADATA_KEYWORDS = ["keyword1", "keyword2"]
+EXAMPLE_METADATA_SCHEMA = {
+  "properties": {
+    "title": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "example": "Sample Document Title"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "example": "This is a sample document description."
+    },
+    "keywords": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "example": [
+        "keyword1",
+        "keyword2"
+      ]
+    }
+  }
+}

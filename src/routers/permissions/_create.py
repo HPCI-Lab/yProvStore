@@ -6,6 +6,7 @@ from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
 from models import DocumentPermission, PermissionLevel
 from routers.common.dependencies import LoggedUser
+from routers.permissions._list import DocumentPermissionGet
 from services.permission_storage.service import DocumentPermissionStorageService
 from services.document_storage.service import DocumentRecordStorageService
 from services.user_storage.service import UserStorageService
@@ -56,7 +57,7 @@ async def create_permission(
     document_record_storage: FromDishka[DocumentRecordStorageService],
     user_storage: FromDishka[UserStorageService],
     logged_user: LoggedUser
-) -> DocumentPermission:
+) -> DocumentPermissionGet:
     """
     The passed PID must be of the form `<prefix>/<pid>`, where `<prefix>` is the PID prefix and `<pid>` is the document PID.
     Create a new permission for a specific document and user.
@@ -85,6 +86,11 @@ async def create_permission(
     )
     # Create and return the new permission for the specified document PID
     try:
-        return await permission_storage.save_permission(new_permission)
+        permission = await permission_storage.save_permission(new_permission)
+        return DocumentPermissionGet(
+            pid=permission.pid,
+            user_email=user.email,
+            permission_level=permission.permission_level
+        )
     except ConflictException as e:
         raise ConflictException(f"Permission for user '{user.email}' on document '{first_document_record.pid}' already exists.") from e
