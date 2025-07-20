@@ -37,8 +37,6 @@ documentation = {
     "status_code": status.HTTP_200_OK,
     "response_description": "Returns the document record with its unique identifier (pid), version, storage URL, owner email, and optional parent document PID.",
     "responses": {
-        status.HTTP_401_UNAUTHORIZED: EXCEPTION_SCHEMA[UnauthorizedException],
-        status.HTTP_403_FORBIDDEN: EXCEPTION_SCHEMA[ForbiddenException],
         status.HTTP_404_NOT_FOUND: EXCEPTION_SCHEMA[NotFoundException, "The specified document PID does not exist."],
         status.HTTP_503_SERVICE_UNAVAILABLE: EXCEPTION_SCHEMA[ServiceUnavailableException]
     }

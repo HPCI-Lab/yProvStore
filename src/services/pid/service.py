@@ -221,14 +221,8 @@ class PidServiceImpl(PidService, HandleConnector):
         await self.ensure_authenticated()
         url = HandlePaths.HANDLE.format(pid=pid_record.pid) + "?overwrite=false"
         handle_record_body = HandleRecord.from_pid_record(pid_record).record_values
-        try:
-            await self.send_http_request("PUT", url, data=handle_record_body)
-            return pid_record
-        except IntegrityException as e:
-            # TODO: update
-            if "handle already exists" in str(e).lower():
-                raise ConflictException(f"PID record with ID '{pid_record.pid}' already exists.")
-            raise
+        await self.send_http_request("PUT", url, data=handle_record_body)
+        return pid_record
 
     async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord:
         await self.ensure_authenticated()
@@ -242,8 +236,6 @@ class PidServiceImpl(PidService, HandleConnector):
         await self.ensure_authenticated()
         url = HandlePaths.HANDLE.format(pid=pid_record.pid)
         handle_record_body = HandleRecord.from_pid_record(pid_record).record_values
-        
-        # We don't check for existence first to make the update atomic (let the server handle it)
         await self.send_http_request("PUT", url, data=handle_record_body)
         return pid_record
     

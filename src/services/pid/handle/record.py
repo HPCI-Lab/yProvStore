@@ -93,6 +93,22 @@ class HandleRecord:
                 type=handle_value_type.value,
                 data_value=str(attribute_value)
             ))
+        metadata_values_ids = {
+            HandleValueType.TITLE: 0,
+            HandleValueType.DESCRIPTION: 1,
+            HandleValueType.KEYWORDS: 2
+        }
+        for attribute_name, attribute_value in pid_record.other.items():
+            if attribute_value is None:
+                continue
+            handle_value_type = HandleValueType.from_pid_record_attribute(attribute_name)
+            
+            # Differentiate metadata indexes and leave space for other possible pid record values
+            values.append(MetadataHandleValue(
+                index=30 + metadata_values_ids[handle_value_type],
+                type=handle_value_type.value,
+                data_value=str(attribute_value)
+            ))
 
         return cls(pid=pid_record.pid, values=values, admin_value=AdminHandleValue())
     

@@ -1,5 +1,6 @@
 from enum import Enum
 from dataclasses import dataclass
+from typing import Any
 
 from models import DocumentRecord
 
@@ -36,6 +37,23 @@ class PidRecord:
     latest_document_pid: str | None = None
     latest_version: int | None = None
 
+    __other: dict[str, Any] = None
+    
+    def __init__(self, pid: str, type: PidType, **kwargs):
+        self.pid = pid
+        if not isinstance(type, PidType):
+            type = PidType(type)
+        self.type = type
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                print(f"Setting attribute {key} to {value}")
+                setattr(self, key, value)
+            else:
+                print(f"Setting other attribute {key} to {value}")
+                if self.__other is None:
+                    self.__other = {}
+                self.__other[key] = value
+
     def __post_init__(self):
         if isinstance(self.type, str):
             self.type = PidType(self.type)
@@ -51,6 +69,20 @@ class PidRecord:
         for field in required_fields[self.type]:
             if not getattr(self, field):
                 raise AttributeError(f"{field} must be set for {self.type} type.")
+    
+    @property
+    def other(self) -> dict[str, Any]:
+        """
+        Returns other attributes not defined in the class.
+        """
+        return self.__other
+    
+    @other.setter
+    def other(self, value: dict[str, Any]):
+        """
+        Sets other attributes not defined in the class.
+        """
+        self.__other = value
 
     @classmethod
     def from_document_record(cls, document_record: DocumentRecord, tree_pid: str | None = None) -> 'PidRecord':
@@ -80,4 +112,5 @@ class PidRecord:
             "first_document_pid": self.first_document_pid,
             "latest_document_pid": self.latest_document_pid,
             "latest_version": self.latest_version,
+            **(self.other or {}),
         }

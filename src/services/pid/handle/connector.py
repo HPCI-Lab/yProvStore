@@ -10,7 +10,7 @@ from Cryptodome.Hash import SHA256
 from Cryptodome.PublicKey import RSA
 
 from application.settings import PID_SERVER_URL, PID_ADMIN_HANDLE, PID_PRIVATE_KEY_PATH, PID_ADMIN_HANDLE_INDEX
-from application.exceptions.types import IntegrityException
+from application.exceptions.types import IntegrityException, ConflictException
 
 
 logger = logging.getLogger(__name__)
@@ -62,6 +62,8 @@ class HandleConnector:
             response_code = error_details.get("responseCode", "Unknown")
             message = error_details.get("message", "No message provided")
             logger.error(f"Handle Server Error: {e.response.status_code} - {response_code}: {message}")
+            if str(response_code) == "101":
+                raise ConflictException("Handle already exists")
             raise IntegrityException("Failed to communicate with Handle Server")
         except httpx.RequestError as e:
             logger.error(f"HTTP Request Error: {e}")
