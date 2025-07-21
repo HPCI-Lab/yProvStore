@@ -28,7 +28,7 @@ class DeletePermissionRequest(BaseModel):
     """
     Request model for deleting a document permission.
     """
-    user_email: str = Field(..., example=EXAMPLE_EMAIL, description="Email of the user whose permission is to be deleted.")
+    user_email: str = Field(..., examples=[EXAMPLE_EMAIL], description="Email of the user whose permission is to be deleted.")
 
 
 documentation = {

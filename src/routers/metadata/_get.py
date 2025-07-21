@@ -25,18 +25,19 @@ class DocumentMetadataGet(BaseModel):
     """
     Response model for document metadata.
     """
-    title: str | None = Field(default=None, example=EXAMPLE_METADATA_TITLE)
-    description: str | None = Field(default=None, example=EXAMPLE_METADATA_DESCRIPTION)
-    keywords: list[str] | None = Field(default=None, example=EXAMPLE_METADATA_KEYWORDS)
+    title: str | None = Field(default=None, examples=[EXAMPLE_METADATA_TITLE])
+    description: str | None = Field(default=None, examples=[EXAMPLE_METADATA_DESCRIPTION])
+    keywords: list[str] | None = Field(default=None, examples=[EXAMPLE_METADATA_KEYWORDS])
 
-    def from_metadata(metadata: DocumentMetadata) -> 'DocumentMetadataGet':
+    @classmethod
+    def from_metadata(cls, metadata: DocumentMetadata) -> 'DocumentMetadataGet':
         """
         Convert DocumentMetadata to DocumentMetadataGet.
         
         :param metadata: DocumentMetadata instance.
         :return: DocumentMetadataGet instance.
         """
-        return DocumentMetadataGet(
+        return cls(
             title=metadata.title,
             description=metadata.description,
             keywords=metadata.keywords

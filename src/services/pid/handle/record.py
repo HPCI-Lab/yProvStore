@@ -20,7 +20,7 @@ class MetadataHandleValue(HandleValue):
 
 class AdminHandleValue(HandleValue):
 
-    def __init__(self, handle: str | None = PID_ADMIN_HANDLE, index: int = PID_ADMIN_HANDLE_INDEX, permissions: str | None = PID_ADMIN_HANDLE_PERMISSIONS):
+    def __init__(self, handle: str = PID_ADMIN_HANDLE, index: int = PID_ADMIN_HANDLE_INDEX, permissions: str = PID_ADMIN_HANDLE_PERMISSIONS):
         data = HandleValueObject(
             format=HandleValueDataFormat.ADMIN,
             value=HandleValueDataAdmin(
@@ -90,7 +90,7 @@ class HandleRecord:
             handle_value_type = HandleValueType.from_pid_record_attribute(attribute_name)
             values.append(MetadataHandleValue(
                 index=idx,
-                type=handle_value_type.value,
+                type=handle_value_type,
                 data_value=str(attribute_value)
             ))
         metadata_values_ids = {
@@ -107,7 +107,7 @@ class HandleRecord:
                 # Differentiate metadata indexes and leave space for other possible pid record values
                 values.append(MetadataHandleValue(
                     index=30 + metadata_values_ids[handle_value_type],
-                    type=handle_value_type.value,
+                    type=handle_value_type,
                     data_value=str(attribute_value)
                 ))
 
@@ -117,7 +117,7 @@ class HandleRecord:
         """
         Converts the HandleRecord back to a PidRecord.
         """
-        pid_record_data = {value.type.value.lower(): value.data.value for value in self.values}
+        pid_record_data = {value.type.value.lower(): (value.data if isinstance(value.data, str) else str(value.data.value)) for value in self.values}
         pid_record_data['pid'] = self.pid
         try:
             return PidRecord(**pid_record_data)

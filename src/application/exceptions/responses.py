@@ -49,7 +49,7 @@ class ExceptionSchema:
         "status_code": 503,
     }
 
-    def __getitem__(self, item: type, description: str = None) -> dict[str, Any]:
+    def __getitem__(self, item: type | tuple, description: str | None = None) -> dict[str, Any]:
         """
         Get the exception response schema for a given exception type.
 
@@ -58,7 +58,11 @@ class ExceptionSchema:
         """
         if isinstance(item, tuple):
             description = item[1] if len(item) > 1 else None
+            if len(item) < 1:
+                raise Exception("Exception type must be provided.")
             item = item[0]
+            if not isinstance(item, type):
+                raise TypeError("Expected a type for the exception, got: {}".format(type(item)))
         schema = self.__class__.__dict__.get(item.__name__, {"model": ExceptionResponse, "description": "An error occurred."})
         if description:
             schema["description"] = description

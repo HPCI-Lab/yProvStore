@@ -1,7 +1,9 @@
 from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import relationship
 
-from models import User, DocumentRecord, DocumentPermission, PermissionLevel
+from models.permission import DocumentPermission, PermissionLevel
+from models.user import User
+from models.document import DocumentRecord
 from services.db.sql.base import BaseDBModel
 
 

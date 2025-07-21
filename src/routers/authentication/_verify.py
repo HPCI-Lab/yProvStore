@@ -21,7 +21,7 @@ class UserVerifyResponse(BaseModel):
     """
     Response model for user verification.
     """
-    email: str = Field(..., example=EXAMPLE_EMAIL)
+    email: str = Field(..., examples=[EXAMPLE_EMAIL])
 
 
 documentation = {

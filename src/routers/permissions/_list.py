@@ -26,8 +26,8 @@ router = APIRouter(
 
 
 class DocumentPermissionGet(BaseModel):
-    pid: str = Field(..., example=EXAMPLE_UUID, description="The pid of the document.")
-    user_email: str = Field(..., example=EXAMPLE_EMAIL, description="Email of the user who has the permission.")
+    pid: str = Field(..., examples=[EXAMPLE_UUID], description="The pid of the document.")
+    user_email: str = Field(..., examples=[EXAMPLE_EMAIL], description="Email of the user who has the permission.")
     permission_level: PermissionLevel
 
 
@@ -40,7 +40,7 @@ documentation = {
 
 
 @router.get("/{prefix}/{pid}/permissions", **documentation)
-async def list_permissions(
+async def list_permissions_prefix(
     pid: str,
     prefix: str,
     permission_storage: FromDishka[DocumentPermissionStorageService],
@@ -88,7 +88,7 @@ async def list_permissions(
     """
     List all permissions for a specific document identified by its PID. Prefix is set by default to the application PID prefix.
     """
-    return await list_permissions(
+    return await list_permissions_prefix(
         pid=pid,
         prefix=PID_PREFIX,
         permission_storage=permission_storage,

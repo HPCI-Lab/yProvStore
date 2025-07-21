@@ -94,6 +94,8 @@ async def update_metadata(
     document_metadata: DocumentMetadataPost,
     document_record_storage: FromDishka[DocumentRecordStorageService],
     metadata_service: FromDishka[DocumentMetadataService],
+    permission_storage: FromDishka[DocumentPermissionStorageService],
+    request: Request,
     logged_user: LoggedUser
 ) -> DocumentMetadataGet:
     """
@@ -103,5 +105,6 @@ async def update_metadata(
     return await update_metadata_prefix(
         pid=pid, prefix=PID_PREFIX, document_metadata=document_metadata,
         document_record_storage=document_record_storage,
-        metadata_service=metadata_service, logged_user=logged_user
+        metadata_service=metadata_service, logged_user=logged_user,
+        permission_storage=permission_storage, request=request
     )

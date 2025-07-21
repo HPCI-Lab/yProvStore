@@ -24,11 +24,11 @@ class DocumentRecordGet(BaseModel):
     """
     Response model for listing available documents.
     """
-    pid: str = Field(..., example=EXAMPLE_UUID)
-    version: int = Field(..., example=EXAMPLE_DOCUMENT_VERSION)
-    storage_url: str = Field(..., example=EXAMPLE_DOCUMENT_STORAGE)
-    owner_email: str = Field(..., example=EXAMPLE_EMAIL)
-    parent_document_pid: str | None = Field(None, example=EXAMPLE_UUID, description="PID of the previous document version.")
+    pid: str = Field(..., examples=[EXAMPLE_UUID])
+    version: int = Field(..., examples=[EXAMPLE_DOCUMENT_VERSION])
+    storage_url: str = Field(..., examples=[EXAMPLE_DOCUMENT_STORAGE])
+    owner_email: str = Field(..., examples=[EXAMPLE_EMAIL])
+    parent_document_pid: str | None = Field(None, examples=[EXAMPLE_UUID], description="PID of the previous document version.")
 
 
 documentation = {
@@ -70,7 +70,7 @@ async def get_document_prefix(
         pid=record.pid,
         version=record.version,
         storage_url=record.storage_url,
-        owner_email=owner_email,
+        owner_email=owner_email or "Unknown",
         parent_document_pid=record.parent_doc_pid
     )
 

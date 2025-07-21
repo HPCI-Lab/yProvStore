@@ -30,8 +30,8 @@ class HandlePaths:
 
 class HandleConnector:
 
-    session_id: str
-    _auth_lock: asyncio.Lock | None = None
+    session_id: str | None = None
+    _auth_lock: asyncio.Lock
 
     def __init__(self):
         self.http_client = httpx.AsyncClient(verify=False) # `verify=False` to allow self-signed certs
@@ -43,7 +43,7 @@ class HandleConnector:
         with open(path, "r") as key_file:
             return RSA.import_key(key_file.read())
 
-    async def send_http_request(self, method: str, url: str, data: dict | None = None, headers: dict | None = None, raise_not_found: bool = True) -> dict | None:
+    async def send_http_request(self, method: str, url: str, data: dict | list | None = None, headers: dict | None = None, raise_not_found: bool = True) -> dict | None:
         if method not in ["GET", "POST", "PUT", "DELETE"]:
             raise Exception(f"Unsupported HTTP method: {method}")
         try:
@@ -86,6 +86,8 @@ class HandleConnector:
         # 2. Start session to get server nonce
         session_url = HandlePaths.SESSIONS
         init_response = await self.send_http_request("POST", session_url, headers={})
+        if not init_response:
+            raise IntegrityException("Failed to initialize session with Handle Server")
         server_nonce_string = init_response["nonce"]
         self.session_id = init_response["sessionId"]
         server_nonce_bytes = base64.b64decode(server_nonce_string)
@@ -105,6 +107,8 @@ class HandleConnector:
             f'id="{id_str}", type="HS_PUBKEY", alg="SHA256", signature="{signature_string}"'
         )
         auth_response = await self.send_http_request("POST", auth_url, headers={'Authorization': auth_header_str})
+        if not auth_response:
+            raise IntegrityException("Failed to authenticate with Handle Server")
 
         if not auth_response.get("authenticated"):
             raise IntegrityException(f"Handle Server authentication failed: {auth_response}")

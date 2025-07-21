@@ -24,7 +24,7 @@ class AbstractEntityDB[T: BaseDBModel](abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def _get(self, entity_id: str) -> T:
+    async def _get(self, entity_id: str, raise_not_found: bool = True) -> T | None:
         """
         Get an entity from the database by its ID.
         """
@@ -89,7 +89,7 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
         self.session.refresh(entity)
         return entity
 
-    async def _get(self, entity_id: str, raise_not_found: bool = True) -> T:
+    async def _get(self, entity_id: str, raise_not_found: bool = True) -> T | None:
         """
         Get an entity from the SQL database by its ID.
         """
@@ -100,7 +100,7 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
             return None
         return entity
 
-    async def _filter(self, limit: int = None, order_by: str = None, **kwargs) -> list[T]:
+    async def _filter(self, limit: int | None = None, order_by: str | None = None, **kwargs) -> list[T]:
         """
         Filter entities in the SQL database based on provided keyword arguments.
         """

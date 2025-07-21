@@ -19,8 +19,8 @@ class UserLoginRequest(BaseModel):
     """
     Model for user login request.
     """
-    email: str = Field(..., example="user@example.com")
-    password: str = Field(..., example="password", min_length=8)
+    email: str = Field(..., examples=["user@example.com"])
+    password: str = Field(..., examples=["password"], min_length=8)
 
 
 class UserLoginResponse(BaseModel):

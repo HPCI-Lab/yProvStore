@@ -30,8 +30,8 @@ class CreatePermissionRequest(BaseModel):
     """
     Request model for creating a new document permission.
     """
-    user_email: str = Field(..., example=EXAMPLE_EMAIL, description="Email of the user to whom the permission is granted.")
-    permission_level: PermissionLevel = Field(..., example=PermissionLevel.WRITE, description="The level of permission to be granted to the user.")
+    user_email: str = Field(..., examples=[EXAMPLE_EMAIL], description="Email of the user to whom the permission is granted.")
+    permission_level: PermissionLevel = Field(..., examples=[PermissionLevel.WRITE], description="The level of permission to be granted to the user.")
 
 
 documentation = {

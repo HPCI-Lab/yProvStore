@@ -20,7 +20,7 @@ class PidService:
 
     prefix = PID_PREFIX
 
-    async def new_pid(self, prefix: str = None) -> str:
+    async def new_pid(self, prefix: str | None = None) -> str:
         """
         Generate a new unique PID (Persistent Identifier).
         """
@@ -32,7 +32,7 @@ class PidService:
         """
         raise NotImplementedError
 
-    async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord:
+    async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord | None:
         """
         Retrieve a PID record by its unique identifier.
         """
@@ -95,7 +95,7 @@ class PidService:
 
             if not pid_tree_record:
                 # Valid if parent_doc version is 1
-                if parent_doc_record.version != 1:
+                if str(parent_doc_record.version) != "1":
                     raise IntegrityException(f"PID tree record for parent document PID {parent_doc_pid} not found.")
                 else:
                     # If parent version is 1 then this is the first document update -> create a new tree PID
@@ -111,18 +111,20 @@ class PidService:
                 raise IntegrityException(f"Document with PID {parent_doc_pid} is not a tree record.")
 
             # It is allowed to create a new document only with version=latest_version + 1 (except with allow_tree_branching=True)
-            if pid_tree_record.latest_version > parent_doc_record.version:
+            if not pid_tree_record.latest_version or not parent_doc_record.version:
+                raise IntegrityException(f"PID tree record with PID {pid_tree_record.pid} has no latest version or parent document version.")
+            if int(pid_tree_record.latest_version) > int(parent_doc_record.version):
                 if not allow_tree_branching:
                     raise ValueError(f"Cannot create a new document in the tree {pid_tree_record.pid} because the latest version is higher than the parent document version.")
                 # Create a new subtree starting in the middle of the document pid tree
-                new_version = parent_doc_record.version + 1  # TODO: check version of subtree
+                new_version = int(parent_doc_record.version) + 1  # TODO: check version of subtree
                 pid_tree_record = PidRecord(
                     pid=await self.new_pid(), type=PidType.PID_TREE, first_document_pid=parent_doc_pid,
                     latest_document_pid=pid, latest_version=new_version
                 )
             else:
                 # Increment the version of the existing tree record
-                new_version = pid_tree_record.latest_version + 1
+                new_version = int(pid_tree_record.latest_version) + 1
                 pid_tree_record.latest_document_pid = pid
                 pid_tree_record.latest_version = new_version
                 await self.update_pid_record(pid_tree_record)
@@ -157,7 +159,7 @@ class LocalPidServiceImpl(PidService):
                 self.pids = json.load(f)
                 self.pids = {pid: PidRecord(**data) for pid, data in self.pids.items()}
 
-    async def new_pid(self, prefix: str = None) -> str:
+    async def new_pid(self, prefix: str | None = None) -> str:
         """
         Generate a new unique PID (Persistent Identifier).
         This implementation uses UUID v4 generation.
@@ -173,7 +175,7 @@ class LocalPidServiceImpl(PidService):
         self._save_pids_to_file()
         return pid_record
 
-    async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord:
+    async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord | None:
         if pid not in self.pids:
             if raise_not_found:
                 raise NotFoundException(f"PID record with ID '{pid}' not found")
@@ -217,7 +219,7 @@ class PidServiceImpl(PidService, HandleConnector):
             raise FileNotFoundError(f"PID private key file not found: {PID_PRIVATE_KEY_PATH}")
         super().__init__()
 
-    async def new_pid(self, prefix: str = None) -> str:
+    async def new_pid(self, prefix: str | None = None) -> str:
         if prefix is None:
             prefix = self.prefix
         new_uuid = str(uuid.uuid4())
@@ -230,7 +232,7 @@ class PidServiceImpl(PidService, HandleConnector):
         await self.send_http_request("PUT", url, data=handle_record_body)
         return pid_record
 
-    async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord:
+    async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord | None:
         await self.ensure_authenticated()
         url = HandlePaths.HANDLE.format(pid=pid)
         response = await self.send_http_request("GET", url, raise_not_found=raise_not_found)

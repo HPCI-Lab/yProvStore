@@ -37,9 +37,9 @@ class PidRecord:
     latest_document_pid: str | None = None
     latest_version: int | None = None
 
-    __other: dict[str, Any] = None
+    __other: dict[str, Any] | None = None
     
-    def __init__(self, pid: str, type: PidType, **kwargs):
+    def __init__(self, pid: str, type: PidType | str, **kwargs):
         self.pid = pid
         if not isinstance(type, PidType):
             type = PidType(type)
@@ -67,9 +67,9 @@ class PidRecord:
         for field in required_fields[self.type]:
             if not getattr(self, field):
                 raise AttributeError(f"{field} must be set for {self.type} type.")
-    
+
     @property
-    def other(self) -> dict[str, Any]:
+    def other(self) -> dict[str, Any] | None:
         """
         Returns other attributes not defined in the class.
         """
@@ -110,5 +110,5 @@ class PidRecord:
             "first_document_pid": self.first_document_pid,
             "latest_document_pid": self.latest_document_pid,
             "latest_version": self.latest_version,
-            **({k: v for k, v in self.other.items() if v} or {}),
+            **(({k: v for k, v in self.other.items() if v} or {}) if self.other else {}),
         }

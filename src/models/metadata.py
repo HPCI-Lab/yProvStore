@@ -20,7 +20,7 @@ class DocumentMetadata:
             self.description = None
     
     @classmethod
-    def from_dict(cls, data: dict) -> 'DocumentMetadata':
+    def from_dict(cls, data: dict | None) -> 'DocumentMetadata':
         """
         Create a DocumentMetadata instance from a dictionary.
         

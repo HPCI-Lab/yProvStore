@@ -12,13 +12,13 @@ class DocumentRecordStorageService:
     Interface for document records storage operations.
     """
 
-    async def get_document_by_pid(self, pid: str, raise_not_found: bool = True) -> DocumentRecord:
+    async def get_document_by_pid(self, pid: str, raise_not_found: bool = True) -> DocumentRecord | None:
         """
         Retrieve a document record by their pid.
         """
         raise NotImplementedError
 
-    async def save_document(self, document: DocumentRecord) -> DocumentRecord:
+    async def save_document(self, document_record: DocumentRecord) -> DocumentRecord:
         """
         Save a new document record to the storage.
         """
@@ -39,8 +39,12 @@ class DocumentRecordStorageServiceImpl(DocumentRecordStorageService, SQLEntityDB
     def __init__(self, session: SessionType):
         super().__init__(session, model_type=DBDocumentRecord)
 
-    async def get_document_by_pid(self, pid: str, raise_not_found: bool = True) -> DocumentRecord:
+    async def get_document_by_pid(self, pid: str, raise_not_found: bool = True) -> DocumentRecord | None:
         db_document_record = await super()._get(pid, raise_not_found=raise_not_found)
+        if not db_document_record:
+            if raise_not_found:
+                raise ConflictException(f"Document with PID '{pid}' not found.")
+            return None
         return db_document_record.to_document_record()
 
     async def save_document(self, document_record: DocumentRecord) -> DocumentRecord:

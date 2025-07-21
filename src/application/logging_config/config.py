@@ -1,4 +1,4 @@
-import logging
+import logging.config
 import os
 from dataclasses import dataclass, asdict, field
 

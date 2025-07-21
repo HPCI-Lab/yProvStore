@@ -1,7 +1,7 @@
 from dishka import Provider, provide, Scope
 from sqlalchemy.orm import Session as SessionType
 
-from application.exceptions.types import ConflictException, ForbiddenException, IntegrityException, NotFoundException
+from application.exceptions.types import ConflictException, ForbiddenException, IntegrityException
 from models import DocumentPermission, User, DocumentRecord, PermissionLevel, PidRecord
 from services.document_storage.service import DocumentRecordStorageService
 from services.user_storage.service import UserStorageService
@@ -71,7 +71,7 @@ class DocumentPermissionStorageService:
                 if not tree_pid_record.first_document_pid:
                     raise IntegrityException(f"Tree PID record with PID '{parent_document_pid_record.tree_pid}' has no first document PID.")
                 first_document_pid = tree_pid_record.first_document_pid
-            first_document: DocumentRecord = await self.document_record_storage.get_document_by_pid(first_document_pid, raise_not_found=False)
+            first_document: DocumentRecord | None = await self.document_record_storage.get_document_by_pid(first_document_pid, raise_not_found=False)
         else:
             first_document = doc
         if not first_document:
@@ -143,7 +143,7 @@ class DocumentPermissionStorageServiceImpl(DocumentPermissionStorageService, SQL
             raise ConflictException(f"Multiple permissions found for user '{user.email}' on document '{first_document.pid}'.")
         elif len(db_permission) == 1:
             if PermissionLevel(db_permission[0].permission_level) >= permission_level:
-                return True
+                return
         raise ForbiddenException(
             f"User '{user.email}' does not have {permission_level} permissions for document '{first_document.pid}'."
         )

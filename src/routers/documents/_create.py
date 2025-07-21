@@ -138,9 +138,9 @@ async def create_document(
         document_data_bytes = json.dumps(data.document_data).encode('utf-8')
     else:
         try:
-            if document_file.content_type not in ['application/json', 'text/plain']:
+            if not document_file or not document_file.content_type or document_file.content_type not in ['application/json', 'text/plain']:
                 raise BadRequestException(
-                    f"Unsupported file type: {document_file.content_type}. Only JSON or plain text files are allowed."
+                    f"Unsupported file type: {document_file.content_type if document_file else "None"}. Only JSON or plain text files are allowed."
                 )
             document_data_bytes = await document_file.read()
         except Exception as e:
@@ -149,7 +149,7 @@ async def create_document(
 
     new_pid_record = await pid_service.new_pid_record_from_document(new_pid, new_document_record.storage_url, parent_doc_pid=parent_document_pid)
 
-    new_document_record.version = new_pid_record.version
+    new_document_record.version = new_pid_record.version or 1
     new_document_record = await document_record_storage.save_document(new_document_record)
 
     # TODO: manage metadata
