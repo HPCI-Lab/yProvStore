@@ -62,7 +62,9 @@ async def list_graphs(
     graph_service: FromDishka[GraphService],
     document_storage_service: FromDishka[DocumentRecordStorageService],
     entity_types: list[str] = Query(None, description="List of entity types to filter the results."),
-    entity_ids: list[str] = Query(None, description="List of entity IDs to filter the results.")
+    entity_ids: list[str] = Query(None, description="List of entity IDs to filter the results."),
+    is_element: bool | None = Query(None, description="Filter by whether the entity is an element."),
+    is_relation: bool | None = Query(None, description="Filter by whether the entity is a relation.")
 ) -> DocumentGraphListResponse:
     """
     Perform list operation on a provenance document graph
@@ -77,7 +79,7 @@ async def list_graphs(
     document_record = await document_storage_service.get_document_by_pid(pid)
 
     # Fetch the graph elements based on the provided entity types and ids
-    warnings, elements = await graph_service.list_elements(document_record, entity_ids, entity_types)
+    warnings, elements = await graph_service.list_elements(document_record, entity_ids, entity_types, is_element, is_relation)
     return DocumentGraphListResponse(warnings=warnings, elements=[
         DocumentGraphEntityGet(
             id=element.id,

@@ -26,6 +26,7 @@ yProv is a joint project between [University of Trento](https://www.unitn.it) an
     - [Managing Documents](#managing-documents)
     - [Managing Document Permissions](#managing-document-permissions)
     - [Managing Document Metadata](#managing-document-metadata)
+    - [Graph Operations on Documents](#graph-operations-on-documents)
     - [Managing PIDs](#managing-pids)
     - [Troubleshooting CLI](#troubleshooting-cli)
 
@@ -486,6 +487,8 @@ You can explore and analyze the provenance graph structure of documents. Graph o
 
   * `--entity-types, -t`   Filter by entity types (can be used multiple times). Examples: `entity`, `agent`, `activity`, `wasDerivedFrom`, `wasGeneratedBy`
   * `--entity-ids, -e`     Filter by specific entity IDs (can be used multiple times)
+  * `--is-element, -ie`    Filter by whether the entity is an element (boolean flag)
+  * `--is-relation, -ir`   Filter by whether the entity is a relation (boolean flag)
   * `--in-json, -j`        Output results in JSON format with complete data
   * `--display-data, -d`   Include the data field in the console table output
   * `--output, -o`         Save results to a file path (writes complete JSON data)
@@ -504,6 +507,22 @@ You can explore and analyze the provenance graph structure of documents. Graph o
     yprov documents graph list myprefix/1234 --entity-types entity --entity-types agent
     # or, shorter:
     yprov documents graph list myprefix/1234 -t entity -t agent
+    ```
+
+  * Filter by entity which are elements:
+
+    ```bash
+    yprov documents graph list myprefix/1234 --is-element
+    # or, shorter:
+    yprov documents graph list myprefix/1234 -ie
+    ```
+
+  * Filter by entity which are relations:
+
+    ```bash
+    yprov documents graph list myprefix/1234 --is-relation
+    # or, shorter:
+    yprov documents graph list myprefix/1234 -ir
     ```
 
   * Filter by entity IDs and display data in the console:

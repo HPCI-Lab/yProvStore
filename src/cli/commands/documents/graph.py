@@ -28,8 +28,10 @@ def graph():
 @click.option("--in-json", "-j", is_flag=True, help="Output the results in JSON format (all data is written).")
 @click.option("--display-data", "-d", is_flag=True, help="Display the data field in the output console.")
 @click.option("--output", "-o", type=click.Path(), help="Output file path to save the results (all data is written).")
+@click.option("--is-element", "-ie", is_flag=True, help="Filter by whether the entity is an element.")
+@click.option("--is-relation", "-ir", is_flag=True, help="Filter by whether the entity is a relation.")
 @click.pass_context
-def list_elements(ctx, pid, entity_types, entity_ids, in_json, display_data, output):
+def list_elements(ctx, pid, entity_types, entity_ids, in_json, display_data, output, is_element, is_relation):
     """
     List elements in a provenance document graph.
 
@@ -47,7 +49,9 @@ def list_elements(ctx, pid, entity_types, entity_ids, in_json, display_data, out
         endpoint=f"/documents/{pid}/graph/list",
         params={
             "entity_types": list(entity_types) if entity_types else None,
-            "entity_ids": list(entity_ids) if entity_ids else None
+            "entity_ids": list(entity_ids) if entity_ids else None,
+            "is_element": is_element,
+            "is_relation": is_relation
         }
     )
 

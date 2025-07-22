@@ -59,7 +59,9 @@ class ProvDocumentGraphService(GraphService):
         self,
         document_record: DocumentRecord,
         entity_ids: list[str],
-        entity_types: list[str]
+        entity_types: list[str],
+        is_element: bool | None = None,
+        is_relation: bool | None = None
     ) -> tuple[list[str], list[DocumentGraphEntity]]:
         
         # TODO: improve efficiency?
@@ -91,6 +93,10 @@ class ProvDocumentGraphService(GraphService):
             prov_records = [r for r in prov_records if self.mapping.get(r.get_type(), "Unknown") in entity_types]
         if entity_ids:
             prov_records = [r for r in prov_records if str(r.identifier) in entity_ids]
+        if is_element is not None:
+            prov_records = [r for r in prov_records if r.is_element() == is_element]
+        if is_relation is not None:
+            prov_records = [r for r in prov_records if r.is_relation() == is_relation]
         return warnings, [
             DocumentGraphEntity(
                 id=str(record.identifier) if record.identifier else "",
