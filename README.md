@@ -421,10 +421,14 @@ You can manage metadata for documents, including retrieving and updating it.
 
   This command updates the metadata for the specified document PID.
   You can specify multiple key-value pairs to update multiple metadata fields at once.
+  To set a list field, use multiple invocations of the same option, or pass a list as a comma-separated string.
   For example:
 
   ```bash
   yprov documents metadata update <document_pid> --title "New Title" --keywords keyword1 --keywords keyword2
+  # or
+  yprov documents metadata update <document_pid> --title "New Title" --keywords "keyword1,keyword2"
+  ```
   
   # This command will empty both title and keywords:
   yprov documents metadata update <document_pid> --title "" --keywords ""
@@ -463,6 +467,70 @@ You can manage metadata for documents, including retrieving and updating it.
   │ keywords    │ list[string] │ No       │ ['keyword1', 'keyword2']               │
   └─────────────┴──────────────┴──────────┴────────────────────────────────────────┘
   ```
+
+-----
+
+### Graph Operations on Documents
+
+You can explore and analyze the provenance graph structure of documents. Graph operations allow you to list and filter elements within a provenance document's graph representation.
+
+* **List graph elements**
+
+  ```bash
+  yprov documents graph list <prefix/id> [OPTIONS]
+  ```
+
+  This command lists all elements in a provenance document's graph, including entities, agents, activities, and relationships.
+
+  Options:
+
+  * `--entity-types, -t`   Filter by entity types (can be used multiple times). Examples: `entity`, `agent`, `activity`, `wasDerivedFrom`, `wasGeneratedBy`
+  * `--entity-ids, -e`     Filter by specific entity IDs (can be used multiple times)
+  * `--in-json, -j`        Output results in JSON format with complete data
+  * `--display-data, -d`   Include the data field in the console table output
+  * `--output, -o`         Save results to a file path (writes complete JSON data)
+
+  Examples:
+
+  * List all graph elements for a document:
+
+    ```bash
+    yprov documents graph list myprefix/1234
+    ```
+
+  * Filter by specific entity types:
+
+    ```bash
+    yprov documents graph list myprefix/1234 --entity-types entity --entity-types agent
+    # or, shorter:
+    yprov documents graph list myprefix/1234 -t entity -t agent
+    ```
+
+  * Filter by entity IDs and display data in the console:
+
+    ```bash
+    yprov documents graph list myprefix/1234 --entity-ids "my_entity_1" --display-data
+    ```
+
+  * Save results to a JSON file:
+
+    ```bash
+    yprov documents graph list myprefix/1234 --output /path/to/graph_elements.json
+    ```
+
+  * Get JSON output in the console:
+
+    ```bash
+    yprov documents graph list myprefix/1234 --in-json
+    ```
+
+  Notes:
+
+  * The PID **must** be in `prefix/id` format.
+  * The command displays a table with columns: ID, Type, Group, Is Element, Is Relation.
+  * Use `--display-data` to see the actual data content of each element in the console.
+  * Multiple filters can be combined (e.g., both entity types and entity IDs).
+  * The output includes any warnings from the server and a total count of elements found.
 
 -----
 

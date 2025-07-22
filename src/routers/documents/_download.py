@@ -86,22 +86,22 @@ documentation.update({
 })
 
 
-@router.get("/{pid}/download", **documentation)
-async def download_document(
-    pid: str,
-    file_storage_service: FromDishka[FileStorageService],
-    document_storage_service: FromDishka[DocumentRecordStorageService],
-    # permission_storage_service: FromDishka[DocumentPermissionStorageService],
-    logged_user: LoggedUser
-) -> StreamingResponse:
-    """
-    Download a document file by its PID. Prefix is automatically set to the default PID prefix.
+# @router.get("/{pid}/download", **documentation)
+# async def download_document(
+#     pid: str,
+#     file_storage_service: FromDishka[FileStorageService],
+#     document_storage_service: FromDishka[DocumentRecordStorageService],
+#     # permission_storage_service: FromDishka[DocumentPermissionStorageService],
+#     logged_user: LoggedUser
+# ) -> StreamingResponse:
+#     """
+#     Download a document file by its PID. Prefix is automatically set to the default PID prefix.
 
-    :param pid: The unique identifier of the document to be downloaded.
-    :param file_storage_service: The service to handle file storage operations.
-    :return: The requested document file.
-    """
+#     :param pid: The unique identifier of the document to be downloaded.
+#     :param file_storage_service: The service to handle file storage operations.
+#     :return: The requested document file.
+#     """
 
-    return await download_document_prefix(
-        pid=pid, prefix=PID_PREFIX, file_storage_service=file_storage_service, document_storage_service=document_storage_service, logged_user=logged_user
-    )
+#     return await download_document_prefix(
+#         pid=pid, prefix=PID_PREFIX, file_storage_service=file_storage_service, document_storage_service=document_storage_service, logged_user=logged_user
+#     )

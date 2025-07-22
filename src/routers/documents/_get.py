@@ -75,21 +75,21 @@ async def get_document_prefix(
     )
 
 
-documentation.update({
-    "description": "This endpoint retrieves a specific document record info by its PID. Prefix is set by default to the application PID prefix.",
-})
+# documentation.update({
+#     "description": "This endpoint retrieves a specific document record info by its PID. Prefix is set by default to the application PID prefix.",
+# })
 
 
-@router.get("/{pid}", **documentation)
-async def get_document(
-    pid: str,
-    document_record_storage: FromDishka[DocumentRecordStorageService],
-    user_storage_service: FromDishka[UserStorageService]
-) -> DocumentRecordGet:
-    """
-    Endpoint to retrieve a specific document record by its PID.
-    """
+# @router.get("/{pid}", **documentation)
+# async def get_document(
+#     pid: str,
+#     document_record_storage: FromDishka[DocumentRecordStorageService],
+#     user_storage_service: FromDishka[UserStorageService]
+# ) -> DocumentRecordGet:
+#     """
+#     Endpoint to retrieve a specific document record by its PID.
+#     """
 
-    return await get_document_prefix(
-        pid=pid, prefix=PID_PREFIX, document_record_storage=document_record_storage, user_storage_service=user_storage_service
-    )
+#     return await get_document_prefix(
+#         pid=pid, prefix=PID_PREFIX, document_record_storage=document_record_storage, user_storage_service=user_storage_service
+#     )

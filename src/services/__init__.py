@@ -8,6 +8,7 @@ from .pid.service import PidServiceProvider
 from .file_storage.service import FileStorageServiceProvider
 from .permission_storage.service import PermissionStorageProvider
 from .metadata.service import DocumentMetadataServiceProvider
+from .graph.service import GraphServiceProvider
 
 
 __all__ = ("providers",)
@@ -22,5 +23,6 @@ providers = [
     PidServiceProvider,
     FileStorageServiceProvider,
     PermissionStorageProvider,
-    DocumentMetadataServiceProvider
+    DocumentMetadataServiceProvider,
+    GraphServiceProvider
 ]

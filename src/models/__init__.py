@@ -4,3 +4,4 @@ from models.document import DocumentRecord  # noqa: F401
 from models.pid import PidRecord, PidType  # noqa: F401
 from models.permission import DocumentPermission, PermissionLevel  # noqa: F401
 from models.metadata import DocumentMetadata  # noqa: F401
+from models.graph import DocumentGraphEntity, DocumentSubgraphDirection  # noqa: F401

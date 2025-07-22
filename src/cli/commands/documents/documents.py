@@ -7,6 +7,7 @@ from rich.table import Table
 from utils.api_client import make_request
 from .permissions import permissions
 from .metadata import metadata
+from .graph import graph
 
 
 console = Console()
@@ -163,4 +164,4 @@ def download_document(ctx, pid, output, output_folder):
 
 documents.add_command(permissions)
 documents.add_command(metadata)
-documents.add_command(documents)
+documents.add_command(graph)

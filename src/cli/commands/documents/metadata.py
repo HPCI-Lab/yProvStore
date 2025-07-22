@@ -113,7 +113,9 @@ def update_metadata(ctx, pid, refresh_schema, **kwargs):
 
     Example:
 
-        yprov documents metadata update <prefix/id> --title "New Title" --keywords keyword1 --keywords keyword2
+        yprov documents metadata update <prefix/id> --title "New Title" --keywords "keyword1" --keywords "keyword2"
+        or
+        yprov documents metadata update <prefix/id> --title "New Title" --keywords "keyword1,keyword2"
 
         # This command will empty both title and keywords:\n
         yprov documents metadata update <prefix/id> --title "" --keywords ""
@@ -121,7 +123,7 @@ def update_metadata(ctx, pid, refresh_schema, **kwargs):
     - The PID must be fully qualified (prefix/id).
     - Fields not defined in the schema will be ignored.
     - To set an empty field, use an empty string
-    - To set a list field, use multiple invocations of the same option.
+    - To set a list field, use multiple invocations of the same option, or pass a list as a comma-separated string.
     - To update a list field, you need to pass the entire list each time.
     - If no fields are provided, the command will exit with a warning.
     """
@@ -153,9 +155,9 @@ def update_metadata(ctx, pid, refresh_schema, **kwargs):
                             if arg not in raw[key]:
                                 raw[key].append(arg)
                         elif arg != raw[key]:
-                            raw[key] = [raw[key], arg]
+                            raw[key] = [raw[key]].append(arg.split(","))
                 else:
-                    raw[key] = arg
+                    raw[key] = arg.split(",") if "," in arg else arg
                 key = ""
             else:
                 console.print(f"[red]❌ Unexpected value: {arg} without a preceding option.[/red]")

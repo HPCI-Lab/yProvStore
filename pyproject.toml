@@ -11,6 +11,9 @@ dependencies = [
   "alembic",
   "bcrypt==4.0.1",
   "pycryptodomex>=3.23.0",
+  "prov>=2.1.1",
+  "lxml>=6.0.0",
+  "rdflib>=7.1.4",
 ]
 
 [project.optional-dependencies]
