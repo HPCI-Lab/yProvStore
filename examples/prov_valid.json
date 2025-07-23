@@ -18,7 +18,11 @@
     }
   }, 
   "agent": {
-    "nowpeople:Bob": {}
+    "nowpeople:Bob": {},
+    "nowpeople:Alice": {
+      "prov:type": "prov:Person", 
+      "prov:label": "Alice"
+    }
   }, 
   "entity": {
     "now:employment-article-v1.html": {}, 

@@ -473,7 +473,7 @@ You can manage metadata for documents, including retrieving and updating it.
 
 ### Graph Operations on Documents
 
-You can explore and analyze the provenance graph structure of documents. Graph operations allow you to list and filter elements within a provenance document's graph representation.
+You can explore and analyze the provenance graph structure of documents. Graph operations allow you to list elements or extract a self-contained subgraph by tracing relationships from specific starting points.
 
 * **List graph elements**
 
@@ -550,6 +550,50 @@ You can explore and analyze the provenance graph structure of documents. Graph o
   * Use `--display-data` to see the actual data content of each element in the console.
   * Multiple filters can be combined (e.g., both entity types and entity IDs).
   * The output includes any warnings from the server and a total count of elements found.
+
+
+-----
+
+  * **Extract a subgraph**
+
+    ```bash
+    yprov documents graph subgraph <prefix/id> [OPTIONS]
+    ```
+
+    This command extracts a self-contained subgraph by tracing the provenance relationships from one or more starting entity IDs. The result is a valid **PROV-JSON** document.
+
+    **Options:**
+
+      * `--entity-id, -e` **[Required]** An entity ID to start the traversal from (can be used multiple times).
+      * `--direction, -d` The direction for traversal: `forward`, `backward`, or `both` (default: `both`).
+      * `--output, -o` Save the resulting PROV-JSON subgraph to a file.
+
+    **Examples:**
+
+      * Extract a subgraph tracing **forward** from a single entity and save it:
+
+        ```bash
+        yprov documents graph subgraph myprefix/1234 --entity-id "my_activity_1" --direction forward --output subgraph.json
+        ```
+
+      * Get a **backward** trace from an entity, printing the JSON to the console:
+
+        ```bash
+        yprov documents graph subgraph myprefix/1234 -e "final_product" -d backward
+        ```
+
+      * Trace in **both** directions from multiple starting points:
+
+        ```bash
+        yprov documents graph subgraph myprefix/1234 -e "entity_A" -e "entity_B"
+        ```
+
+    **Notes:**
+
+      * You **must** provide at least one `--entity-id`.
+      * The output is always a PROV-JSON document, not a table.
+      * If the resulting JSON is too large to display in the console, it will be automatically saved to a file named `subgraph_<prefix>_<id>.json`.
+      * Any warnings from the server are always displayed.
 
 -----
 

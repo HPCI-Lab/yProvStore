@@ -1,8 +1,8 @@
-from prov.model import ProvDocument, PROV_N_MAP, ADDITIONAL_N_MAP
 from dishka import Provider, Scope, provide
 
 from models import DocumentRecord, DocumentGraphEntity, DocumentSubgraphDirection
 from services.file_storage.service import FileStorageService
+from ._prov_utils import ProvUtils
 
 
 class GraphService:
@@ -27,23 +27,23 @@ class GraphService:
         :return: A tuple containing a list of warnings and a list of DocumentGraphEntity objects.
         """
         raise NotImplemented
-    
+
     async def subgraph(
         self,
         document_record: DocumentRecord,
         entity_ids: list[str],
         direction: DocumentSubgraphDirection = DocumentSubgraphDirection.BOTH
-    ) -> list[DocumentGraphEntity]:
+    ) -> tuple[list[str], dict]:
         """
         Get a subgraph of the document graph based on the specified entity IDs and direction.
 
         :param document_record: The document record referencing the graph.
         :param entity_ids: List of entity IDs to include in the subgraph.
         :param direction: The direction of the subgraph (forward, backward, or both).
-        :return: A list of DocumentGraphEntity objects representing the subgraph elements.
+        :return: A dictionary representing the subgraph elements.
         """
         raise NotImplemented
-    
+
 
 class ProvDocumentGraphService(GraphService):
     """
@@ -52,8 +52,7 @@ class ProvDocumentGraphService(GraphService):
 
     def __init__(self, file_storage_service: FileStorageService):
         self.file_storage_service = file_storage_service
-        self.mapping = PROV_N_MAP | ADDITIONAL_N_MAP
-        self.mapping_values = set(self.mapping.values())
+        self.prov_utils = ProvUtils()
 
     async def list_elements(
         self,
@@ -63,60 +62,29 @@ class ProvDocumentGraphService(GraphService):
         is_element: bool | None = None,
         is_relation: bool | None = None
     ) -> tuple[list[str], list[DocumentGraphEntity]]:
-        
-        # TODO: improve efficiency?
-
-        warnings = []
 
         file_bytes = await self.file_storage_service.retrieve_file(document_record.storage_id)
-
-        try:
-            prov_doc = ProvDocument.deserialize(content=file_bytes)
-        except Exception as e:
-            warnings.append(f"Document {document_record.pid} is not a valid PROV document")
-            # TODO: manage in rdf?
-            return warnings, []
-
-        if entity_ids is None:
-            entity_ids = []
-        if entity_types is None:
-            entity_types = []
-
-        # Validate all entity types are available in the PROV terms
-        set_types = set(entity_types)
-        for set_type in set_types:
-            if not set_type in self.mapping_values:
-                warnings.append(f"Entity type '{set_type}' is not a valid PROV type.")
-
-        prov_records = prov_doc.flattened().get_records()
-        if entity_types:
-            prov_records = [r for r in prov_records if self.mapping.get(r.get_type(), "Unknown") in entity_types]
-        if entity_ids:
-            prov_records = [r for r in prov_records if str(r.identifier) in entity_ids]
-        if is_element is not None:
-            prov_records = [r for r in prov_records if r.is_element() == is_element]
-        if is_relation is not None:
-            prov_records = [r for r in prov_records if r.is_relation() == is_relation]
-        return warnings, [
-            DocumentGraphEntity(
-                id=str(record.identifier) if record.identifier else "",
-                type=str(self.mapping.get(record.get_type(), "Unknown")),
-                group=str(record.get_type()),
-                is_element=record.is_element(),
-                is_relation=record.is_relation(),
-                data={str(a[0]): str(a[1]) for a in record.attributes}
-            )
-            for record in prov_records
-        ]
+        return await self.prov_utils.graph_list_elements(
+            file_bytes=file_bytes,
+            entity_ids=entity_ids,
+            entity_types=entity_types,
+            is_element=is_element,
+            is_relation=is_relation
+        )
 
     async def subgraph(
         self,
         document_record: DocumentRecord,
         entity_ids: list[str],
         direction: DocumentSubgraphDirection = DocumentSubgraphDirection.BOTH
-    ) -> list[DocumentGraphEntity]:
-        # Implementation logic to fetch subgraph from the document graph
-        raise NotImplementedError
+    ) -> tuple[list[str], dict]:
+        
+        file_bytes = await self.file_storage_service.retrieve_file(document_record.storage_id)
+        return await self.prov_utils.graph_subgraph(
+            file_bytes=file_bytes,
+            entity_ids=entity_ids,
+            direction=direction
+        )
 
 
 class GraphServiceProvider(Provider):

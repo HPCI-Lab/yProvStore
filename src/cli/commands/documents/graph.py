@@ -54,9 +54,8 @@ def list_elements(ctx, pid, entity_types, entity_ids, in_json, display_data, out
             "is_relation": is_relation
         }
     )
-
-    if response.status_code != 200:
-        console.print(f"[red]Error: {response.json().get('detail', 'Unknown error occurred.')}")
+    if not response:
+        console.print("[red]❌ Failed to perform the list operation.[/red]")
         return
 
     data = response.json()
@@ -101,3 +100,84 @@ def list_elements(ctx, pid, entity_types, entity_ids, in_json, display_data, out
     else:
         console.print("[green]No warnings encountered.[/green]")
     console.print(f"[blue]Total elements found: {len(data.get('elements', []))}[/blue]")
+
+
+@graph.command(name="subgraph")
+@click.argument("pid")
+@click.option(
+    "--entity-id", "-e", "entity_ids", 
+    multiple=True, 
+    required=True, 
+    help="[Required] Entity ID to start the subgraph from. Can be used multiple times."
+)
+@click.option(
+    "--direction", "-d",
+    type=click.Choice(['both', 'forward', 'backward'], case_sensitive=False),
+    default='both',
+    show_default=True,
+    help="Direction of the subgraph traversal."
+)
+@click.option("--output", "-o", type=click.Path(), help="Output file path to save the resulting PROV-JSON subgraph.")
+@click.pass_context
+def subgraph(ctx, pid, entity_ids, direction, output):
+    """
+    Extract a subgraph from a provenance document.
+
+    This command starts a traversal from one or more given entity IDs and
+    returns a new, self-contained PROV-JSON document representing the
+    subgraph.
+    """
+    api_url = ctx.obj['API_URL']
+
+    if pid.count("/") != 1:
+        console.print("[red]Error: PID must be in the format prefix/id.[/red]")
+        return
+    
+    prefix, pid_part = pid.split("/", 1)
+
+    response = make_request(
+        method="GET",
+        api_url=api_url,
+        endpoint=f"/documents/{pid}/graph/subgraph",
+        params={
+            "prefix": prefix,
+            "pid": pid_part,
+            "entity_ids": list(entity_ids),
+            "direction": direction,
+        }
+    )
+    if not response:
+        console.print("[red]❌ Failed to perform the subgraph operation.[/red]")
+        return
+
+    data = response.json()
+    subgraph_data = data.get("subgraph", {})
+    warnings = data.get("warnings", [])
+
+    if output:
+        # Ensure the output directory exists
+        output_dir = os.path.dirname(output)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+        
+        # Save the subgraph data to the specified file
+        with open(output, 'w') as f:
+            json.dump(subgraph_data, f, indent=2)
+        console.print(f"[green]Subgraph saved to {output}[/green]")
+    else:
+        # Print the subgraph data to the console
+        if len(json.dumps(subgraph_data)) > 10000:  # 10000 bytes threshold
+            # If the subgraph is too large, save it to a file instead
+            pid = pid.replace("/", "_")
+            warning_msg = f"[yellow]Subgraph too large to display. Saved to subgraph_{pid}.json instead.[/yellow]"
+            with open(f"subgraph_{pid}.json", 'w') as f:
+                json.dump(subgraph_data, f, indent=2)
+            console.print(warning_msg)
+        else:
+            console.print(json.dumps(data, indent=2))
+
+    # Always print any warnings to the console for visibility
+    if warnings:
+        console.print("\n[yellow]Warnings:[/yellow]")
+        for warning in warnings:
+            console.print(f"- {warning}")

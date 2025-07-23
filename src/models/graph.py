@@ -13,6 +13,10 @@ class DocumentSubgraphDirection(Enum):
 
 @dataclass
 class DocumentGraphEntity:
+    """
+    Represents an entity or relation in the document graph.
+    Returned by the graph list operation.
+    """
 
     id: str
     type: str

@@ -29,7 +29,7 @@ documentation = {
                 "application/json": {
                     "example": {
                         "responseCode": 1,
-                        "handle": f"{PID_PREFIX}/{EXAMPLE_UUID}",
+                        "handle": f"{EXAMPLE_UUID}",
                         "values": [
                             {
                                 "index": 100,
