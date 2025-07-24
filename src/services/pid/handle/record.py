@@ -1,6 +1,6 @@
 from dataclasses import dataclass, asdict
 
-from models import PidRecord
+from models import PidRecord, DocumentMetadata
 from application.settings import PID_ADMIN_HANDLE, PID_ADMIN_HANDLE_INDEX, PID_ADMIN_VALUE_INDEX, PID_ADMIN_HANDLE_PERMISSIONS
 from application.exceptions.types import IntegrityException
 from services.pid.handle.base import HandleValue, HandleValueDataAdmin, HandleValueType, HandleValueObject, HandleValueDataFormat
@@ -56,7 +56,6 @@ class HandleRecord:
         admin_value = None
         for value in record_values:
             if value['type'] == HandleValueType.HS_ADMIN.value:
-                # TODO: check
                 admin_value = AdminHandleValue(
                     handle=value['data']['value']['handle'],
                     index=value['index'],
@@ -93,11 +92,6 @@ class HandleRecord:
                 type=handle_value_type,
                 data_value=str(attribute_value)
             ))
-        metadata_values_ids = {
-            HandleValueType.TITLE: 0,
-            HandleValueType.DESCRIPTION: 1,
-            HandleValueType.KEYWORDS: 2
-        }
         if pid_record.other:
             for attribute_name, attribute_value in pid_record.other.items():
                 if attribute_value is None:
@@ -105,8 +99,13 @@ class HandleRecord:
                 handle_value_type = HandleValueType.from_pid_record_attribute(attribute_name)
                 
                 # Differentiate metadata indexes and leave space for other possible pid record values
+                try:
+                    metadata_index = list(DocumentMetadata.__dataclass_fields__.keys()).index(attribute_name)
+                except ValueError:
+                    raise IntegrityException(f"Record with PID {pid_record.pid} contains an invalid metadata attribute: {attribute_name}.")
+
                 values.append(MetadataHandleValue(
-                    index=30 + metadata_values_ids[handle_value_type],
+                    index=30 + metadata_index,
                     type=handle_value_type,
                     data_value=str(attribute_value)
                 ))

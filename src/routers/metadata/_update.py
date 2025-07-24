@@ -1,7 +1,6 @@
 import logging
-from dataclasses import asdict
 
-from fastapi import status, APIRouter, Request
+from fastapi import status, APIRouter
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
 from application.exceptions.responses import EXCEPTION_SCHEMA
@@ -9,8 +8,7 @@ from application.exceptions.types import NotFoundException, ServiceUnavailableEx
 from services.document_storage.service import DocumentRecordStorageService
 from services.metadata.service import DocumentMetadataService
 from services.permission_storage.service import DocumentPermissionStorageService
-from application.settings import PID_PREFIX
-from models import User, PermissionLevel
+from models import PermissionLevel
 from routers.common.dependencies import LoggedUser
 from ._get import DocumentMetadataGet
 
@@ -52,8 +50,7 @@ async def update_metadata_prefix(
     document_record_storage: FromDishka[DocumentRecordStorageService],
     permission_storage: FromDishka[DocumentPermissionStorageService],
     metadata_service: FromDishka[DocumentMetadataService],
-    logged_user: LoggedUser,
-    request: Request
+    logged_user: LoggedUser
 ) -> DocumentMetadataGet:
     """
     Endpoint to retrieve metadata for a specific document by its PID and prefix.
@@ -64,8 +61,7 @@ async def update_metadata_prefix(
     document_record = await document_record_storage.get_document_by_pid(pid)
 
     # Verify the user has permission to update the document
-    user: User = request.state.user
-    await permission_storage.validate_user_permission(user, document_record, permission_level=PermissionLevel.WRITE)
+    await permission_storage.validate_user_permission(logged_user, document_record, permission_level=PermissionLevel.WRITE)
 
     metadata = await metadata_service.get_document_metadata(pid)
 

@@ -70,6 +70,7 @@ EXAMPLE_DOCUMENT_DATA = {
 EXAMPLE_METADATA_TITLE = "Sample Document Title"
 EXAMPLE_METADATA_DESCRIPTION = "This is a sample document description."
 EXAMPLE_METADATA_KEYWORDS = ["keyword1", "keyword2"]
+EXAMPLE_METADATA_AUTHOR = "Sample Author"
 EXAMPLE_METADATA_SCHEMA = {
   "properties": {
     "title": {

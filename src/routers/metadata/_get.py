@@ -4,12 +4,11 @@ from fastapi import status, APIRouter
 from pydantic import BaseModel, Field
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
-from application.documentation.openapi_generation import EXAMPLE_METADATA_TITLE, EXAMPLE_METADATA_DESCRIPTION, EXAMPLE_METADATA_KEYWORDS
+from application.documentation.openapi_generation import EXAMPLE_METADATA_TITLE, EXAMPLE_METADATA_DESCRIPTION, EXAMPLE_METADATA_KEYWORDS, EXAMPLE_METADATA_AUTHOR
 from application.exceptions.responses import EXCEPTION_SCHEMA
 from application.exceptions.types import NotFoundException, ServiceUnavailableException
 from services.document_storage.service import DocumentRecordStorageService
 from services.metadata.service import DocumentMetadataService
-from application.settings import PID_PREFIX
 from models import DocumentMetadata
 
 logger = logging.getLogger(__name__)
@@ -28,6 +27,7 @@ class DocumentMetadataGet(BaseModel):
     title: str | None = Field(default=None, examples=[EXAMPLE_METADATA_TITLE])
     description: str | None = Field(default=None, examples=[EXAMPLE_METADATA_DESCRIPTION])
     keywords: list[str] | None = Field(default=None, examples=[EXAMPLE_METADATA_KEYWORDS])
+    author: str | None = Field(default=None, examples=[EXAMPLE_METADATA_AUTHOR])
 
     @classmethod
     def from_metadata(cls, metadata: DocumentMetadata) -> 'DocumentMetadataGet':
@@ -37,11 +37,7 @@ class DocumentMetadataGet(BaseModel):
         :param metadata: DocumentMetadata instance.
         :return: DocumentMetadataGet instance.
         """
-        return cls(
-            title=metadata.title,
-            description=metadata.description,
-            keywords=metadata.keywords
-        )
+        return cls(**{field: getattr(metadata, field) for field in cls.model_fields.keys()})
 
 
 documentation = {
