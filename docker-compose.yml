@@ -1,0 +1,23 @@
+services:
+  # FastAPI Application Service
+  api:
+    build: .
+    secrets:
+      - pid_admin_key
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mounts local code for live-reloading in development
+      - ./src:/app/src
+    environment:
+      - PID_PRIVATE_KEY_PATH=/run/secrets/pid_admin_key
+      - USE_LOCAL_PID_SERVICE=false
+      - PID_PREFIX=21.T11961
+      - PID_ADMIN_HANDLE=0.NA/21.T11961
+      - PID_SERVER_URL=https://pidhs.disi.unitn.it:8000
+      - APP_URL=http://localhost:8000
+      # NOTE: be sure to define JWT_SECRET_KEY in the environment .env file
+
+secrets:
+  pid_admin_key:
+    file: ./keys/admpriv.pem

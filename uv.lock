@@ -1185,6 +1185,7 @@ dependencies = [
     { name = "pyjwt" },
     { name = "rdflib" },
     { name = "sqlalchemy" },
+    { name = "uvicorn" },
 ]
 
 [package.optional-dependencies]
@@ -1208,5 +1209,6 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "rdflib", specifier = ">=7.1.4" },
     { name = "sqlalchemy" },
+    { name = "uvicorn", specifier = ">=0.35.0" },
 ]
 provides-extras = ["dev"]
