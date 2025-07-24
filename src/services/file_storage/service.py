@@ -33,6 +33,8 @@ class LocalFileStorageServiceImpl(FileStorageService):
     Local file storage implementation for testing purposes.
     """
 
+    # TODO: manage compression
+
     def __init__(self):
         self.documents_path = TMP_PATH / "documents"
         if not self.documents_path.exists():

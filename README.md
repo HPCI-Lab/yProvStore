@@ -274,11 +274,41 @@ Once authenticated, you can create, list, and download provenance documents.
       --parent-pid <parent_pid_here>
     ```
 
-  * **List all available documents**.
+  * **List all available documents** (with pagination).
 
     ```bash
-    yprov documents list
+    yprov documents list [--page <page_number>] [--page-size <page_size>] [--updated-after <timestamp>]
     ```
+
+    - `--page <page_number>`: Page number to retrieve (zero-indexed, default: 0).
+    - `--page-size <page_size>`: Number of documents per page (default: 10).
+    - `--updated-after <timestamp>`: Only return documents updated after this timestamp (ISO 8601 format, e.g., `2024-06-01T00:00:00Z` or `2024-06-01`).
+
+    Examples:
+
+    * List the first page (default 10 items):
+
+      ```bash
+      yprov documents list
+      ```
+
+    * List the third page (page 2, zero-indexed) with 50 items per page:
+
+      ```bash
+      yprov documents list --page 2 --page-size 50
+      ```
+
+    * List documents updated after June 1, 2024:
+
+      ```bash
+      yprov documents list --updated-after 2024-06-01
+      ```
+
+    * List documents updated after a specific timestamp:
+
+      ```bash
+      yprov documents list --updated-after 2024-06-01T00:00:00Z
+      ```
 
   * **Get detailed information** for a specific document by its PID.
 
@@ -300,7 +330,7 @@ Once authenticated, you can create, list, and download provenance documents.
                                 default to the document's PID.
     ```
 
-    * Save to the current directory (e.g., `<pid>.prov`):
+    * Save to the current directory (e.g., `<pid>.json`):
 
       ```bash
       yprov documents download <your_document_pid>
@@ -346,7 +376,7 @@ Once authenticated, you can create, list, and download provenance documents.
                                   default to the document's PID.
       ```
       
-      * Save to the current directory (e.g., `<pid>.prov`):
+      * Save to the current directory (e.g., `<pid>.json`):
       
         ```bash
         yprov documents download <your_document_pid>
@@ -387,7 +417,7 @@ You can grant or view permissions on documents. Internally, all permissions live
   yprov documents permissions list <pid>
   ```
 
-  `<pid>` can be either `prefix/id` or just `id` (default prefix will be used). This shows every user and their permission level on that document’s first version.
+  `<pid>` must be `prefix/id`. This shows every user and their permission level on that document’s first version.
 
 - **Delete a permission**
 
@@ -612,11 +642,11 @@ The `pids` group lets you list and retrieve PID records from your PID service.
   Options:
 
   * `--page INTEGER`       Page number (zero‑indexed). Default: `0`
-  * `--page-size INTEGER`   Number of items per page. Default: `25`
+  * `--page-size INTEGER`   Number of items per page. Default: `10`
 
   Examples:
 
-  * List the first page (25 items):
+  * List the first page (10 items):
 
     ```bash
     yprov pids list
@@ -627,16 +657,11 @@ The `pids` group lets you list and retrieve PID records from your PID service.
     yprov pids list --page 2 --page-size 50
     ```
 
-- **Get a PID record** (by prefix/id or by id only)
+- **Get a PID record** (by prefix/id)
 
   ```bash
   yprov pids get <PID>
   ```
-
-  The `<PID>` argument can be provided in two ways:
-
-  * **`prefix/id`** — explicitly specify both prefix and identifier
-  * **`id`** — omit the prefix, and the service will use your application’s default prefix
 
   Examples:
 
@@ -644,11 +669,6 @@ The `pids` group lets you list and retrieve PID records from your PID service.
 
     ```bash
     yprov pids get myprefix/1234
-    ```
-  * Retrieve a record using the default prefix:
-
-    ```bash
-    yprov pids get 1234
     ```
 
 

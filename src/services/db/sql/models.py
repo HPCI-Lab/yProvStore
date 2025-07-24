@@ -82,6 +82,16 @@ class DBDocumentRecord(BaseDBModel):
             owner_id=self.owner_id,
             parent_doc_pid=self.parent_doc_pid
         )
+    
+    def update_from_document_record(self, document_record: DocumentRecord) -> None:
+        """
+        Update this DBDocumentRecord instance from a DocumentRecord instance.
+        """
+        self.id = document_record.pid
+        self.version = document_record.version
+        self.storage_id = document_record.storage_id
+        self.owner_id = document_record.owner_id
+        self.parent_doc_pid = document_record.parent_doc_pid
 
     @classmethod
     def from_document_record(cls, document_record: DocumentRecord) -> 'DBDocumentRecord':

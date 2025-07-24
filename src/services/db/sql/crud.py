@@ -100,9 +100,17 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
             return None
         return entity
 
-    async def _filter(self, limit: int | None = None, order_by: str | None = None, **kwargs) -> list[T]:
+    async def _filter(
+        self,
+        limit: int | None = None,
+        order_by: str | None = None,
+        page: int | None = None,
+        page_size: int | None = None,
+        **kwargs
+    ) -> list[T]:
         """
         Filter entities in the SQL database based on provided keyword arguments.
+        Supports pagination with zero-indexed pages and page_size.
         """
         conditions = []
         if hasattr(self._model_type, 'deleted'):
@@ -118,13 +126,20 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
                     condition = self._generate_filter_condition(nested[0], nested[1], value, self._model_type)
                     if condition is not None:
                         conditions.append(condition)
-
         except AttributeError as e:
             logger.error(f"AttributeError in filtering [{self._model_type.__name__}] with kwargs [{kwargs}]: {e}")
             return []
 
         statement = select(self._model_type).filter(*conditions)
-        statement = statement.limit(limit) if limit else statement
+
+        # Pagination logic
+        if page is not None and page_size is not None:
+            if page < 0 or page_size <= 0:
+                raise ValueError("Page must be >= 0 and page_size must be > 0")
+            statement = statement.offset(page * page_size).limit(page_size)
+        elif limit:
+            statement = statement.limit(limit)
+
         if order_by:
             order = order_by.split(" ")
             order_function = asc
@@ -140,6 +155,7 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
             if not hasattr(self._model_type, order[0]):
                 raise AttributeError(f"Attribute [{order[0]}] not found in model [{self._model_type.__name__}].")
             statement = statement.order_by(order_function(getattr(self._model_type, order[0])))
+
         return self.session.scalars(statement).all()
 
     async def _update(self, entity: T) -> T:
@@ -183,24 +199,25 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
         #         logger.error(f"AttributeError [{parent_value}] in generating filter condition for [{self._model_type.__name__}]: {e}")
         #         return None
         supported_operations = ["eq", "ne", "lt", "le", "gt", "ge", "in", "like", "ilike", "is_null", "is_not_null"]
+        print(f"Generating filter condition for [{self._model_type.__name__}] with parent_value [{parent_value}] and nested_value [{nested_value}]")
         if nested_value in supported_operations:
             try:
                 operations = {
-                    "eq": getattr(parent_class, parent_value) == value,
-                    "ne": getattr(parent_class, parent_value) != value,
-                    "lt": getattr(parent_class, parent_value) < value,
-                    "le": getattr(parent_class, parent_value) <= value,
-                    "gt": getattr(parent_class, parent_value) > value,
-                    "ge": getattr(parent_class, parent_value) >= value,
-                    "in": getattr(parent_class, parent_value).in_(value),
-                    "like": getattr(parent_class, parent_value).like(value),
-                    "ilike": getattr(parent_class, parent_value).ilike(value),
-                    "is_null": getattr(parent_class, parent_value).is_(None) if value else getattr(parent_class, parent_value).isnot(None),
-                    "is_not_null": getattr(parent_class, parent_value).isnot(None) if value else getattr(parent_class, parent_value).is_(None),
+                    "eq": (lambda: getattr(parent_class, parent_value) == value),
+                    "ne": (lambda: getattr(parent_class, parent_value) != value),
+                    "lt": (lambda: getattr(parent_class, parent_value) < value),
+                    "le": (lambda: getattr(parent_class, parent_value) <= value),
+                    "gt": (lambda: getattr(parent_class, parent_value) > value),
+                    "ge": (lambda: getattr(parent_class, parent_value) >= value),
+                    "in": (lambda: getattr(parent_class, parent_value).in_(value)),
+                    "like": (lambda: getattr(parent_class, parent_value).like(value)),
+                    "ilike": (lambda: getattr(parent_class, parent_value).ilike(value)),
+                    "is_null": (lambda: getattr(parent_class, parent_value).is_(None) if value else getattr(parent_class, parent_value).isnot(None)),
+                    "is_not_null": (lambda: getattr(parent_class, parent_value).isnot(None) if value else getattr(parent_class, parent_value).is_(None)),
                 }
             except AttributeError as e:
                 logger.error(f"AttributeError [{parent_value}__{nested_value}] in generating filter condition for [{self._model_type.__name__}]: {e}")
                 return None
-            return operations[nested_value]
+            return operations[nested_value]()
         else:
             raise NotImplementedError(f"Unsupported operation [{parent_value}__{nested_value}] for filtering [{self._model_type.__name__}]")
