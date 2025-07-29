@@ -63,19 +63,19 @@ class DocumentPermissionStorageService:
             if parent_document_pid_record.version == 1:
                 first_document_pid = parent_document_pid_record.pid
             else:
-                if not parent_document_pid_record.tree_pid:
-                    raise IntegrityException(f"Parent document record with PID '{doc.parent_doc_pid}' has no tree PID and its version is not 1.")
-                tree_pid_record: PidRecord = await self.pid_service.get_pid_record(parent_document_pid_record.tree_pid, raise_not_found=False)
-                if not tree_pid_record:
-                    raise IntegrityException(f"Tree PID record with PID '{parent_document_pid_record.tree_pid}' not found.")
-                if not tree_pid_record.first_document_pid:
-                    raise IntegrityException(f"Tree PID record with PID '{parent_document_pid_record.tree_pid}' has no first document PID.")
-                first_document_pid = tree_pid_record.first_document_pid
+                if not parent_document_pid_record.lineage_id:
+                    raise IntegrityException(f"Parent document record with PID '{doc.parent_doc_pid}' has no lineage ID and its version is not 1.")
+                lineage_id_record: PidRecord = await self.pid_service.get_pid_record(parent_document_pid_record.lineage_id, raise_not_found=False)
+                if not lineage_id_record:
+                    raise IntegrityException(f"Lineage ID record with PID '{parent_document_pid_record.lineage_id}' not found.")
+                if not lineage_id_record.first_document_pid:
+                    raise IntegrityException(f"Lineage ID record with PID '{parent_document_pid_record.lineage_id}' has no first document PID.")
+                first_document_pid = lineage_id_record.first_document_pid
             first_document: DocumentRecord | None = await self.document_record_storage.get_document_by_pid(first_document_pid, raise_not_found=False)
         else:
             first_document = doc
         if not first_document:
-            raise ForbiddenException(f"First version document with PID '{tree_pid_record.first_document_pid}' not found in this server instance, cannot validate permissions.")
+            raise ForbiddenException(f"First version document with PID '{lineage_id_record.first_document_pid}' not found in this server instance, cannot validate permissions.")
         return first_document
 
 

@@ -80,7 +80,9 @@ class DBDocumentRecord(BaseDBModel):
             version=self.version,
             storage_id=self.storage_id,
             owner_id=self.owner_id,
-            parent_doc_pid=self.parent_doc_pid
+            parent_doc_pid=self.parent_doc_pid,
+            created_at=self.created_at,
+            updated_at=self.updated_at
         )
     
     def update_from_document_record(self, document_record: DocumentRecord) -> None:

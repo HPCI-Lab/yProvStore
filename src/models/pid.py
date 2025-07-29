@@ -3,9 +3,12 @@ from dataclasses import dataclass
 from typing import Any
 
 from models import DocumentRecord
+from datetime import timezone
 
 
-# TODO: manage tree pid
+PID_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
+PID_TIMEZONE = timezone.utc
+
 
 class PidType(Enum):
     """
@@ -13,7 +16,7 @@ class PidType(Enum):
     """
     DOCUMENT = "document"
     ARTIFACT = "artifact"
-    PID_TREE = "pid_tree"
+    LINEAGE = "lineage"
 
     def __str__(self):
         return self.value
@@ -24,15 +27,15 @@ class PidRecord:
     pid: str
     type: PidType
 
-    # TODO: add owner email
-
     # Attributes for document
     version: int | None = None
     url: str | None = None
-    parent_doc_pid: str | None = None  # previous document pid in the tree
-    tree_pid: str | None = None
+    created_at: str | None = None
+    parent_doc_pid: str | None = None  # previous document pid in the lineage
+    successive_doc_pid: str | None = None  # next document pid in the lineage
+    lineage_id: str | None = None
 
-    # Attributes for PID tree
+    # Attributes for PID lineage
     first_document_pid: str | None = None
     latest_document_pid: str | None = None
     latest_version: int | None = None
@@ -60,7 +63,7 @@ class PidRecord:
         if isinstance(self.latest_version, str):
             self.latest_version = int(self.latest_version)
         required_fields = {
-            PidType.PID_TREE: ["first_document_pid", "latest_document_pid", "latest_version"],
+            PidType.LINEAGE: ["first_document_pid", "latest_document_pid", "latest_version"],
             PidType.DOCUMENT: ["url", "version"],
             PidType.ARTIFACT: ["url"]
         }
@@ -83,7 +86,7 @@ class PidRecord:
         self.__other = value
 
     @classmethod
-    def from_document_record(cls, document_record: DocumentRecord, tree_pid: str | None = None) -> 'PidRecord':
+    def from_document_record(cls, document_record: DocumentRecord, lineage_id: str | None = None) -> 'PidRecord':
         """
         Create a PidRecord from a DocumentRecord.
         """
@@ -93,7 +96,8 @@ class PidRecord:
             version=document_record.version,
             url=document_record.storage_url,
             parent_doc_pid=document_record.parent_doc_pid,
-            tree_pid=tree_pid,
+            lineage_id=lineage_id,
+            created_at=document_record.created_at,
         )
 
     def to_dict(self) -> dict:
@@ -105,8 +109,10 @@ class PidRecord:
             "type": self.type.value,
             "version": self.version,
             "url": self.url,
+            "created_at": self.created_at,
             "parent_doc_pid": self.parent_doc_pid,
-            "tree_pid": self.tree_pid,
+            "successive_doc_pid": self.successive_doc_pid,
+            "lineage_id": self.lineage_id,
             "first_document_pid": self.first_document_pid,
             "latest_document_pid": self.latest_document_pid,
             "latest_version": self.latest_version,

@@ -177,7 +177,7 @@ yprov auth login
 yprov auth verify
 yprov auth logout
 yprov documents create --json-file <path/to/document.json> [--parent-pid <parent_pid>]
-yprov documents list
+yprov documents list [--page <page_number>] [--page-size <page_size>] [--updated-after <timestamp>]
 yprov documents get <document_pid>
 yprov documents download <document_pid> [--output-folder <path>] [--output <file_path>]
 yprov documents permissions add <document_pid> --user-email <email> --permission-level <level>
@@ -186,6 +186,8 @@ yprov documents permissions delete <document_pid> --user-email <email>
 yprov documents metadata get <document_pid>
 yprov documents metadata update <document_pid> --key1 <key1> --key2 <value2>
 yprov documents metadata schema
+yprov documents graph list <document_pid> [--entity-types <type>] [--entity-ids <id>] [--is-element] [--is-relation] [--in-json] [--display-data] [--output <file_path>]
+yprov documents graph subgraph <document_pid> --entity-id <entity_id> [--direction <direction>] [--output <file_path>]
 yprov pids list [--page <page_number>] [--page-size <page_size>]
 yprov pids get <pid>
 ```

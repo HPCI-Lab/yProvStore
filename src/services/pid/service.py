@@ -2,13 +2,14 @@ import os
 import uuid
 import json
 import logging
+from datetime import datetime
 from urllib.parse import urlencode
 
 from dishka import Provider, provide, Scope
 
 from application.settings import PID_PREFIX, TMP_PATH, PID_PRIVATE_KEY_PATH, USE_LOCAL_PID_SERVICE
 from application.exceptions.types import ConflictException, NotFoundException, IntegrityException
-from models import PidRecord, PidType
+from models import PidRecord, PidType, PID_DATE_FORMAT, PID_TIMEZONE
 from services.pid.handle.connector import HandleConnector, HandlePaths
 from services.pid.handle.record import HandleRecord
 
@@ -70,64 +71,67 @@ class PidService:
         raise NotImplementedError
 
     async def new_pid_record_from_document(
-        self, pid: str, url: str, parent_doc_pid: str | None = None, allow_tree_branching: bool = False,
+        self, pid: str, url: str, parent_doc_pid: str | None = None, allow_lineage_branching: bool = False,
     ) -> PidRecord:
         """
         Create a new PID record from a document.
-        This method manages the creation of a PID tree if the parent document PID is provided.
+        This method manages the creation of a PID lineage if the parent document PID is provided.
 
         :param pid: The PID to use for the new document. If None, a new PID will be generated.
         :param url: The storage url of the document.
         :param parent_doc_pid: The PID of the parent document, if any.
-        :param allow_tree_branching: If True, allows creating a new subtree even if the latest version of the parent document is higher than the current document version.
+        :param allow_lineage_branching: If True, allows creating a new lineage even if the latest version of the parent document is higher than the current document version.
         :return: A PidRecord object of the new created document.
         """
         parent_doc_record = None
-        pid_tree_record = None
+        lineage_record = None
         new_version = 1
         if parent_doc_pid:
             parent_doc_record = await self.get_pid_record(parent_doc_pid, raise_not_found=False)
             if not parent_doc_record:
                 raise NotFoundException(f"Parent document PID {parent_doc_pid} not found in handle server.")
-            if parent_doc_record.tree_pid:
-                pid_tree_record = await self.get_pid_record(parent_doc_record.tree_pid, raise_not_found=False)
+            if parent_doc_record.lineage_id:
+                lineage_record = await self.get_pid_record(parent_doc_record.lineage_id, raise_not_found=False)
                 logger.debug(f"Parent document record: {parent_doc_record}")
 
-            if not pid_tree_record:
+            if not lineage_record:
                 # Valid if parent_doc version is 1
                 if str(parent_doc_record.version) != "1":
-                    raise IntegrityException(f"PID tree record for parent document PID {parent_doc_pid} not found.")
+                    raise IntegrityException(f"PID lineage record for parent document PID {parent_doc_pid} not found.")
                 else:
-                    # If parent version is 1 then this is the first document update -> create a new tree PID
-                    tree_pid = await self.new_pid()
-                    pid_tree_record = PidRecord(pid=tree_pid, type=PidType.PID_TREE, first_document_pid=parent_doc_pid, latest_document_pid=pid, latest_version=new_version)
-                    pid_tree_record = await self.save_pid_record(pid_tree_record)
+                    # If parent version is 1 then this is the first document update -> create a new lineage PID
+                    lineage_id = await self.new_pid()
+                    lineage_record = PidRecord(pid=lineage_id, type=PidType.LINEAGE, first_document_pid=parent_doc_pid, latest_document_pid=pid, latest_version=new_version)
+                    lineage_record = await self.save_pid_record(lineage_record)
 
-                    # Update the parent document record with the new tree PID
-                    parent_doc_record.tree_pid = pid_tree_record.pid
-                    await self.update_pid_record(parent_doc_record)
+                    # Update the parent document record with the new lineage PID
+                    parent_doc_record.lineage_id = lineage_record.pid
 
-            if pid_tree_record.type != PidType.PID_TREE:
-                raise IntegrityException(f"Document with PID {parent_doc_pid} is not a tree record.")
+            if lineage_record.type != PidType.LINEAGE:
+                raise IntegrityException(f"Document with PID {parent_doc_pid} is not a lineage record.")
+            
+            # It is allowed to create a new document only with version=latest_version + 1 (except with allow_lineage_branching=True)
+            if not lineage_record.latest_version or not parent_doc_record.version:
+                raise IntegrityException(f"PID lineage record with PID {lineage_record.pid} has no latest version or parent document version.")
+            if int(lineage_record.latest_version) > int(parent_doc_record.version) and not allow_lineage_branching:
+                raise ValueError(f"Cannot create a new document in the lineage {lineage_record.pid} because the latest version is higher than the parent document version.")
 
-            # It is allowed to create a new document only with version=latest_version + 1 (except with allow_tree_branching=True)
-            if not pid_tree_record.latest_version or not parent_doc_record.version:
-                raise IntegrityException(f"PID tree record with PID {pid_tree_record.pid} has no latest version or parent document version.")
-            if int(pid_tree_record.latest_version) > int(parent_doc_record.version):
-                if not allow_tree_branching:
-                    raise ValueError(f"Cannot create a new document in the tree {pid_tree_record.pid} because the latest version is higher than the parent document version.")
-                # Create a new subtree starting in the middle of the document pid tree
+            parent_doc_record.successive_doc_pid = pid
+            await self.update_pid_record(parent_doc_record)
+
+            if int(lineage_record.latest_version) > int(parent_doc_record.version):
+                # Create a new lineage starting in the middle of the document pid lineage
                 new_version = int(parent_doc_record.version) + 1  # TODO: check version of subtree
-                pid_tree_record = PidRecord(
-                    pid=await self.new_pid(), type=PidType.PID_TREE, first_document_pid=parent_doc_pid,
+                lineage_record = PidRecord(
+                    pid=await self.new_pid(), type=PidType.LINEAGE, first_document_pid=parent_doc_pid,
                     latest_document_pid=pid, latest_version=new_version
                 )
             else:
-                # Increment the version of the existing tree record
-                new_version = int(pid_tree_record.latest_version) + 1
-                pid_tree_record.latest_document_pid = pid
-                pid_tree_record.latest_version = new_version
-                await self.update_pid_record(pid_tree_record)
+                # Increment the version of the existing lineage record
+                new_version = int(lineage_record.latest_version) + 1
+                lineage_record.latest_document_pid = pid
+                lineage_record.latest_version = new_version
+                await self.update_pid_record(lineage_record)
 
         new_pid_record = PidRecord(
             pid=pid,
@@ -135,7 +139,8 @@ class PidService:
             version=new_version,
             url=url,
             parent_doc_pid=parent_doc_pid,
-            tree_pid=pid_tree_record.pid if pid_tree_record else None,
+            lineage_id=lineage_record.pid if lineage_record else None,
+            created_at=datetime.now(PID_TIMEZONE).strftime(PID_DATE_FORMAT)
         )
         return await self.save_pid_record(new_pid_record)
 

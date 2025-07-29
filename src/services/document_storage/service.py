@@ -1,7 +1,7 @@
 from dishka import Provider, provide, Scope
 from sqlalchemy.orm import Session as SessionType
 
-from application.exceptions.types import ConflictException
+from application.exceptions.types import ConflictException, NotFoundException
 from models import DocumentRecord
 from services.db.sql.models import DBDocumentRecord
 from services.db.sql.crud import SQLEntityDB
@@ -60,7 +60,7 @@ class DocumentRecordStorageServiceImpl(DocumentRecordStorageService, SQLEntityDB
         db_document_record = await super()._get(pid, raise_not_found=raise_not_found)
         if not db_document_record:
             if raise_not_found:
-                raise ConflictException(f"Document with PID '{pid}' not found.")
+                raise NotFoundException(f"Document with PID '{pid}' not found.")
             return None
         return db_document_record.to_document_record()
 
@@ -88,7 +88,6 @@ class DocumentRecordStorageServiceImpl(DocumentRecordStorageService, SQLEntityDB
         filters = {}
         if updated_after:
             filters['updated_at__ge'] = updated_after
-        print(f"Listing documents with filters: {filters}, page: {page}, page_size: {page_size}")
         db_documents = await super()._filter(page=page, page_size=page_size, **filters)
         return [db_document.to_document_record() for db_document in db_documents]
 
