@@ -24,8 +24,6 @@ router = APIRouter(
 )
 
 
-# TODO: manage metadata input
-
 class DocumentRecordCreate(BaseModel):
     """
     Request model for the input data to publish a new document.
@@ -151,8 +149,6 @@ async def create_document(
 
     new_document_record.version = new_pid_record.version or 1
     new_document_record = await document_record_storage.save_document(new_document_record)
-
-    # TODO: manage metadata
 
     return DocumentRecordGet(
         pid=new_document_record.pid,

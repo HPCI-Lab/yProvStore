@@ -69,24 +69,3 @@ async def get_metadata_prefix(
 
     metadata = await metadata_service.get_document_metadata(pid)
     return DocumentMetadataGet.from_metadata(metadata)
-
-
-# documentation.update({
-#     "description": "This endpoint retrieves a specific document metadata by its PID. "
-#                    "Prefix is set by default to the application PID prefix.",
-# })
-
-
-# @router.get("/{pid}/metadata", **documentation)
-# async def get_metadata(
-#     pid: str,
-#     document_record_storage: FromDishka[DocumentRecordStorageService],
-#     metadata_service: FromDishka[DocumentMetadataService]
-# ) -> DocumentMetadataGet:
-#     """
-#     Endpoint to retrieve a specific document metadata by its PID.
-#     """
-
-#     return await get_metadata_prefix(
-#         pid=pid, prefix=PID_PREFIX, document_record_storage=document_record_storage, metadata_service=metadata_service
-#     )

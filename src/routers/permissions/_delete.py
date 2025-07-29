@@ -63,30 +63,3 @@ async def delete_permission_prefix(
 
     await permission_storage.delete_permission(first_document_record.pid, data.user_email)
     return SuccessResponse(message="Permission deleted successfully.")
-
-
-# documentation.update({
-#     "description": "This endpoint deletes a specific permission associated with a document pid and a user. PID prefix is set by default to the application PID prefix."
-# })
-
-
-# @router.delete("/{pid}/permissions", **documentation)
-# async def delete_permission(
-#     pid: str,
-#     data: DeletePermissionRequest,
-#     permission_storage: FromDishka[DocumentPermissionStorageService],
-#     document_record_storage: FromDishka[DocumentRecordStorageService],
-#     logged_user: LoggedUser
-# ) -> SuccessResponse:
-#     """
-#     Delete a specific permission for a document identified by its PID and a user email.
-#     The first document version is used to find and delete the permission.
-#     """
-#     return await delete_permission_prefix(
-#         pid=pid,
-#         prefix=PID_PREFIX,
-#         data=data,
-#         permission_storage=permission_storage,
-#         document_record_storage=document_record_storage,
-#         logged_user=logged_user
-#     )

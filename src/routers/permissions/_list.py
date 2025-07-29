@@ -69,30 +69,3 @@ async def list_permissions_prefix(
         user_email=user_emails[perm.user_id],
         permission_level=perm.permission_level
     ) for perm in perms]
-
-
-# documentation.update({
-#     "description": ("This endpoint retrieves a list of all permissions associated with a specific document (the first version of the document is used)."
-#                     " PID prefix is set by default to the application PID prefix.")
-# })
-
-
-# @router.get("/{pid}/permissions", **documentation)
-# async def list_permissions(
-#     pid: str,
-#     permission_storage: FromDishka[DocumentPermissionStorageService],
-#     document_record_storage: FromDishka[DocumentRecordStorageService],
-#     user_storage: FromDishka[UserStorageService],
-#     logged_user: LoggedUser
-# ) -> list[DocumentPermissionGet]:
-#     """
-#     List all permissions for a specific document identified by its PID. Prefix is set by default to the application PID prefix.
-#     """
-#     return await list_permissions_prefix(
-#         pid=pid,
-#         prefix=PID_PREFIX,
-#         permission_storage=permission_storage,
-#         document_record_storage=document_record_storage,
-#         user_storage=user_storage,
-#         logged_user=logged_user
-#     )

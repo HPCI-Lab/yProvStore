@@ -81,33 +81,3 @@ async def update_metadata_prefix(
         logger.warning(f"Failed to update document record `updated_at` for PID '{pid}': {e}")
 
     return DocumentMetadataGet.from_metadata(metadata)
-
-
-# documentation.update({
-#     "description": ("This endpoint updates a specific document metadata by its PID. "
-#                     "Prefix is set by default to the application PID prefix.\n"
-#                     "Only the fields that are provided in the request body will be updated.\n"
-#                     "To set an empty field, use an empty string or an empty list.")
-# })
-
-
-# @router.patch("/{pid}/metadata", **documentation)
-# async def update_metadata(
-#     pid: str,
-#     document_metadata: DocumentMetadataPost,
-#     document_record_storage: FromDishka[DocumentRecordStorageService],
-#     metadata_service: FromDishka[DocumentMetadataService],
-#     permission_storage: FromDishka[DocumentPermissionStorageService],
-#     request: Request,
-#     logged_user: LoggedUser
-# ) -> DocumentMetadataGet:
-#     """
-#     Endpoint to retrieve a specific document metadata by its PID.
-#     """
-
-#     return await update_metadata_prefix(
-#         pid=pid, prefix=PID_PREFIX, document_metadata=document_metadata,
-#         document_record_storage=document_record_storage,
-#         metadata_service=metadata_service, logged_user=logged_user,
-#         permission_storage=permission_storage, request=request
-#     )
