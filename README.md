@@ -17,6 +17,7 @@ yProv is a joint project between [University of Trento](https://www.unitn.it) an
     - [Database Setup](#database-setup)
     - [Environment Variables (Optional)](#environment-variables-optional)
     - [Running the Application](#running-the-application)
+    - [Available Endpoints](#available-endpoints)
     - [Troubleshooting](#troubleshooting)
   - [yProv-CLI](#yprov-cli)
     - [Installation](#installation)
@@ -147,6 +148,11 @@ uv run src/run.py
 Thanks to `uv`, this command will automatically activate the virtual environment and run the FastAPI application.
 
 You can now go to your web browser and navigate to `http://localhost:8000/docs` to access the interactive API documentation provided by FastAPI. This interface allows you to test the API endpoints and explore the available functionality.
+
+### Available Endpoints
+
+![OpenAPI Endpoints 1](documentation/images/openapi_1.png)
+![OpenAPI Endpoints 2](documentation/images/openapi_2.png)
 
 ### Troubleshooting
 
