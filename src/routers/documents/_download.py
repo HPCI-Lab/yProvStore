@@ -4,13 +4,11 @@ from fastapi import APIRouter, status
 from fastapi.responses import StreamingResponse, Response
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
-from application.settings import PID_PREFIX
 from application.exceptions.types import UnauthorizedException, NotFoundException, ServiceUnavailableException
 from application.exceptions.responses import EXCEPTION_SCHEMA
 from services.file_storage.service import FileStorageService
 from services.document_storage.service import DocumentRecordStorageService
 # from services.permission_storage.service import DocumentPermissionStorageService
-from routers.common.dependencies import LoggedUser
 
 
 __all__ = ("router",)

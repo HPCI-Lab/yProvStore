@@ -11,6 +11,7 @@ yProv is a joint project between [University of Trento](https://www.unitn.it) an
 - [yProvStore](#yprovstore)
   - [Table of Contents](#table-of-contents)
   - [Local Development](#local-development)
+    - [TL;DR: Quick Setup & Installation](#tldr-quick-setup--installation)
     - [Python version](#python-version)
     - [Installing Dependencies](#installing-dependencies)
     - [Database Setup](#database-setup)
@@ -33,6 +34,51 @@ yProv is a joint project between [University of Trento](https://www.unitn.it) an
 ## Local Development
 
 This section provides instructions for setting up the yProvStore project for local development. It covers the prerequisites, dependencies installation, database setup, and how to run the application.
+
+For a quick setup, you can follow the [TL;DR: Quick Setup & Installation](#tldr-quick-setup--installation) section below, otherwise, you can read through the detailed steps provided in the following sections.
+
+### TL;DR: Quick Setup & Installation
+
+1. **Clone the repository:**
+    ```bash
+    git clone https://github.com/HPCI-Lab/yProvStore
+    cd yProvStore
+    ```
+
+2. **Install `uv` (optional, recommended):**
+    ```bash
+    pip install uv
+    ```
+
+3. **Install Python 3.12** (if not already installed).
+    You can use `pyenv` or `uv` to manage Python versions:
+    ```bash
+    uv install python 3.12
+    ```
+
+4. **Install dependencies:**
+    ```bash
+    uv sync
+    ```
+
+5. **Run database migrations:**
+    ```bash
+    uv run alembic upgrade head
+    ```
+
+6. **Start the application:**
+    ```bash
+    uv run src/run.py
+    ```
+
+    > **NOTE**: If you see errors, check the [Troubleshooting](#troubleshooting) and [Environment Variables](#environment-variables-optional) sections for common issues.
+
+7. **Access the API docs:**  
+    Open [http://localhost:8000/docs](http://localhost:8000/docs) in your browser.
+
+    > For CLI usage, run `source prepare_cli.sh` (Linux/macOS) or `call prepare_cli.bat` (Windows) before using `yprov` commands. More details can be found in the [yProv-CLI](#yprov-cli) section below.
+
+---
 
 ### Python version
 

@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field
 from fastapi import APIRouter, status
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
-from application.settings import PID_PREFIX
 from application.documentation.openapi_generation import EXAMPLE_EMAIL
 from application.exceptions.types import ForbiddenException
 from routers.common.dependencies import LoggedUser

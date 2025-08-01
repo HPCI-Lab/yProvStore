@@ -60,8 +60,8 @@ class ProvUtils:
 
         try:
             prov_doc = ProvDocument.deserialize(content=file_bytes)
-        except Exception as e:
-            warnings.append(f"The document is not a valid PROV document")
+        except Exception:
+            warnings.append("The document is not a valid PROV document")
             # TODO: manage in rdf?
             return warnings, []
 
@@ -73,7 +73,7 @@ class ProvUtils:
         # Validate all entity types are available in the PROV terms
         set_types = set(entity_types)
         for set_type in set_types:
-            if not set_type in self.mapping_values:
+            if set_type not in self.mapping_values:
                 warnings.append(f"Entity type '{set_type}' is not a valid PROV type.")
 
         prov_records = prov_doc.unified().flattened().get_records()
@@ -120,7 +120,7 @@ class ProvUtils:
             prov_doc = ProvDocument.deserialize(content=file_bytes)
         except Exception:
             # TODO: manage in rdf?
-            warnings.append(f"The document is not a valid PROV document.")
+            warnings.append("The document is not a valid PROV document.")
             return warnings, {}
 
         new_doc = ProvDocument()

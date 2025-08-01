@@ -1,7 +1,6 @@
 import os
 import click
 import json
-from datetime import datetime
 from rich.console import Console
 from rich.table import Table
 

@@ -1,4 +1,4 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 
 from models import PidRecord, DocumentMetadata
 from application.settings import PID_ADMIN_HANDLE, PID_ADMIN_HANDLE_INDEX, PID_ADMIN_VALUE_INDEX, PID_ADMIN_HANDLE_PERMISSIONS

@@ -73,7 +73,7 @@ class DocumentMetadata:
                 logger.warning(f"Multiple types found for metadata attribute '{attribute_name}': {types_tuple}. Using the first type: {types_tuple[0]}")
             attribute_type = types_tuple[0]
             
-        if type(attribute_type) == GenericAlias:
+        if type(attribute_type) is GenericAlias:
             # f"The attribute '{attribute_name}' is a list of type: {attribute_type.__args__[0]}."
             attribute_type = attribute_type.__origin__  # Get the original type (e.g., list, dict)
         return attribute_type

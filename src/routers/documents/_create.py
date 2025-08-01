@@ -138,7 +138,7 @@ async def create_document(
         try:
             if not document_file or not document_file.content_type or document_file.content_type not in ['application/json', 'text/plain']:
                 raise BadRequestException(
-                    f"Unsupported file type: {document_file.content_type if document_file else "None"}. Only JSON or plain text files are allowed."
+                    "Unsupported file type: " + (document_file.content_type if document_file else "None") + ". Only JSON or plain text files are allowed."
                 )
             document_data_bytes = await document_file.read()
         except Exception as e:

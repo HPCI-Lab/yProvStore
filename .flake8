@@ -5,3 +5,4 @@ exclude =
     .venv,
     build,
     dist
+ignore = E121,E125,E501,W291,W293

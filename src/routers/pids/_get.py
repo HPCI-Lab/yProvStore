@@ -5,7 +5,7 @@ from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
 from application.documentation.openapi_generation import EXAMPLE_UUID
 from services.pid.service import PidService
-from application.settings import PID_ADMIN_HANDLE, PID_ADMIN_HANDLE_INDEX, PID_ADMIN_HANDLE_PERMISSIONS, PID_PREFIX
+from application.settings import PID_ADMIN_HANDLE, PID_ADMIN_HANDLE_INDEX, PID_ADMIN_HANDLE_PERMISSIONS
 
 __all__ = ("router",)
 

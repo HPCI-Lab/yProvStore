@@ -11,7 +11,7 @@ from services.db.sql.base import BaseDBModel
 logger = logging.getLogger(__name__)
 
 
-class AbstractEntityDB[T: BaseDBModel](abc.ABC):
+class AbstractEntityDB[T: BaseDBModel](abc.ABC):  # noqa
     """
     Abstract base class for a database that manages crud operations for entities.
     """

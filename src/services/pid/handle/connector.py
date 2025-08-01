@@ -3,6 +3,7 @@ import json
 import httpx
 import base64
 import asyncio
+import urllib3
 import logging
 
 from Cryptodome.Signature import pkcs1_15
@@ -17,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 # Disable UnsecureRequestWarning prints for self-signed https requests
-import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -34,10 +34,10 @@ class HandleConnector:
     _auth_lock: asyncio.Lock
 
     def __init__(self):
-        self.http_client = httpx.AsyncClient(verify=False) # `verify=False` to allow self-signed certs
+        self.http_client = httpx.AsyncClient(verify=False)  # `verify=False` to allow self-signed certs
         self.private_key = self._load_private_key_file(PID_PRIVATE_KEY_PATH)
         self.session_id = None
-        self._auth_lock = asyncio.Lock() # Prevents race conditions during authentication
+        self._auth_lock = asyncio.Lock()  # Prevents race conditions during authentication
 
     def _load_private_key_file(self, path):
         with open(path, "r") as key_file:
@@ -56,7 +56,7 @@ class HandleConnector:
             # - "message": For error responses, an error message.
             if response.status_code == 404 and not raise_not_found:
                 return None
-            response.raise_for_status() # Raise an exception for 4xx/5xx responses
+            response.raise_for_status()  # Raise an exception for 4xx/5xx responses
             return response.json()
         except httpx.HTTPStatusError as e:
             # Re-raise with more context from the server's response if available

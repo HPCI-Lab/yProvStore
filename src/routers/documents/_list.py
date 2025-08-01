@@ -8,7 +8,6 @@ from dishka.integrations.fastapi import FromDishka, DishkaRoute
 from application.documentation.openapi_generation import EXAMPLE_EMAIL, EXAMPLE_UUID, EXAMPLE_DOCUMENT_VERSION, EXAMPLE_DOCUMENT_STORAGE
 from services.document_storage.service import DocumentRecordStorageService
 from services.user_storage.service import UserStorageService
-from application.exceptions.types import NotFoundException
 
 __all__ = ("router",)
 

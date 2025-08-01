@@ -26,7 +26,7 @@ class GraphService:
         :param entity_types: List of entity types to filter the results.
         :return: A tuple containing a list of warnings and a list of DocumentGraphEntity objects.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     async def subgraph(
         self,
@@ -42,7 +42,7 @@ class GraphService:
         :param direction: The direction of the subgraph (forward, backward, or both).
         :return: A dictionary representing the subgraph elements.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class ProvDocumentGraphService(GraphService):

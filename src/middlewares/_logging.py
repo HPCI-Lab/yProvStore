@@ -2,7 +2,7 @@ import logging
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response, StreamingResponse
+from starlette.responses import Response
 
 from application.settings import DEBUG
 
@@ -28,7 +28,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             logger.debug(
                 f"Response status code: {response.status_code}, "
                 f"headers: {response.headers}, "
-                f"body: {response.body.decode('utf-8') if hasattr(response, "body") and response.body else 'None'}"
+                "body: " + (response.body.decode('utf-8') if hasattr(response, "body") and response.body else 'None')
             )
 
         # === Add other logs after executing the request if needed ===

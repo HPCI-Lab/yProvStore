@@ -11,7 +11,7 @@ from services.permission_storage.service import DocumentPermissionStorageService
 from services.document_storage.service import DocumentRecordStorageService
 from services.user_storage.service import UserStorageService
 from application.exceptions.responses import EXCEPTION_SCHEMA
-from application.exceptions.types import ForbiddenException, BadRequestException, ConflictException, NotFoundException
+from application.exceptions.types import ForbiddenException, BadRequestException, ConflictException
 from application.documentation.openapi_generation import EXAMPLE_EMAIL
 
 
