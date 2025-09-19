@@ -19,44 +19,48 @@ logger = logging.getLogger(__name__)
 
 
 router = APIRouter(
-    prefix="/permissions",
+    prefix="",
     route_class=DishkaRoute
 )
 
 
 class DocumentPermissionGet(BaseModel):
-    pid: str = Field(..., example=EXAMPLE_UUID, description="The pid of the document.")
-    user_email: str = Field(..., example=EXAMPLE_EMAIL, description="Email of the user who has the permission.")
+    pid: str = Field(..., examples=[EXAMPLE_UUID], description="The pid of the document.")
+    user_email: str = Field(..., examples=[EXAMPLE_EMAIL], description="Email of the user who has the permission.")
     permission_level: PermissionLevel
 
 
 documentation = {
     "summary": "List Document Permissions",
-    "description": "This endpoint retrieves a list of all permissions associated with a specific document.",
+    "description": "This endpoint retrieves a list of all permissions associated with a specific document (the first version of the document is used).",
     "status_code": status.HTTP_200_OK,
     "response_description": "Returns a list of permissions for the specified document."
 }
 
 
-@router.get("", **documentation)
-async def list_permissions(
+@router.get("/{prefix}/{pid}/permissions", **documentation)
+async def list_permissions_prefix(
     pid: str,
+    prefix: str,
     permission_storage: FromDishka[DocumentPermissionStorageService],
     document_record_storage: FromDishka[DocumentRecordStorageService],
     user_storage: FromDishka[UserStorageService],
     logged_user: LoggedUser
 ) -> list[DocumentPermissionGet]:
     """
-    List all permissions for a specific document.
+    List all permissions for a specific document identified by its PID and prefix.
     """
+    pid = f"{prefix}/{pid}"
     document_record = await document_record_storage.get_document_by_pid(pid)
 
+    first_document_record = await permission_storage.get_first_document_record(document_record)
+
     # Only owner of the document can manage permissions
-    if document_record.owner_id != logged_user.id:
-        raise ForbiddenException("You do not have permission to manage permissions for this document.")
+    if first_document_record.owner_id != logged_user.id:
+        raise ForbiddenException("You do not have permission to manage access for this document.")
 
     # Fetch and return the list of permissions for the specified document PID
-    perms = await permission_storage.list_permissions_for_doc(pid)
+    perms = await permission_storage.list_permissions_for_doc(first_document_record.pid)
 
     user_emails = await user_storage.get_user_emails([perm.user_id for perm in perms])
     return [DocumentPermissionGet(

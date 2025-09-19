@@ -7,7 +7,9 @@ class TokenData:
 
     @classmethod
     def from_dict(cls, data: dict) -> "TokenData":
-        return cls(email=data.get("email"))
+        if not data.get("email"):
+            raise ValueError("Email is required in token data")
+        return cls(email=str(data.get("email")))
 
     def to_dict(self) -> dict:
         return {"email": self.email}

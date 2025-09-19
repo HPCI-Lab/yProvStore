@@ -32,6 +32,7 @@ EXAMPLE_UUID_2 = f"{PID_PREFIX}/123e4567-e89b-12d3-a456-426614174001"
 EXAMPLE_EMAIL = "user@example.com"
 EXAMPLE_DOCUMENT_VERSION = 1
 EXAMPLE_DOCUMENT_STORAGE = f"{APP_URL}/docs/{EXAMPLE_UUID}"
+# TODO: make this a valid PROV JSON graph
 EXAMPLE_DOCUMENT_DATA = {
     "activity": {
         "activity1": {
@@ -65,4 +66,51 @@ EXAMPLE_DOCUMENT_DATA = {
             "prov:activity": "activity1",
         }
     }
+}
+EXAMPLE_METADATA_TITLE = "Sample Document Title"
+EXAMPLE_METADATA_DESCRIPTION = "This is a sample document description."
+EXAMPLE_METADATA_KEYWORDS = ["keyword1", "keyword2"]
+EXAMPLE_METADATA_AUTHOR = "Sample Author"
+EXAMPLE_METADATA_SCHEMA = {
+  "properties": {
+    "title": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "example": "Sample Document Title"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "example": "This is a sample document description."
+    },
+    "keywords": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "example": [
+        "keyword1",
+        "keyword2"
+      ]
+    }
+  }
 }

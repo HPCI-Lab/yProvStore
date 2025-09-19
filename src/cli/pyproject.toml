@@ -5,7 +5,8 @@ description = "A CLI for interacting with the yProv provenance service."
 dependencies = [
     "click>=8.0",
     "requests>=2.25",
-    "rich>=13.0"
+    "rich>=13.0",
+    "appdirs"
 ]
 
 [project.scripts]

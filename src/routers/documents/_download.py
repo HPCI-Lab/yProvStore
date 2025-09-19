@@ -4,13 +4,11 @@ from fastapi import APIRouter, status
 from fastapi.responses import StreamingResponse, Response
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
-from application.settings import PID_PREFIX
 from application.exceptions.types import UnauthorizedException, NotFoundException, ServiceUnavailableException
 from application.exceptions.responses import EXCEPTION_SCHEMA
 from services.file_storage.service import FileStorageService
 from services.document_storage.service import DocumentRecordStorageService
 # from services.permission_storage.service import DocumentPermissionStorageService
-from routers.common.dependencies import LoggedUser
 
 
 __all__ = ("router",)
@@ -49,8 +47,6 @@ async def download_document_prefix(
     prefix: str,
     file_storage_service: FromDishka[FileStorageService],
     document_storage_service: FromDishka[DocumentRecordStorageService],
-    # permission_storage_service: FromDishka[DocumentPermissionStorageService],
-    logged_user: LoggedUser
 ) -> StreamingResponse:
     """
     Download a document file by its PID and prefix.
@@ -64,8 +60,6 @@ async def download_document_prefix(
     pid = f"{prefix}/{pid}"
     document_record = await document_storage_service.get_document_by_pid(pid)
 
-    # TODO: decide how to handle read permissions (documents should be public by default)
-    # await permission_storage_service.validate_user_permission(user=logged_user, doc=document_record, permission_level=PermissionLevel.READ)
     try:
         file_data = await file_storage_service.retrieve_file(document_record.storage_id)
         return StreamingResponse(
@@ -79,29 +73,3 @@ async def download_document_prefix(
         raise NotFoundException(f"Document with PID '{pid}' not found.")
     except ServiceUnavailableException as e:
         raise ServiceUnavailableException(f"Failed to retrieve document with PID '{pid}'") from e
-
-
-documentation.update({
-    "description": "This endpoint allows the user to download a document by its PID. Prefix is set by default to the application PID prefix.",
-})
-
-
-@router.get("/{pid}/download", **documentation)
-async def download_document(
-    pid: str,
-    file_storage_service: FromDishka[FileStorageService],
-    document_storage_service: FromDishka[DocumentRecordStorageService],
-    # permission_storage_service: FromDishka[DocumentPermissionStorageService],
-    logged_user: LoggedUser
-) -> StreamingResponse:
-    """
-    Download a document file by its PID. Prefix is automatically set to the default PID prefix.
-
-    :param pid: The unique identifier of the document to be downloaded.
-    :param file_storage_service: The service to handle file storage operations.
-    :return: The requested document file.
-    """
-
-    return await download_document_prefix(
-        pid=pid, prefix=PID_PREFIX, file_storage_service=file_storage_service, document_storage_service=document_storage_service, logged_user=logged_user
-    )

@@ -1,0 +1,43 @@
+services:
+  # FastAPI Application Service
+  api:
+    build: .
+    container_name: yprovstore-api
+    secrets:
+      - pid_admin_key
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mounts local code for live-reloading in development
+      - ./src:/app/src
+    environment:
+      - PID_PRIVATE_KEY_PATH=/run/secrets/pid_admin_key
+      - USE_LOCAL_PID_SERVICE=false
+      - PID_PREFIX=21.T11961
+      - PID_ADMIN_HANDLE=0.NA/21.T11961
+      - PID_SERVER_URL=https://pidhs.disi.unitn.it:8000
+      - APP_URL=http://localhost:8000
+    env_file:
+      - .env
+      # NOTE: be sure to define JWT_SECRET_KEY in the environment .env file
+
+  minio:
+    image: minio/minio:latest
+    container_name: yprovstore-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    env_file:
+      - .env
+      # NOTE: be sure to define these env vars in the environment .env file:
+      #       MINIO_ROOT_USER, MINIO_ROOT_PASSWORD, MINIO_BUCKET
+
+volumes:
+  minio_data:
+
+secrets:
+  pid_admin_key:
+    file: ./keys/admpriv.pem

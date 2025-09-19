@@ -2,6 +2,8 @@
 
 This document provides some basic information about the Handle System REST API, which is used for managing handles and their associated values. The API allows for creating, retrieving, updating, and deleting handles, as well as managing sessions for authentication.
 
+Link to pdf documentation: [Handle NET Tech Manual](https://www.handle.net/tech_manual/HN_Tech_Manual_9.pdf) 
+
 ## API Response Codes
 
 The Handle System REST API uses specific response codes in the JSON body of its replies, which correspond to standard HTTP status codes.

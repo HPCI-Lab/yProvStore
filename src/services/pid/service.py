@@ -2,12 +2,14 @@ import os
 import uuid
 import json
 import logging
+from datetime import datetime
+from urllib.parse import urlencode
 
 from dishka import Provider, provide, Scope
 
 from application.settings import PID_PREFIX, TMP_PATH, PID_PRIVATE_KEY_PATH, USE_LOCAL_PID_SERVICE
 from application.exceptions.types import ConflictException, NotFoundException, IntegrityException
-from models import PidRecord, PidType
+from models import PidRecord, PidType, PID_DATE_FORMAT, PID_TIMEZONE
 from services.pid.handle.connector import HandleConnector, HandlePaths
 from services.pid.handle.record import HandleRecord
 
@@ -19,7 +21,7 @@ class PidService:
 
     prefix = PID_PREFIX
 
-    async def new_pid(self, prefix: str = None) -> str:
+    async def new_pid(self, prefix: str | None = None) -> str:
         """
         Generate a new unique PID (Persistent Identifier).
         """
@@ -31,7 +33,7 @@ class PidService:
         """
         raise NotImplementedError
 
-    async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord:
+    async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord | None:
         """
         Retrieve a PID record by its unique identifier.
         """
@@ -50,6 +52,10 @@ class PidService:
         """
         List all document PIDs stored in the PID service.
         This method returns a list of all PIDs that represent documents.
+        
+        :param page: The page number for pagination (default is 0).
+        :param page_size: The number of items per page (default is 10).
+        :return: A list of document PIDs.
         """
         raise NotImplementedError
     
@@ -65,62 +71,67 @@ class PidService:
         raise NotImplementedError
 
     async def new_pid_record_from_document(
-        self, pid: str, url: str, parent_doc_pid: str | None = None, allow_tree_branching: bool = False,
+        self, pid: str, url: str, parent_doc_pid: str | None = None, allow_lineage_branching: bool = False,
     ) -> PidRecord:
         """
         Create a new PID record from a document.
-        This method manages the creation of a PID tree if the parent document PID is provided.
+        This method manages the creation of a PID lineage if the parent document PID is provided.
 
         :param pid: The PID to use for the new document. If None, a new PID will be generated.
         :param url: The storage url of the document.
         :param parent_doc_pid: The PID of the parent document, if any.
-        :param allow_tree_branching: If True, allows creating a new subtree even if the latest version of the parent document is higher than the current document version.
+        :param allow_lineage_branching: If True, allows creating a new lineage even if the latest version of the parent document is higher than the current document version.
         :return: A PidRecord object of the new created document.
         """
         parent_doc_record = None
-        pid_tree_record = None
+        lineage_record = None
         new_version = 1
         if parent_doc_pid:
             parent_doc_record = await self.get_pid_record(parent_doc_pid, raise_not_found=False)
             if not parent_doc_record:
                 raise NotFoundException(f"Parent document PID {parent_doc_pid} not found in handle server.")
-            if parent_doc_record.tree_pid:
-                pid_tree_record = await self.get_pid_record(parent_doc_record.tree_pid, raise_not_found=False)
+            if parent_doc_record.lineage_id:
+                lineage_record = await self.get_pid_record(parent_doc_record.lineage_id, raise_not_found=False)
                 logger.debug(f"Parent document record: {parent_doc_record}")
 
-            if not pid_tree_record:
+            if not lineage_record:
                 # Valid if parent_doc version is 1
-                if parent_doc_record.version != 1:
-                    raise IntegrityException(f"PID tree record for parent document PID {parent_doc_pid} not found.")
+                if str(parent_doc_record.version) != "1":
+                    raise IntegrityException(f"PID lineage record for parent document PID {parent_doc_pid} not found.")
                 else:
-                    # If parent version is 1 then this is the first document update -> create a new tree PID
-                    tree_pid = await self.new_pid()
-                    pid_tree_record = PidRecord(pid=tree_pid, type=PidType.PID_TREE, first_document_pid=parent_doc_pid, latest_document_pid=pid, latest_version=new_version)
-                    pid_tree_record = await self.save_pid_record(pid_tree_record)
+                    # If parent version is 1 then this is the first document update -> create a new lineage PID
+                    lineage_id = await self.new_pid()
+                    lineage_record = PidRecord(pid=lineage_id, type=PidType.LINEAGE, first_document_pid=parent_doc_pid, latest_document_pid=pid, latest_version=new_version)
+                    lineage_record = await self.save_pid_record(lineage_record)
 
-                    # Update the parent document record with the new tree PID
-                    parent_doc_record.tree_pid = pid_tree_record.pid
-                    await self.update_pid_record(parent_doc_record)
+                    # Update the parent document record with the new lineage PID
+                    parent_doc_record.lineage_id = lineage_record.pid
 
-            if pid_tree_record.type != PidType.PID_TREE:
-                raise IntegrityException(f"Document with PID {parent_doc_pid} is not a tree record.")
+            if lineage_record.type != PidType.LINEAGE:
+                raise IntegrityException(f"Document with PID {parent_doc_pid} is not a lineage record.")
+            
+            # It is allowed to create a new document only with version=latest_version + 1 (except with allow_lineage_branching=True)
+            if not lineage_record.latest_version or not parent_doc_record.version:
+                raise IntegrityException(f"PID lineage record with PID {lineage_record.pid} has no latest version or parent document version.")
+            if int(lineage_record.latest_version) > int(parent_doc_record.version) and not allow_lineage_branching:
+                raise ValueError(f"Cannot create a new document in the lineage {lineage_record.pid} because the latest version is higher than the parent document version.")
 
-            # It is allowed to create a new document only with version=latest_version + 1 (except with allow_tree_branching=True)
-            if pid_tree_record.latest_version > parent_doc_record.version:
-                if not allow_tree_branching:
-                    raise ValueError(f"Cannot create a new document in the tree {pid_tree_record.pid} because the latest version is higher than the parent document version.")
-                # Create a new subtree starting in the middle of the document pid tree
-                new_version = parent_doc_record.version + 1  # TODO: check version of subtree
-                pid_tree_record = PidRecord(
-                    pid=await self.new_pid(), type=PidType.PID_TREE, first_document_pid=parent_doc_pid,
+            parent_doc_record.successive_doc_pid = pid
+            await self.update_pid_record(parent_doc_record)
+
+            if int(lineage_record.latest_version) > int(parent_doc_record.version):
+                # Create a new lineage starting in the middle of the document pid lineage
+                new_version = int(parent_doc_record.version) + 1  # TODO: check version of subtree
+                lineage_record = PidRecord(
+                    pid=await self.new_pid(), type=PidType.LINEAGE, first_document_pid=parent_doc_pid,
                     latest_document_pid=pid, latest_version=new_version
                 )
             else:
-                # Increment the version of the existing tree record
-                new_version = pid_tree_record.latest_version + 1
-                pid_tree_record.latest_document_pid = pid
-                pid_tree_record.latest_version = new_version
-                await self.update_pid_record(pid_tree_record)
+                # Increment the version of the existing lineage record
+                new_version = int(lineage_record.latest_version) + 1
+                lineage_record.latest_document_pid = pid
+                lineage_record.latest_version = new_version
+                await self.update_pid_record(lineage_record)
 
         new_pid_record = PidRecord(
             pid=pid,
@@ -128,7 +139,8 @@ class PidService:
             version=new_version,
             url=url,
             parent_doc_pid=parent_doc_pid,
-            tree_pid=pid_tree_record.pid if pid_tree_record else None,
+            lineage_id=lineage_record.pid if lineage_record else None,
+            created_at=datetime.now(PID_TIMEZONE).strftime(PID_DATE_FORMAT)
         )
         return await self.save_pid_record(new_pid_record)
 
@@ -152,7 +164,7 @@ class LocalPidServiceImpl(PidService):
                 self.pids = json.load(f)
                 self.pids = {pid: PidRecord(**data) for pid, data in self.pids.items()}
 
-    async def new_pid(self, prefix: str = None) -> str:
+    async def new_pid(self, prefix: str | None = None) -> str:
         """
         Generate a new unique PID (Persistent Identifier).
         This implementation uses UUID v4 generation.
@@ -168,7 +180,7 @@ class LocalPidServiceImpl(PidService):
         self._save_pids_to_file()
         return pid_record
 
-    async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord:
+    async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord | None:
         if pid not in self.pids:
             if raise_not_found:
                 raise NotFoundException(f"PID record with ID '{pid}' not found")
@@ -210,8 +222,9 @@ class PidServiceImpl(PidService, HandleConnector):
     def __init__(self):
         if not os.path.exists(PID_PRIVATE_KEY_PATH):
             raise FileNotFoundError(f"PID private key file not found: {PID_PRIVATE_KEY_PATH}")
+        super().__init__()
 
-    async def new_pid(self, prefix: str = None) -> str:
+    async def new_pid(self, prefix: str | None = None) -> str:
         if prefix is None:
             prefix = self.prefix
         new_uuid = str(uuid.uuid4())
@@ -221,16 +234,10 @@ class PidServiceImpl(PidService, HandleConnector):
         await self.ensure_authenticated()
         url = HandlePaths.HANDLE.format(pid=pid_record.pid) + "?overwrite=false"
         handle_record_body = HandleRecord.from_pid_record(pid_record).record_values
-        try:
-            await self.send_http_request("PUT", url, data=handle_record_body)
-            return pid_record
-        except IntegrityException as e:
-            # TODO: update
-            if "handle already exists" in str(e).lower():
-                raise ConflictException(f"PID record with ID '{pid_record.pid}' already exists.")
-            raise
+        await self.send_http_request("PUT", url, data=handle_record_body)
+        return pid_record
 
-    async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord:
+    async def get_pid_record(self, pid: str, raise_not_found: bool = True) -> PidRecord | None:
         await self.ensure_authenticated()
         url = HandlePaths.HANDLE.format(pid=pid)
         response = await self.send_http_request("GET", url, raise_not_found=raise_not_found)
@@ -242,14 +249,17 @@ class PidServiceImpl(PidService, HandleConnector):
         await self.ensure_authenticated()
         url = HandlePaths.HANDLE.format(pid=pid_record.pid)
         handle_record_body = HandleRecord.from_pid_record(pid_record).record_values
-        
-        # We don't check for existence first to make the update atomic (let the server handle it)
         await self.send_http_request("PUT", url, data=handle_record_body)
         return pid_record
-    
+
     async def list_document_pids(self, page: int = 0, page_size: int = 10) -> list[str]:
         await self.ensure_authenticated()
-        url = HandlePaths.HANDLES + f"?prefix={PID_PREFIX}&page={page}&pageSize={page_size}"
+        query_params = {
+            "prefix": PID_PREFIX,
+            "page": page,
+            "pageSize": page_size
+        }
+        url = f"{HandlePaths.HANDLES}?{urlencode(query_params)}"
         response = await self.send_http_request("GET", url)
         return response['handles']
 

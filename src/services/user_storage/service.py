@@ -12,7 +12,7 @@ class UserStorageService:
     Interface for user storage operations.
     """
 
-    async def get_user_by_email(self, email: str) -> User:
+    async def get_user_by_email(self, email: str, raise_not_found: bool = True) -> User | None:
         """
         Retrieve a user by their email address.
         """
@@ -24,7 +24,7 @@ class UserStorageService:
         """
         raise NotImplementedError
 
-    async def save_user(self, user: User) -> None:
+    async def save_user(self, user: User) -> User:
         """
         Save a new user to the storage.
         """
@@ -48,7 +48,7 @@ class UserStorageServiceImpl(UserStorageService, SQLEntityDB[DBUser]):
     def __init__(self, session: SessionType):
         super().__init__(session, model_type=DBUser)
 
-    async def get_user_by_email(self, email: str, raise_not_found: bool = True) -> User:
+    async def get_user_by_email(self, email: str, raise_not_found: bool = True) -> User | None:
         users = await self._filter(email=email)
         if len(users) > 1:
             raise ConflictException(f"Multiple users found with email '{email}'")
@@ -61,12 +61,12 @@ class UserStorageServiceImpl(UserStorageService, SQLEntityDB[DBUser]):
     async def get_user_by_id(self, user_id: str) -> User:
         return await super()._get(user_id)
 
-    async def save_user(self, user: User) -> None:
+    async def save_user(self, user: User) -> User:
         db_user = DBUser.from_user(user)
         new_db_user = await super()._create(db_user)
         return new_db_user.to_user()
 
-    async def get_user_emails(self, ids: list[str]) -> list[tuple[str, str]]:
+    async def get_user_emails(self, ids: list[str]) -> dict[str, str]:
         users = await super()._filter(id__in=ids)
         return {user.id: user.email for user in users}
 

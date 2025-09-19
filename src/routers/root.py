@@ -5,7 +5,9 @@ from dishka.integrations.fastapi import DishkaRoute
 from routers.authentication.router import router as authentication_router
 from routers.documents.router import documents_router, document_router
 from routers.pids.router import pids_router, pid_router
-# from routers.permissions.router import router as permissions_router
+from routers.permissions.router import router as permissions_router
+from routers.metadata.router import metadata_router, metadata_schema_router
+from routers.graph.router import router as graph_router
 
 __all__ = ('root_router',)
 
@@ -31,9 +33,12 @@ root_sub_routers: tuple[APIRouter, ...] = (
     authentication_router,
     documents_router,
     document_router,
-    # permissions_router,
+    permissions_router,
     pids_router,
     pid_router,
+    metadata_router,
+    metadata_schema_router,
+    graph_router
 )
 
 for router in root_sub_routers:

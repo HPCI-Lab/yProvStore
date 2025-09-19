@@ -1,7 +1,9 @@
 from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import relationship
 
-from models import User, DocumentRecord, DocumentPermission, PermissionLevel
+from models.permission import DocumentPermission, PermissionLevel
+from models.user import User
+from models.document import DocumentRecord
 from services.db.sql.base import BaseDBModel
 
 
@@ -78,8 +80,20 @@ class DBDocumentRecord(BaseDBModel):
             version=self.version,
             storage_id=self.storage_id,
             owner_id=self.owner_id,
-            parent_doc_pid=self.parent_doc_pid
+            parent_doc_pid=self.parent_doc_pid,
+            created_at=self.created_at,
+            updated_at=self.updated_at
         )
+    
+    def update_from_document_record(self, document_record: DocumentRecord) -> None:
+        """
+        Update this DBDocumentRecord instance from a DocumentRecord instance.
+        """
+        self.id = document_record.pid
+        self.version = document_record.version
+        self.storage_id = document_record.storage_id
+        self.owner_id = document_record.owner_id
+        self.parent_doc_pid = document_record.parent_doc_pid
 
     @classmethod
     def from_document_record(cls, document_record: DocumentRecord) -> 'DBDocumentRecord':

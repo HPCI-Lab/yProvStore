@@ -24,8 +24,6 @@ router = APIRouter(
 )
 
 
-# TODO: manage metadata input
-
 class DocumentRecordCreate(BaseModel):
     """
     Request model for the input data to publish a new document.
@@ -37,14 +35,14 @@ documentation = {
     "summary": "Publish a Document Record",
     "description": ("This endpoint allows the user to publish a new document record with its associated data. "
                     "The document is stored in the system, and a unique identifier (PID) is generated for it."
-                    "\n\nTo upload a document, exectly one of the following fields must be provided: "
+                    "\n\nTo upload a document, exactly one of the following fields must be provided: "
                     "`document_data` in the request body, or `document_file` as a file upload."),
     "status_code": status.HTTP_200_OK,
     "response_description": "Returns the created document record",
     "responses": {
         status.HTTP_401_UNAUTHORIZED: EXCEPTION_SCHEMA[UnauthorizedException],
         status.HTTP_400_BAD_REQUEST: EXCEPTION_SCHEMA[BadRequestException, "Invalid document data provided as input."],
-        status.HTTP_403_FORBIDDEN: EXCEPTION_SCHEMA[ForbiddenException],
+        status.HTTP_403_FORBIDDEN: EXCEPTION_SCHEMA[ForbiddenException, "You do not have permission to create a document under the specified parent document lineage."],
         status.HTTP_404_NOT_FOUND: EXCEPTION_SCHEMA[NotFoundException, "The specified parent document PID does not exist."],
         status.HTTP_503_SERVICE_UNAVAILABLE: EXCEPTION_SCHEMA[ServiceUnavailableException]
     },
@@ -138,9 +136,9 @@ async def create_document(
         document_data_bytes = json.dumps(data.document_data).encode('utf-8')
     else:
         try:
-            if document_file.content_type not in ['application/json', 'text/plain']:
+            if not document_file or not document_file.content_type or document_file.content_type not in ['application/json', 'text/plain']:
                 raise BadRequestException(
-                    f"Unsupported file type: {document_file.content_type}. Only JSON or plain text files are allowed."
+                    "Unsupported file type: " + (document_file.content_type if document_file else "None") + ". Only JSON or plain text files are allowed."
                 )
             document_data_bytes = await document_file.read()
         except Exception as e:
@@ -149,10 +147,8 @@ async def create_document(
 
     new_pid_record = await pid_service.new_pid_record_from_document(new_pid, new_document_record.storage_url, parent_doc_pid=parent_document_pid)
 
-    new_document_record.version = new_pid_record.version
+    new_document_record.version = new_pid_record.version or 1
     new_document_record = await document_record_storage.save_document(new_document_record)
-
-    # TODO: manage metadata
 
     return DocumentRecordGet(
         pid=new_document_record.pid,

@@ -3,7 +3,11 @@ import click
 import json
 from rich.console import Console
 from rich.table import Table
+
 from utils.api_client import make_request
+from .permissions import permissions
+from .metadata import metadata
+from .graph import graph
 
 
 console = Console()
@@ -16,11 +20,17 @@ def documents():
 
 
 @documents.command(name="list")
+@click.option('--page', default=0, show_default=True, type=int, help="Page number (zero-indexed).")
+@click.option('--page-size', default=10, show_default=True, type=int, help="Number of documents per page.")
+@click.option('--updated-after', type=str, help="List only documents updated after this ISO 8601 datetime (e.g., '2024-06-01T00:00:00Z').")
 @click.pass_context
-def list_documents(ctx):
-    """List all available document records."""
+def list_documents(ctx, page, page_size, updated_after):
+    """List all available document records, with pagination and optional updated-after filter."""
     api_url = ctx.obj['API_URL']
-    response = make_request("GET", api_url, "/documents")
+    params = {'page': page, 'page_size': page_size}
+    if updated_after:
+        params['updated_after'] = updated_after
+    response = make_request("GET", api_url, "/documents", params=params)
 
     if response and response.status_code == 200:
         doc_list = response.json()
@@ -28,7 +38,7 @@ def list_documents(ctx):
             console.print("[yellow]No documents found.[/yellow]")
             return
 
-        table = Table(title="Available Provenance Documents")
+        table = Table(title=f"Available Provenance Documents (Page {page}, Size {page_size})")
         table.add_column("PID", style="cyan", no_wrap=True)
         table.add_column("Version", style="magenta")
         table.add_column("Owner", style="green")
@@ -38,6 +48,8 @@ def list_documents(ctx):
             table.add_row(doc['pid'], str(doc['version']), doc['owner_email'], doc.get('parent_document_pid', 'N/A'))
 
         console.print(table)
+    else:
+        console.print(f"❌ [bold red]Error[/bold red] {response.status_code if response else ''}: {response.text if response else 'No response.'}")
 
 
 @documents.command(name="get")
@@ -127,10 +139,10 @@ def download_document(ctx, pid, output, output_folder):
         output_folder = os.path.dirname(output_path)
     elif output_folder:
         # If only a folder is given, construct the path using the PID as the filename
-        output_path = os.path.join(output_folder, f"{pid}.prov")
+        output_path = os.path.join(output_folder, f"{pid}.json")
     else:
         # If no location is specified, save the file in the current directory
-        output_path = f"{pid}.prov"
+        output_path = f"{pid}.json"
         output_folder = os.getcwd()
 
     api_url = ctx.obj['API_URL']
@@ -156,3 +168,8 @@ def download_document(ctx, pid, output, output_folder):
             console.print(f"✅ [bold green]Download complete![/bold green] File saved to [yellow]{output_path}[/yellow].")
         except IOError as e:
             console.print(f"[bold red]Error writing to file:[/bold red] {e}")
+
+
+documents.add_command(permissions)
+documents.add_command(metadata)
+documents.add_command(graph)

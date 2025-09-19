@@ -1,6 +1,6 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 
-from models import PidRecord
+from models import PidRecord, DocumentMetadata
 from application.settings import PID_ADMIN_HANDLE, PID_ADMIN_HANDLE_INDEX, PID_ADMIN_VALUE_INDEX, PID_ADMIN_HANDLE_PERMISSIONS
 from application.exceptions.types import IntegrityException
 from services.pid.handle.base import HandleValue, HandleValueDataAdmin, HandleValueType, HandleValueObject, HandleValueDataFormat
@@ -20,7 +20,7 @@ class MetadataHandleValue(HandleValue):
 
 class AdminHandleValue(HandleValue):
 
-    def __init__(self, handle: str | None = PID_ADMIN_HANDLE, index: int = PID_ADMIN_HANDLE_INDEX, permissions: str | None = PID_ADMIN_HANDLE_PERMISSIONS):
+    def __init__(self, handle: str = PID_ADMIN_HANDLE, index: int = PID_ADMIN_HANDLE_INDEX, permissions: str = PID_ADMIN_HANDLE_PERMISSIONS):
         data = HandleValueObject(
             format=HandleValueDataFormat.ADMIN,
             value=HandleValueDataAdmin(
@@ -56,7 +56,6 @@ class HandleRecord:
         admin_value = None
         for value in record_values:
             if value['type'] == HandleValueType.HS_ADMIN.value:
-                # TODO: check
                 admin_value = AdminHandleValue(
                     handle=value['data']['value']['handle'],
                     index=value['index'],
@@ -90,9 +89,26 @@ class HandleRecord:
             handle_value_type = HandleValueType.from_pid_record_attribute(attribute_name)
             values.append(MetadataHandleValue(
                 index=idx,
-                type=handle_value_type.value,
+                type=handle_value_type,
                 data_value=str(attribute_value)
             ))
+        if pid_record.other:
+            for attribute_name, attribute_value in pid_record.other.items():
+                if attribute_value is None:
+                    continue
+                handle_value_type = HandleValueType.from_pid_record_attribute(attribute_name)
+                
+                # Differentiate metadata indexes and leave space for other possible pid record values
+                try:
+                    metadata_index = list(DocumentMetadata.__dataclass_fields__.keys()).index(attribute_name)
+                except ValueError:
+                    raise IntegrityException(f"Record with PID {pid_record.pid} contains an invalid metadata attribute: {attribute_name}.")
+
+                values.append(MetadataHandleValue(
+                    index=30 + metadata_index,
+                    type=handle_value_type,
+                    data_value=str(attribute_value)
+                ))
 
         return cls(pid=pid_record.pid, values=values, admin_value=AdminHandleValue())
     
@@ -100,7 +116,7 @@ class HandleRecord:
         """
         Converts the HandleRecord back to a PidRecord.
         """
-        pid_record_data = {value.type.value.lower(): value.data.value for value in self.values}
+        pid_record_data = {value.type.value.lower(): (value.data if isinstance(value.data, str) else str(value.data.value)) for value in self.values}
         pid_record_data['pid'] = self.pid
         try:
             return PidRecord(**pid_record_data)

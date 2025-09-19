@@ -4,17 +4,20 @@
 
 yProv is a joint project between [University of Trento](https://www.unitn.it) and [CMCC](https://www.cmcc.it).
 
-**yProvStore** is the backend service of yProv, built with FastAPI and designed to handle the storage and retrieval of provenance data. It provides a RESTful API for interacting with provenance information, allowing users to create and read provenance records.
+**yProvStore** is the backend service of yProv, built with FastAPI and designed to handle the storage and retrieval of provenance data. It provides a RESTful API for interacting with provenance information, allowing users to create and read provenance records, manage document metadata, and handle permissions.
 
 ## Table of Contents
 
 - [yProvStore](#yprovstore)
   - [Table of Contents](#table-of-contents)
   - [Local Development](#local-development)
+    - [TL;DR: Quick Setup & Installation](#tldr-quick-setup--installation)
     - [Python version](#python-version)
     - [Installing Dependencies](#installing-dependencies)
     - [Database Setup](#database-setup)
+    - [Environment Variables (Optional)](#environment-variables-optional)
     - [Running the Application](#running-the-application)
+    - [Available Endpoints](#available-endpoints)
     - [Troubleshooting](#troubleshooting)
   - [yProv-CLI](#yprov-cli)
     - [Installation](#installation)
@@ -23,11 +26,60 @@ yProv is a joint project between [University of Trento](https://www.unitn.it) an
     - [Configuration](#configuration)
     - [Authentication](#authentication)
     - [Managing Documents](#managing-documents)
+    - [Managing Document Permissions](#managing-document-permissions)
+    - [Managing Document Metadata](#managing-document-metadata)
+    - [Graph Operations on Documents](#graph-operations-on-documents)
+    - [Managing PIDs](#managing-pids)
     - [Troubleshooting CLI](#troubleshooting-cli)
 
 ## Local Development
 
 This section provides instructions for setting up the yProvStore project for local development. It covers the prerequisites, dependencies installation, database setup, and how to run the application.
+
+For a quick setup, you can follow the [TL;DR: Quick Setup & Installation](#tldr-quick-setup--installation) section below, otherwise, you can read through the detailed steps provided in the following sections.
+
+### TL;DR: Quick Setup & Installation
+
+1. **Clone the repository:**
+    ```bash
+    git clone https://github.com/HPCI-Lab/yProvStore
+    cd yProvStore
+    ```
+
+2. **Install `uv` (optional, recommended):**
+    ```bash
+    pip install uv
+    ```
+
+3. **Install Python 3.12** (if not already installed).
+    You can use `pyenv` or `uv` to manage Python versions:
+    ```bash
+    uv install python 3.12
+    ```
+
+4. **Install dependencies:**
+    ```bash
+    uv sync
+    ```
+
+5. **Run database migrations:**
+    ```bash
+    uv run alembic upgrade head
+    ```
+
+6. **Start the application:**
+    ```bash
+    uv run src/run.py
+    ```
+
+    > **NOTE**: If you see errors, check the [Troubleshooting](#troubleshooting) and [Environment Variables](#environment-variables-optional) sections for common issues.
+
+7. **Access the API docs:**  
+    Open [http://localhost:8000/docs](http://localhost:8000/docs) in your browser.
+
+    > For CLI usage, run `source prepare_cli.sh` (Linux/macOS) or `call prepare_cli.bat` (Windows) before using `yprov` commands. More details can be found in the [yProv-CLI](#yprov-cli) section below.
+
+---
 
 ### Python version
 
@@ -80,6 +132,7 @@ If you need to change any environment variables, you can create a `.env` file in
 LOG_LEVEL=DEBUG  # Default: INFO
 PID_PRIVATE_KEY_PATH=/path/to/private/key.pem  # Path to the private key for PID service (will throw an error if not set and USE_LOCAL_PID_SERVICE is False)
 USE_LOCAL_PID_SERVICE=True  # Set to True to use the local PID service for testing purposes (default is False)
+USE_LOCAL_FILE_STORAGE_SERVICE=True  # Set to True to use local file storage instead of MinIO (default is False)
 ```
 
 The other environment variables can be seen in the `src/application/settings.py` file, where they are defined with default values. You can override these defaults by setting them in your `.env` file.
@@ -96,6 +149,11 @@ uv run src/run.py
 Thanks to `uv`, this command will automatically activate the virtual environment and run the FastAPI application.
 
 You can now go to your web browser and navigate to `http://localhost:8000/docs` to access the interactive API documentation provided by FastAPI. This interface allows you to test the API endpoints and explore the available functionality.
+
+### Available Endpoints
+
+![OpenAPI Endpoints 1](documentation/images/openapi_1.png)
+![OpenAPI Endpoints 2](documentation/images/openapi_2.png)
 
 ### Troubleshooting
 
@@ -121,6 +179,34 @@ It means that the application is trying to use the PID service, but the private 
 2. Set the `USE_LOCAL_PID_SERVICE` environment variable to `True` in your `.env` file if you only need to test locally.
 
 More details on this can be found in the [Environment Variables](#environment-variables-optional) section above.
+
+## Application Deployment with Docker
+
+The application can also be deployed using Docker and Docker Compose. This allows you to run the application in a containerized environment, making it easier to manage dependencies and configurations.
+
+To deploy the application using Docker, follow these steps:
+
+1. Make sure you have Docker and Docker Compose installed on your machine.
+2. Create a `.env` file in the root directory of the project and define the necessary environment variables.
+   
+    ```
+    PID_PRIVATE_KEY_PATH=/path/to/private/key.pem  # Path to the private key for PID service (will throw an error if not set and USE_LOCAL_PID_SERVICE is False)
+    MINIO_ROOT_USER=<your_minio_root_user>
+    MINIO_ROOT_PASSWORD=<your_minio_root_password>
+    MINIO_BUCKET=<your_minio_bucket>  # default: yprov-documents
+    ```
+
+    > Additional environment variables can be set as needed. See the file `src/application/settings.py` for more details.
+
+3. Run the following command to start the application:
+
+    ```bash
+    docker-compose up --build  # Add -d to run in detached mode
+    ```
+
+4. Now you need to also manually create the MinIO bucket defined in the `MINIO_BUCKET` environment variable. You can do this by accessing the MinIO web interface at `http://localhost:9001` and logging in with the root user and password you defined in the `.env` file. Once logged in, create a new bucket with the name specified in `MINIO_BUCKET`.
+5. Now you can access the API documentation at `http://localhost:8000/docs` and the documents will be uploaded to the MinIO bucket you created.
+
 
 ## yProv-CLI
 
@@ -149,7 +235,7 @@ This will set up the CLI environment by initiating the virtual environment and m
 
 **Prepare the CLI before its usage:**
 
-In general, remember to always run `source prepare_cli.sh` before using the CLI to ensure that the environment is set up correctly.
+In general, remember to always run `source prepare_cli.sh` (or `call prepare_cli.bat` on Windows) before using the CLI to ensure that the environment is set up correctly.
 This should be done not only when you first install the CLI, but also whenever you open a new terminal session where you want to use the CLI.
 
 
@@ -172,9 +258,17 @@ yprov auth login
 yprov auth verify
 yprov auth logout
 yprov documents create --json-file <path/to/document.json> [--parent-pid <parent_pid>]
-yprov documents list
+yprov documents list [--page <page_number>] [--page-size <page_size>] [--updated-after <timestamp>]
 yprov documents get <document_pid>
 yprov documents download <document_pid> [--output-folder <path>] [--output <file_path>]
+yprov documents permissions add <document_pid> --user-email <email> --permission-level <level>
+yprov documents permissions list <document_pid>
+yprov documents permissions delete <document_pid> --user-email <email>
+yprov documents metadata get <document_pid>
+yprov documents metadata update <document_pid> --key1 <key1> --key2 <value2>
+yprov documents metadata schema
+yprov documents graph list <document_pid> [--entity-types <type>] [--entity-ids <id>] [--is-element] [--is-relation] [--in-json] [--display-data] [--output <file_path>]
+yprov documents graph subgraph <document_pid> --entity-id <entity_id> [--direction <direction>] [--output <file_path>]
 yprov pids list [--page <page_number>] [--page-size <page_size>]
 yprov pids get <pid>
 ```
@@ -204,6 +298,10 @@ The CLI defaults to connecting to `http://127.0.0.1:8000`. You can specify a dif
     ```bash
     export YPROV_API_URL="http://your-api-server.com:8000"
     ```
+    > Or on Windows:
+    > ```cmd
+    > set YPROV_API_URL="http://your-api-server.com:8000"
+    > ```
 
     You can then check the status of the API server with:
 
@@ -259,11 +357,41 @@ Once authenticated, you can create, list, and download provenance documents.
       --parent-pid <parent_pid_here>
     ```
 
-  * **List all available documents**.
+  * **List all available documents** (with pagination).
 
     ```bash
-    yprov documents list
+    yprov documents list [--page <page_number>] [--page-size <page_size>] [--updated-after <timestamp>]
     ```
+
+    - `--page <page_number>`: Page number to retrieve (zero-indexed, default: 0).
+    - `--page-size <page_size>`: Number of documents per page (default: 10).
+    - `--updated-after <timestamp>`: Only return documents updated after this timestamp (ISO 8601 format, e.g., `2024-06-01T00:00:00Z` or `2024-06-01`).
+
+    Examples:
+
+    * List the first page (default 10 items):
+
+      ```bash
+      yprov documents list
+      ```
+
+    * List the third page (page 2, zero-indexed) with 50 items per page:
+
+      ```bash
+      yprov documents list --page 2 --page-size 50
+      ```
+
+    * List documents updated after June 1, 2024:
+
+      ```bash
+      yprov documents list --updated-after 2024-06-01
+      ```
+
+    * List documents updated after a specific timestamp:
+
+      ```bash
+      yprov documents list --updated-after 2024-06-01T00:00:00Z
+      ```
 
   * **Get detailed information** for a specific document by its PID.
 
@@ -285,7 +413,7 @@ Once authenticated, you can create, list, and download provenance documents.
                                 default to the document's PID.
     ```
 
-    * Save to the current directory (e.g., `<pid>.prov`):
+    * Save to the current directory (e.g., `<pid>.json`):
 
       ```bash
       yprov documents download <your_document_pid>
@@ -331,7 +459,7 @@ Once authenticated, you can create, list, and download provenance documents.
                                   default to the document's PID.
       ```
       
-      * Save to the current directory (e.g., `<pid>.prov`):
+      * Save to the current directory (e.g., `<pid>.json`):
       
         ```bash
         yprov documents download <your_document_pid>
@@ -347,6 +475,241 @@ Once authenticated, you can create, list, and download provenance documents.
 
 -----
 
+### Managing Document Permissions
+
+You can grant or view permissions on documents. Internally, all permissions live on the *first version* of a document—adding or listing against any version will target that root document.
+
+* **Add a permission**
+
+  ```bash
+  yprov documents permissions add <prefix/id> \
+    --user-email user@example.com \
+    --permission-level write
+  ```
+
+  Notes:
+
+  * PID **must** be in `prefix/id` form.
+  * Permissions are always stored on the first version; granting on v2 or v3 still writes to v1.
+  * The first version document must already reside on this server instance.
+  * Although `read` is supported by the service, setting `read` on already‑public docs may result in an error.
+
+- **List permissions**
+
+  ```bash
+  yprov documents permissions list <pid>
+  ```
+
+  `<pid>` must be `prefix/id`. This shows every user and their permission level on that document’s first version.
+
+- **Delete a permission**
+
+  ```bash
+  yprov documents permissions delete <prefix/id> --user-email user@example.com
+  ```
+
+  This command deletes the permission for the specified user on the document's first version. The `<prefix/id>` can be provided in the same way as in the list command.
+
+  You must be the owner of the first version of the document to delete permissions. If you are not the owner, you will receive a `403 Forbidden` error.
+
+-----
+
+### Managing Document Metadata
+
+
+You can manage metadata for documents, including retrieving and updating it.
+
+- **Get metadata for a document**
+
+  ```bash
+  yprov documents metadata get <document_pid>
+  ```
+
+  This command retrieves the metadata associated with the specified document PID.
+
+- **Update metadata for a document**
+
+  ```bash
+  yprov documents metadata update <document_pid> --key <value>
+  ```
+
+  This command updates the metadata for the specified document PID.
+  You can specify multiple key-value pairs to update multiple metadata fields at once.
+  To set a list field, use multiple invocations of the same option, or pass a list as a comma-separated string.
+  For example:
+
+  ```bash
+  yprov documents metadata update <document_pid> --title "New Title" --keywords keyword1 --keywords keyword2
+  # or
+  yprov documents metadata update <document_pid> --title "New Title" --keywords "keyword1,keyword2"
+  ```
+  
+  # This command will empty both title and keywords:
+  yprov documents metadata update <document_pid> --title "" --keywords ""
+  ```
+  
+  - The PID must be fully qualified (prefix/id).
+  - Only passed fields will be updated; existing fields not specified will remain unchanged.
+  - Before updating, the command will validate the provided fields against the metadata schema fetched from the server.
+  - Fields not defined in the schema will be ignored.
+  - To set an empty field, use an empty string
+  - To set a list field, use multiple invocations of the same option.
+  - To update a list field, you need to pass the entire list each time.
+  - If no fields are provided, the command will exit with a warning.
+  - To update metadata for a document, you must be the owner of the document or have write permissions on it.
+
+- **Get metadata schema**
+
+  You can retrieve the metadata schema, which defines the structure and fields of the metadata.
+
+  ```bash
+  yprov documents metadata schema
+  ```
+
+  The schema defines the structure and fields that can be used in document metadata.
+
+  Example output:
+
+  ```
+  > yprov documents metadata schema
+                              Document Metadata Schema
+  ┌─────────────┬──────────────┬──────────┬────────────────────────────────────────┐
+  │ Field       │ Type         │ Required │ Example                                │
+  ├─────────────┼──────────────┼──────────┼────────────────────────────────────────┤
+  │ title       │ string       │ No       │ Sample Document Title                  │
+  │ description │ string       │ No       │ This is a sample document description. │
+  │ keywords    │ list[string] │ No       │ ['keyword1', 'keyword2']               │
+  └─────────────┴──────────────┴──────────┴────────────────────────────────────────┘
+  ```
+
+-----
+
+### Graph Operations on Documents
+
+You can explore and analyze the provenance graph structure of documents. Graph operations allow you to list elements or extract a self-contained subgraph by tracing relationships from specific starting points.
+
+* **List graph elements**
+
+  ```bash
+  yprov documents graph list <prefix/id> [OPTIONS]
+  ```
+
+  This command lists all elements in a provenance document's graph, including entities, agents, activities, and relationships.
+
+  Options:
+
+  * `--entity-types, -t`   Filter by entity types (can be used multiple times). Examples: `entity`, `agent`, `activity`, `wasDerivedFrom`, `wasGeneratedBy`
+  * `--entity-ids, -e`     Filter by specific entity IDs (can be used multiple times)
+  * `--is-element, -ie`    Filter by whether the entity is an element (boolean flag)
+  * `--is-relation, -ir`   Filter by whether the entity is a relation (boolean flag)
+  * `--in-json, -j`        Output results in JSON format with complete data
+  * `--display-data, -d`   Include the data field in the console table output
+  * `--output, -o`         Save results to a file path (writes complete JSON data)
+
+  Examples:
+
+  * List all graph elements for a document:
+
+    ```bash
+    yprov documents graph list myprefix/1234
+    ```
+
+  * Filter by specific entity types:
+
+    ```bash
+    yprov documents graph list myprefix/1234 --entity-types entity --entity-types agent
+    # or, shorter:
+    yprov documents graph list myprefix/1234 -t entity -t agent
+    ```
+
+  * Filter by entity which are elements:
+
+    ```bash
+    yprov documents graph list myprefix/1234 --is-element
+    # or, shorter:
+    yprov documents graph list myprefix/1234 -ie
+    ```
+
+  * Filter by entity which are relations:
+
+    ```bash
+    yprov documents graph list myprefix/1234 --is-relation
+    # or, shorter:
+    yprov documents graph list myprefix/1234 -ir
+    ```
+
+  * Filter by entity IDs and display data in the console:
+
+    ```bash
+    yprov documents graph list myprefix/1234 --entity-ids "my_entity_1" --display-data
+    ```
+
+  * Save results to a JSON file:
+
+    ```bash
+    yprov documents graph list myprefix/1234 --output /path/to/graph_elements.json
+    ```
+
+  * Get JSON output in the console:
+
+    ```bash
+    yprov documents graph list myprefix/1234 --in-json
+    ```
+
+  Notes:
+
+  * The PID **must** be in `prefix/id` format.
+  * The command displays a table with columns: ID, Type, Group, Is Element, Is Relation.
+  * Use `--display-data` to see the actual data content of each element in the console.
+  * Multiple filters can be combined (e.g., both entity types and entity IDs).
+  * The output includes any warnings from the server and a total count of elements found.
+
+
+-----
+
+  * **Extract a subgraph**
+
+    ```bash
+    yprov documents graph subgraph <prefix/id> [OPTIONS]
+    ```
+
+    This command extracts a self-contained subgraph by tracing the provenance relationships from one or more starting entity IDs. The result is a valid **PROV-JSON** document.
+
+    **Options:**
+
+      * `--entity-id, -e` **[Required]** An entity ID to start the traversal from (can be used multiple times).
+      * `--direction, -d` The direction for traversal: `forward`, `backward`, or `both` (default: `both`).
+      * `--output, -o` Save the resulting PROV-JSON subgraph to a file.
+
+    **Examples:**
+
+      * Extract a subgraph tracing **forward** from a single entity and save it:
+
+        ```bash
+        yprov documents graph subgraph myprefix/1234 --entity-id "my_activity_1" --direction forward --output subgraph.json
+        ```
+
+      * Get a **backward** trace from an entity, printing the JSON to the console:
+
+        ```bash
+        yprov documents graph subgraph myprefix/1234 -e "final_product" -d backward
+        ```
+
+      * Trace in **both** directions from multiple starting points:
+
+        ```bash
+        yprov documents graph subgraph myprefix/1234 -e "entity_A" -e "entity_B"
+        ```
+
+    **Notes:**
+
+      * You **must** provide at least one `--entity-id`.
+      * The output is always a PROV-JSON document, not a table.
+      * If the resulting JSON is too large to display in the console, it will be automatically saved to a file named `subgraph_<prefix>_<id>.json`.
+      * Any warnings from the server are always displayed.
+
+-----
+
 ### Managing PIDs
 
 `yProvStore` additionally provides some proxy methods to retrieve PID records directly from the underlying PID service (Handle System).
@@ -355,38 +718,33 @@ The `pids` group lets you list and retrieve PID records from your PID service.
 
 * **List PIDs** (with optional pagination)
 
-```bash
-  yprov pids list [OPTIONS]
-```
-
-Options:
-
-* `--page INTEGER`       Page number (zero‑indexed). Default: `0`
-* `--page-size INTEGER`   Number of items per page. Default: `25`
-
-Examples:
-
-* List the first page (25 items):
-
   ```bash
-  yprov pids list
-  ```
-* List page 2 (zero‑indexed, i.e. the third page) with 50 items per page:
-
-  ```bash
-  yprov pids list --page 2 --page-size 50
+    yprov pids list [OPTIONS]
   ```
 
-- **Get a PID record** (by prefix/id or by id only)
+  Options:
+
+  * `--page INTEGER`       Page number (zero‑indexed). Default: `0`
+  * `--page-size INTEGER`   Number of items per page. Default: `10`
+
+  Examples:
+
+  * List the first page (10 items):
+
+    ```bash
+    yprov pids list
+    ```
+  * List page 2 (zero‑indexed, i.e. the third page) with 50 items per page:
+
+    ```bash
+    yprov pids list --page 2 --page-size 50
+    ```
+
+- **Get a PID record** (by prefix/id)
 
   ```bash
   yprov pids get <PID>
   ```
-
-  The `<PID>` argument can be provided in two ways:
-
-  * **`prefix/id`** — explicitly specify both prefix and identifier
-  * **`id`** — omit the prefix, and the service will use your application’s default prefix
 
   Examples:
 
@@ -394,11 +752,6 @@ Examples:
 
     ```bash
     yprov pids get myprefix/1234
-    ```
-  * Retrieve a record using the default prefix:
-
-    ```bash
-    yprov pids get 1234
     ```
 
 

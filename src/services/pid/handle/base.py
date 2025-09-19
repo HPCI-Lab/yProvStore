@@ -15,9 +15,11 @@ class HandleValueType(Enum):
     TYPE = "TYPE"
     VERSION = "VERSION"
     PARENT_DOC_PID = "PARENT_DOC_PID"
-    TREE_PID = "TREE_PID"
+    SUCCESSIVE_DOC_PID = "SUCCESSIVE_DOC_PID"
+    LINEAGE_ID = "LINEAGE_ID"
+    CREATED_AT = "CREATED_AT"
 
-    # Tree PID record attributes
+    # Lineage PID record attributes
     FIRST_DOCUMENT_PID = "FIRST_DOCUMENT_PID"
     LATEST_DOCUMENT_PID = "LATEST_DOCUMENT_PID"
     LATEST_VERSION = "LATEST_VERSION"
@@ -26,6 +28,7 @@ class HandleValueType(Enum):
     TITLE = "TITLE"
     DESCRIPTION = "DESCRIPTION"
     KEYWORDS = "KEYWORDS"
+    AUTHOR = "AUTHOR"
     # ...
 
     @classmethod
@@ -132,11 +135,11 @@ class HandleValue:
     def __post_init__(self):
         if isinstance(self.type, str):
             self.type = HandleValueType(self.type)
-        if type == HandleValueType.HS_ADMIN:
+        if self.type == HandleValueType.HS_ADMIN:
             if not isinstance(self.data, HandleValueObject) or self.data.format != HandleValueDataFormat.ADMIN \
                 or not isinstance(self.data.value, HandleValueDataAdmin):
                 raise ValueError("HS_ADMIN type must have data in HandleValueObject format with ADMIN value type.")
-        elif type == HandleValueType.HS_VLIST:
+        elif self.type == HandleValueType.HS_VLIST:
             if not isinstance(self.data, HandleValueObject) or self.data.format != HandleValueDataFormat.VLIST \
                 or not isinstance(self.data.value, list) or not all(isinstance(item, HandleValueDataListItem) for item in self.data.value):
                 raise ValueError("HS_VLIST type must have data in HandleValueObject format with VLIST value type containing a list of HandleValueDataListItem.")

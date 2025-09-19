@@ -5,7 +5,7 @@ from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
 from application.documentation.openapi_generation import EXAMPLE_UUID
 from services.pid.service import PidService
-from application.settings import PID_ADMIN_HANDLE, PID_ADMIN_HANDLE_INDEX, PID_ADMIN_HANDLE_PERMISSIONS, PID_PREFIX
+from application.settings import PID_ADMIN_HANDLE, PID_ADMIN_HANDLE_INDEX, PID_ADMIN_HANDLE_PERMISSIONS
 
 __all__ = ("router",)
 
@@ -29,7 +29,7 @@ documentation = {
                 "application/json": {
                     "example": {
                         "responseCode": 1,
-                        "handle": f"{PID_PREFIX}/{EXAMPLE_UUID}",
+                        "handle": f"{EXAMPLE_UUID}",
                         "values": [
                             {
                                 "index": 100,
@@ -79,19 +79,3 @@ async def get_pid_prefix(
     record_pid = await pid_service.get_document_pid(pid)
 
     return record_pid
-
-
-@router.get("/{pid}", **documentation)
-async def get_pid(
-    pid: str,
-    pid_service: FromDishka[PidService]
-) -> dict:
-    """
-    Endpoint to retrieve a specific PID record from the PID service.
-    This endpoint retrieves the PID record for the specified PID.
-    """
-    return await get_pid_prefix(
-        pid=pid,
-        prefix=PID_PREFIX,
-        pid_service=pid_service
-    )

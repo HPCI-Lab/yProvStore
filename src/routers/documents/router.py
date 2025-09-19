@@ -19,11 +19,6 @@ documents_router.include_router(list_router)
 documents_router.include_router(create_router)
 
 
-
-# TODO: add to documentation that prefix is not passed (or endpoints fail)
-#       !! OR CREATE A NEW ROUTER FOR DOCUMENTS WITH PREFIX !!
-
-
 document_router = APIRouter(
     prefix="/documents",
     tags=["Provenance Documents"],

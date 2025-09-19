@@ -1,4 +1,4 @@
-import logging
+import logging.config
 import os
 from dataclasses import dataclass, asdict, field
 
@@ -10,11 +10,19 @@ class LastPartFilter(logging.Filter):
         cwd = os.getcwd()
         module_path = []
         split_path = record.pathname[len(cwd)::].rsplit('\\')
+        if len(split_path) == 1:
+            split_path = record.pathname[len(cwd)::].rsplit('/')
         for split in split_path:
+            if split == '' or split == '.':
+                continue
             module_path.append(split.lower())
-        module_path[-1] = module_path[-1].split(".")[0]
-        module_path = module_path[1:]
-        record.module_path = ".".join(module_path)
+        if module_path[0] == '.venv':
+            # /.venv/lib/python3.12/site-packages/...
+            module_path = module_path[3:]
+        if module_path:
+            module_path[-1] = module_path[-1].split(".")[0]
+            module_path = module_path[1:]
+            record.module_path = ".".join(module_path)
         return True
 
 
