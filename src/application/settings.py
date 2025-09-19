@@ -27,6 +27,7 @@ if not TMP_PATH.exists():
     TMP_PATH.mkdir(parents=True, exist_ok=True)
 
 USE_LOCAL_PID_SERVICE = os.getenv("USE_LOCAL_PID_SERVICE", "False").lower() in ("true", "1", "yes")
+USE_LOCAL_FILE_STORAGE_SERVICE = os.getenv("USE_LOCAL_FILE_STORAGE_SERVICE", "False").lower() in ("true", "1", "yes")
 
 # === PID Service Settings === #
 PID_PREFIX = os.getenv("PID_PREFIX", "21.T11961")
@@ -36,3 +37,15 @@ PID_PRIVATE_KEY_PATH = os.getenv("PID_PRIVATE_KEY_PATH", "keys/admpriv.pem")
 PID_ADMIN_HANDLE = os.getenv("PID_ADMIN_HANDLE", "0.NA/21.T11961")
 PID_ADMIN_HANDLE_INDEX = int(os.getenv("PID_ADMIN_HANDLE_INDEX", 300))
 PID_ADMIN_HANDLE_PERMISSIONS = os.getenv("PID_ADMIN_HANDLE_PERMISSIONS", "011111110011")  # TODO: Verify permissions
+
+# === MinIO Settings === #
+MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "yprovstore-minio:9000")
+MINIO_ACCESS_KEY = os.getenv("MINIO_ROOT_USER", "minioadmin")  # TODO: is it okay to use root user?
+MINIO_SECRET_KEY = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
+MINIO_BUCKET = os.getenv("MINIO_BUCKET", "yprov-documents")
+MINIO_SECURE = os.getenv("MINIO_SECURE", "True").lower() in ("true", "1", "yes")
+MINIO_REGION = os.getenv("MINIO_REGION", None)
+
+# Validate minio endpoint name does not contain underscores
+if MINIO_ENDPOINT and '_' in MINIO_ENDPOINT.split(':')[0]:
+    raise ValueError("MINIO_ENDPOINT cannot contain underscores in the hostname part.")

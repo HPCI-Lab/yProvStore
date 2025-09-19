@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy import create_engine, DateTime, Column, func, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -6,7 +8,8 @@ from application.settings import DB_CONNECTION_STRING, DEBUG
 
 Base = declarative_base()
 
-engine = create_engine(DB_CONNECTION_STRING, echo=DEBUG)
+engine = create_engine(DB_CONNECTION_STRING, echo=False)
+logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
 
 # Create all tables
 Base.metadata.create_all(engine)

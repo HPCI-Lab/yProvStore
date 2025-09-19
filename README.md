@@ -132,6 +132,7 @@ If you need to change any environment variables, you can create a `.env` file in
 LOG_LEVEL=DEBUG  # Default: INFO
 PID_PRIVATE_KEY_PATH=/path/to/private/key.pem  # Path to the private key for PID service (will throw an error if not set and USE_LOCAL_PID_SERVICE is False)
 USE_LOCAL_PID_SERVICE=True  # Set to True to use the local PID service for testing purposes (default is False)
+USE_LOCAL_FILE_STORAGE_SERVICE=True  # Set to True to use local file storage instead of MinIO (default is False)
 ```
 
 The other environment variables can be seen in the `src/application/settings.py` file, where they are defined with default values. You can override these defaults by setting them in your `.env` file.
@@ -178,6 +179,34 @@ It means that the application is trying to use the PID service, but the private 
 2. Set the `USE_LOCAL_PID_SERVICE` environment variable to `True` in your `.env` file if you only need to test locally.
 
 More details on this can be found in the [Environment Variables](#environment-variables-optional) section above.
+
+## Application Deployment with Docker
+
+The application can also be deployed using Docker and Docker Compose. This allows you to run the application in a containerized environment, making it easier to manage dependencies and configurations.
+
+To deploy the application using Docker, follow these steps:
+
+1. Make sure you have Docker and Docker Compose installed on your machine.
+2. Create a `.env` file in the root directory of the project and define the necessary environment variables.
+   
+    ```
+    PID_PRIVATE_KEY_PATH=/path/to/private/key.pem  # Path to the private key for PID service (will throw an error if not set and USE_LOCAL_PID_SERVICE is False)
+    MINIO_ROOT_USER=<your_minio_root_user>
+    MINIO_ROOT_PASSWORD=<your_minio_root_password>
+    MINIO_BUCKET=<your_minio_bucket>  # default: yprov-documents
+    ```
+
+    > Additional environment variables can be set as needed. See the file `src/application/settings.py` for more details.
+
+3. Run the following command to start the application:
+
+    ```bash
+    docker-compose up --build  # Add -d to run in detached mode
+    ```
+
+4. Now you need to also manually create the MinIO bucket defined in the `MINIO_BUCKET` environment variable. You can do this by accessing the MinIO web interface at `http://localhost:9001` and logging in with the root user and password you defined in the `.env` file. Once logged in, create a new bucket with the name specified in `MINIO_BUCKET`.
+5. Now you can access the API documentation at `http://localhost:8000/docs` and the documents will be uploaded to the MinIO bucket you created.
+
 
 ## yProv-CLI
 
