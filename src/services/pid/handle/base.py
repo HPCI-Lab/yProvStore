@@ -18,6 +18,8 @@ class HandleValueType(Enum):
     SUCCESSIVE_DOC_PID = "SUCCESSIVE_DOC_PID"
     LINEAGE_ID = "LINEAGE_ID"
     CREATED_AT = "CREATED_AT"
+    HASH = "HASH"
+    HASH_ALGORITHM = "HASH_ALGORITHM"
 
     # Lineage PID record attributes
     FIRST_DOCUMENT_PID = "FIRST_DOCUMENT_PID"

@@ -21,11 +21,11 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
     op.create_table('document_records',
-    sa.Column('id', sa.String(), nullable=False),
-    sa.Column('version', sa.String(), nullable=False),
-    sa.Column('storage_id', sa.String(), nullable=False),
-    sa.Column('owner_id', sa.String(), nullable=False),
-    sa.Column('parent_doc_pid', sa.String(), nullable=True),
+    sa.Column('id', sa.String(255), nullable=False),
+    sa.Column('version', sa.String(50), nullable=False),
+    sa.Column('storage_id', sa.String(255), nullable=False),
+    sa.Column('owner_id', sa.String(255), nullable=False),
+    sa.Column('parent_doc_pid', sa.String(255), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
     sa.Column('deleted', sa.Boolean(), nullable=False),

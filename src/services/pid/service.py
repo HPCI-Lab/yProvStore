@@ -71,15 +71,18 @@ class PidService:
         raise NotImplementedError
 
     async def new_pid_record_from_document(
-        self, pid: str, url: str, parent_doc_pid: str | None = None, allow_lineage_branching: bool = False,
+        self, pid: str, url: str, parent_doc_pid: str | None = None, hash: str | None = None, 
+        allow_lineage_branching: bool = False,
     ) -> PidRecord:
         """
         Create a new PID record from a document.
         This method manages the creation of a PID lineage if the parent document PID is provided.
+        !! Note: This method does not save the new PID record to the storage. It only creates the record object.
 
         :param pid: The PID to use for the new document. If None, a new PID will be generated.
         :param url: The storage url of the document.
         :param parent_doc_pid: The PID of the parent document, if any.
+        :param hash: Optional hash 256 of the document content.
         :param allow_lineage_branching: If True, allows creating a new lineage even if the latest version of the parent document is higher than the current document version.
         :return: A PidRecord object of the new created document.
         """
@@ -138,11 +141,13 @@ class PidService:
             type=PidType.DOCUMENT,
             version=new_version,
             url=url,
+            hash=hash,
+            hash_algorithm="sha256" if hash else None,
             parent_doc_pid=parent_doc_pid,
             lineage_id=lineage_record.pid if lineage_record else None,
             created_at=datetime.now(PID_TIMEZONE).strftime(PID_DATE_FORMAT)
         )
-        return await self.save_pid_record(new_pid_record)
+        return new_pid_record
 
 
 class LocalPidServiceImpl(PidService):

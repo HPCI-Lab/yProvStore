@@ -19,6 +19,10 @@ yProv is a joint project between [University of Trento](https://www.unitn.it) an
     - [Running the Application](#running-the-application)
     - [Available Endpoints](#available-endpoints)
     - [Troubleshooting](#troubleshooting)
+      - [1. Empty database error](#1-empty-database-error)
+      - [2. Missing PID private key error](#2-missing-pid-private-key-error)
+      - [3. MinIO bucket error](#3-minio-bucket-error)
+  - [Application Deployment with Docker](#application-deployment-with-docker)
   - [yProv-CLI](#yprov-cli)
     - [Installation](#installation)
     - [Basic Command Structure](#basic-command-structure)
@@ -66,6 +70,28 @@ For a quick setup, you can follow the [TL;DR: Quick Setup & Installation](#tldr-
     ```bash
     uv run alembic upgrade head
     ```
+
+5. **Create a `.env` file** in the root directory to set necessary environment variables. For local testing, you can use:
+    ```env
+    USE_LOCAL_PID_SERVICE=True  # Uses a mocked version of the PID service for local testing
+    USE_LOCAL_FILE_STORAGE_SERVICE=True  # Uses local file storage instead of MinIO for local testing
+    ```
+
+    Or, if you want to connect to the real PID service, provide the path to your private key:
+    ```env
+    PID_PRIVATE_KEY_PATH=keys/admpriv.pem
+    USE_LOCAL_PID_SERVICE=False
+    USE_LOCAL_FILE_STORAGE_SERVICE=True  # Still using local file storage for testing
+    ```
+
+    > If you want to use MinIO for file storage, set the following variables instead of `USE_LOCAL_FILE_STORAGE_SERVICE=True`:
+    > ```env
+    > MINIO_ROOT_USER=minioadmin
+    > MINIO_ROOT_PASSWORD=minioadmin
+    > MINIO_BUCKET_NAME=yprov-documents
+    > MINIO_ENDPOINT=localhost:9000  # Change if your MinIO server (for example within docker which whould be `yprovstore-minio:9000` which is the default value)
+    > MINIO_SECURE=False  # !! IMPORTANT: if testing locally you need to disable HTTPS
+    > ```
 
 6. **Start the application:**
     ```bash
@@ -129,7 +155,7 @@ This command will apply all pending migrations to your database, ensuring that i
 If you need to change any environment variables, you can create a `.env` file in the root directory of the project. This file can contain any environment-specific configurations, such as database connection strings or API keys. Some usefule environment variables are:
 
 ```env
-LOG_LEVEL=DEBUG  # Default: INFO
+LOG_LEVEL=INFO  # Change to DEBUG for more verbose logging
 PID_PRIVATE_KEY_PATH=/path/to/private/key.pem  # Path to the private key for PID service (will throw an error if not set and USE_LOCAL_PID_SERVICE is False)
 USE_LOCAL_PID_SERVICE=True  # Set to True to use the local PID service for testing purposes (default is False)
 USE_LOCAL_FILE_STORAGE_SERVICE=True  # Set to True to use local file storage instead of MinIO (default is False)
@@ -157,6 +183,8 @@ You can now go to your web browser and navigate to `http://localhost:8000/docs` 
 
 ### Troubleshooting
 
+#### 1. Empty database error
+
 If you encounter this error when running the application:
 
 ```
@@ -166,6 +194,8 @@ Exception: Database is empty (no tables), verify your configuration and migratio
 It means that the database has not been initialized yet. To resolve this, ensure you have run the Alembic migrations as described in the [Database Setup](#database-setup) section above.
 
 -----
+
+#### 2. Missing PID private key error
 
 If you encounter this error when running the application:
 
@@ -180,6 +210,21 @@ It means that the application is trying to use the PID service, but the private 
 
 More details on this can be found in the [Environment Variables](#environment-variables-optional) section above.
 
+-----
+
+#### 3. MinIO bucket error
+
+```
+Uploading document from JSON file: examples/prov_valid.json
+Error 503:
+{'description': 'Failed to ensure storage bucket.'}
+❌ Error : No response.
+```
+
+If you encounter this error when trying to upload a document, it means that the bucket was not created on MinIO. To resolve this, you need to manually create the bucket defined in the `MINIO_BUCKET` environment variable. You can do this by accessing the MinIO web interface at `http://localhost:9001` and logging in with the root user and password you defined in the `.env` file (default is `minioadmin` with password `minioadmin`). Once logged in, create a new bucket with the name specified in `MINIO_BUCKET` (default name is `yprov-documents`).
+
+Alternatively, you may be missing `MINIO_SECURE=False` in your `.env` file if you are using an insecure connection (HTTP instead of HTTPS which is the case of local testing).
+
 ## Application Deployment with Docker
 
 The application can also be deployed using Docker and Docker Compose. This allows you to run the application in a containerized environment, making it easier to manage dependencies and configurations.
@@ -190,10 +235,12 @@ To deploy the application using Docker, follow these steps:
 2. Create a `.env` file in the root directory of the project and define the necessary environment variables.
    
     ```
+    JWT_SECRET_KEY=your_secret_key  # Change this to a secure random value
     PID_PRIVATE_KEY_PATH=/path/to/private/key.pem  # Path to the private key for PID service (will throw an error if not set and USE_LOCAL_PID_SERVICE is False)
     MINIO_ROOT_USER=<your_minio_root_user>
     MINIO_ROOT_PASSWORD=<your_minio_root_password>
     MINIO_BUCKET=<your_minio_bucket>  # default: yprov-documents
+    MINIO_SECURE=False  # !! IMPORTANT: if testing locally you need to disable HTTPS
     ```
 
     > Additional environment variables can be set as needed. See the file `src/application/settings.py` for more details.

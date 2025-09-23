@@ -1,9 +1,13 @@
+import hashlib
 import io
 import importlib
 import logging
+import os
+import tempfile
 from typing import Optional
 
 from dishka import Provider, provide, Scope
+from fastapi import UploadFile
 
 from application import settings
 from application.settings import TMP_PATH
@@ -14,18 +18,39 @@ logger = logging.getLogger(__name__)
 
 class FileStorageService:
 
-    async def store_file(self, storage_id: str, file_data: bytes) -> None:
+    async def store_file(self, storage_id: str, file_data: bytes) -> str:
         """
         Store a file in the storage system.
+        Already reads all data into memory, so not suitable for large files.
 
         :param storage_id: Unique identifier for the file in the storage system.
         :param file_data: The binary data of the file to be stored.
+        :return: The SHA-256 hash of the stored file as a hex string.
+        """
+        raise NotImplementedError
+    
+    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile) -> str:
+        """
+        Stream the UploadFile (async) to a temp file while computing SHA-256, then persist it.
+        More memory efficient for large files than reading all into memory first (store_file).
+
+        :param storage_id: Unique identifier for the file in the storage system.
+        :param upload_file: The UploadFile instance from FastAPI.
+        :return: The SHA-256 hash of the stored file as a hex string.
         """
         raise NotImplementedError
 
     async def retrieve_file(self, storage_id: str) -> bytes:
         """
         Retrieve a file from the storage system.
+
+        :param storage_id: Unique identifier for the file in the storage system.
+        """
+        raise NotImplementedError
+    
+    async def delete_file(self, storage_id: str) -> None:
+        """
+        Delete a file from the storage system.
 
         :param storage_id: Unique identifier for the file in the storage system.
         """
@@ -60,9 +85,58 @@ class LocalFileStorageServiceImpl(FileStorageService):
                 raise Exception("Invalid file path structure.")
             with open(file_path, 'wb') as f:
                 f.write(file_data)
+            return hashlib.sha256(file_data).hexdigest()
         except Exception as e:
             logger.error(f"Error storing file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to store file.")
+        
+    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile) -> str:
+        file_path = self.documents_path / storage_id
+        if file_path.exists():
+            raise ConflictException(f"File with ID '{storage_id}' already exists.")
+
+        # stream and hash into a temp file
+        hasher = hashlib.sha256()
+        tmp_path = None
+
+        try:
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp_path = tmp.name
+                # read in chunks from UploadFile (async)
+                while True:
+                    chunk = await upload_file.read(1024 * 1024)  # 1 MiB chunks
+                    if not chunk:
+                        break
+                    tmp.write(chunk)      # sync write to disk
+                    hasher.update(chunk)  # update hash incrementally
+
+            hash_hex = hasher.hexdigest()
+
+            split = storage_id.split('/')
+            if len(split) == 2:
+                # Create pid prefix directory if it doesn't exist
+                prefix_dir = self.documents_path / split[0]
+                if not prefix_dir.exists():
+                    prefix_dir.mkdir(parents=True, exist_ok=True)
+            elif len(split) > 2:
+                raise Exception("Invalid file path structure")
+
+            # Move temp file to final location
+            os.rename(tmp_path, file_path)
+            tmp_path = None  # prevent deletion in finally
+
+            return hash_hex
+
+        except Exception as e:
+            logger.error(f"Error storing file {storage_id}: {e}")
+            raise ServiceUnavailableException("Failed to store file.")
+        finally:
+            # cleanup temp file if present
+            if tmp_path:
+                try:
+                    os.unlink(tmp_path)
+                except Exception:
+                    pass
 
     async def retrieve_file(self, storage_id: str) -> bytes:
         file_path = self.documents_path / storage_id
@@ -75,6 +149,23 @@ class LocalFileStorageServiceImpl(FileStorageService):
         except Exception as e:
             logger.error(f"Error retrieving file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to retrieve file.")
+        
+    async def delete_file(self, storage_id: str) -> None:
+        file_path = self.documents_path / storage_id
+        if not file_path.exists():
+            return  # If the file doesn't exist, consider it already deleted
+
+        try:
+            file_path.unlink()
+            # Optionally, remove the prefix directory if empty
+            split = storage_id.split('/')
+            if len(split) == 2:
+                prefix_dir = self.documents_path / split[0]
+                if prefix_dir.exists() and not any(prefix_dir.iterdir()):
+                    prefix_dir.rmdir()
+        except Exception as e:
+            logger.error(f"Error deleting file {storage_id}: {e}")
+            raise ServiceUnavailableException("Failed to delete file.")
 
 
 class MinioFileStorageServiceImpl(FileStorageService):
@@ -123,29 +214,87 @@ class MinioFileStorageServiceImpl(FileStorageService):
             raise ConflictException(f"File with ID '{storage_id}' already exists.")
         except Exception as e:
             if isinstance(e, getattr(self, "_S3Error", tuple())):
-                # If not found, proceed to upload; other S3 errors -> service issue
                 if getattr(e, "code", "") not in ("NoSuchKey", "NoSuchObject", "NotFound"):
                     logger.error(f"MinIO stat_object error for {storage_id}: {e}")
                     raise ServiceUnavailableException("Failed to access storage.")
             else:
-                # Unexpected error; log and proceed to attempt upload
                 logger.warning(f"Unexpected error during stat_object for {storage_id}: {e}. Proceeding to upload.")
 
         try:
             data_stream = io.BytesIO(file_data)
+            file_hash = hashlib.sha256(file_data).hexdigest()
             self.client.put_object(
                 self.bucket,
                 storage_id,
                 data=data_stream,
                 length=len(file_data),
                 content_type="application/octet-stream",
+                metadata={"sha256": file_hash}
             )
+            return file_hash
         except Exception as e:
             if isinstance(e, getattr(self, "_S3Error", tuple())):
                 logger.error(f"MinIO put_object error for {storage_id}: {e}")
                 raise ServiceUnavailableException("Failed to store file.")
             logger.error(f"Unexpected error storing file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to store file.")
+        
+    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile) -> str:
+        # Check for conflict
+        try:
+            self.client.stat_object(self.bucket, storage_id)
+            # If stat succeeds, object exists
+            raise ConflictException(f"File with ID '{storage_id}' already exists.")
+        except Exception as e:
+            if isinstance(e, getattr(self, "_S3Error", tuple())):
+                if getattr(e, "code", "") not in ("NoSuchKey", "NoSuchObject", "NotFound"):
+                    logger.error(f"MinIO stat_object error for {storage_id}: {e}")
+                    raise ServiceUnavailableException("Failed to access storage.")
+            else:
+                logger.warning(f"Unexpected error during stat_object for {storage_id}: {e}. Proceeding to upload.")
+
+        # stream and hash into a temp file
+        hasher = hashlib.sha256()
+        tmp_path = None
+
+        try:
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp_path = tmp.name
+                # read in chunks from UploadFile (async)
+                while True:
+                    chunk = await upload_file.read(1024 * 1024)  # 1 MiB chunks
+                    if not chunk:
+                        break
+                    tmp.write(chunk)      # sync write to disk
+                    hasher.update(chunk)  # update hash incrementally
+
+            hash_hex = hasher.hexdigest()
+            size = os.path.getsize(tmp_path)
+
+            # Upload temp file to MinIO
+            with open(tmp_path, "rb") as data_stream:
+                metadata = {"sha256": hash_hex}
+                self.client.put_object(
+                    self.bucket,
+                    storage_id,
+                    data=data_stream,
+                    length=size,
+                    content_type=upload_file.content_type or "application/octet-stream",
+                    metadata=metadata,
+                )
+            return hash_hex
+
+        except Exception as e:
+            # Log and re-raise or map to ServiceUnavailableException
+            logger.exception(f"Error storing file {storage_id}: {e}")
+            raise ServiceUnavailableException("Failed to store file.")
+        finally:
+            # cleanup temp file if present
+            if tmp_path:
+                try:
+                    os.unlink(tmp_path)
+                except Exception:
+                    pass
 
     async def retrieve_file(self, storage_id: str) -> bytes:
         try:
@@ -165,6 +314,19 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 raise ServiceUnavailableException("Failed to retrieve file.")
             logger.error(f"Unexpected error retrieving file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to retrieve file.")
+        
+    async def delete_file(self, storage_id: str) -> None:
+        try:
+            self.client.remove_object(self.bucket, storage_id)
+        except Exception as e:
+            if isinstance(e, getattr(self, "_S3Error", tuple())):
+                # If not found, consider it already deleted
+                if getattr(e, "code", "") in ("NoSuchKey", "NoSuchObject", "NotFound"):
+                    return
+                logger.error(f"MinIO remove_object error for {storage_id}: {e}")
+                raise ServiceUnavailableException("Failed to delete stored file.")
+            logger.error(f"Unexpected error deleting file {storage_id}: {e}")
+            raise ServiceUnavailableException("Failed to delete stored file.")
 
 
 class FileStorageServiceProvider(Provider):

@@ -46,6 +46,12 @@ class DocumentRecordStorageService:
         :return: A list of document records.
         """
         raise NotImplementedError
+    
+    async def delete_document(self, pid: str) -> None:
+        """
+        Delete a document record from the storage by its pid.
+        """
+        raise NotImplementedError
 
 
 class DocumentRecordStorageServiceImpl(DocumentRecordStorageService, SQLEntityDB[DBDocumentRecord]):
@@ -90,6 +96,9 @@ class DocumentRecordStorageServiceImpl(DocumentRecordStorageService, SQLEntityDB
             filters['updated_at__ge'] = updated_after
         db_documents = await super()._filter(page=page, page_size=page_size, **filters)
         return [db_document.to_document_record() for db_document in db_documents]
+    
+    async def delete_document(self, pid: str) -> None:
+        await super().delete(pid)
 
 
 class DocumentStorageProvider(Provider):

@@ -12,6 +12,7 @@ class DocumentRecord:
     parent_doc_pid: str | None = None  # previous document pid in the lineage
     created_at: str | None = None  # timestamp of creation
     updated_at: str | None = None  # timestamp of the last update
+    hash: str | None = None  # optional hash 256 of the document content
 
     def __post_init__(self):
         if isinstance(self.version, str):

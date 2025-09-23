@@ -13,9 +13,9 @@ class DBUser(BaseDBModel):
     """
     __tablename__ = "users"
 
-    id = Column(String, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    password_hash = Column(String, nullable=False)
+    id = Column(String(255), primary_key=True, index=True)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
 
     documents = relationship("DBDocumentRecord", back_populates="owner")
     permissions = relationship("DBDocumentPermission", back_populates="user")
@@ -54,11 +54,12 @@ class DBDocumentRecord(BaseDBModel):
     """
     __tablename__ = "document_records"
 
-    id = Column(String, primary_key=True, index=True)
-    version = Column(String, nullable=False)
-    storage_id = Column(String, nullable=False)
-    owner_id = Column(String, ForeignKey('users.id'), nullable=False)
-    parent_doc_pid = Column(String, nullable=True)
+    id = Column(String(255), primary_key=True, index=True)
+    version = Column(String(50), nullable=False)
+    storage_id = Column(String(255), nullable=False)
+    owner_id = Column(String(255), ForeignKey('users.id'), nullable=False)
+    parent_doc_pid = Column(String(255), nullable=True)
+    hash = Column(String(64), nullable=True)  # SHA-256 hash
 
     owner = relationship("DBUser", back_populates="documents")
     permissions = relationship("DBDocumentPermission", back_populates="document_record")
@@ -105,7 +106,8 @@ class DBDocumentRecord(BaseDBModel):
             version=document_record.version,
             storage_id=document_record.storage_id,
             owner_id=document_record.owner_id,
-            parent_doc_pid=document_record.parent_doc_pid
+            parent_doc_pid=document_record.parent_doc_pid,
+            hash=document_record.hash
         )
 
 
@@ -115,10 +117,10 @@ class DBDocumentPermission(BaseDBModel):
     """
     __tablename__ = "document_permissions"
 
-    id = Column(String, primary_key=True, index=True)
-    pid = Column(String, ForeignKey('document_records.id'), nullable=False)
-    user_id = Column(String, ForeignKey('users.id'), nullable=False)
-    permission_level = Column(String, nullable=False)
+    id = Column(String(255), primary_key=True, index=True)
+    pid = Column(String(255), ForeignKey('document_records.id'), nullable=False)
+    user_id = Column(String(255), ForeignKey('users.id'), nullable=False)
+    permission_level = Column(String(50), nullable=False)
 
     document_record = relationship("DBDocumentRecord", back_populates="permissions")
     user = relationship("DBUser", back_populates="permissions")

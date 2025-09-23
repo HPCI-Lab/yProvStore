@@ -1,4 +1,5 @@
 import json
+import logging
 
 from fastapi import APIRouter, status, UploadFile, Form, Request
 from pydantic import BaseModel
@@ -16,6 +17,8 @@ from routers.documents._get import DocumentRecordGet
 from routers.common.dependencies import LoggedUser
 
 __all__ = ("router",)
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(
@@ -132,23 +135,52 @@ async def create_document(
         parent_doc_pid=parent_document_pid,
     )
 
+    file_hash = None
     if data and data.document_data:
         document_data_bytes = json.dumps(data.document_data).encode('utf-8')
+        file_hash = await file_storage_service.store_file(new_document_record.storage_id, document_data_bytes)
     else:
         try:
             if not document_file or not document_file.content_type or document_file.content_type not in ['application/json', 'text/plain']:
                 raise BadRequestException(
                     "Unsupported file type: " + (document_file.content_type if document_file else "None") + ". Only JSON or plain text files are allowed."
                 )
-            document_data_bytes = await document_file.read()
+            file_hash = await file_storage_service.store_file_from_uploadfile(new_document_record.storage_id, document_file)
         except Exception as e:
             raise BadRequestException(f"Failed to read document file: {e}")
-    await file_storage_service.store_file(new_document_record.storage_id, document_data_bytes)
 
-    new_pid_record = await pid_service.new_pid_record_from_document(new_pid, new_document_record.storage_url, parent_doc_pid=parent_document_pid)
+    stored_on_db = False
+    try:
+        # Create the PID record (but do not save it yet)
+        new_pid_record = await pid_service.new_pid_record_from_document(
+            new_pid, new_document_record.storage_url, parent_doc_pid=parent_document_pid, hash=file_hash
+        )
 
-    new_document_record.version = new_pid_record.version or 1
-    new_document_record = await document_record_storage.save_document(new_document_record)
+        # Save the document record to db
+        new_document_record.version = new_pid_record.version or 1
+        new_document_record.hash = file_hash
+        new_document_record = await document_record_storage.save_document(new_document_record)
+        stored_on_db = True
+
+        # Save the PID record only after the document record is successfully saved
+        new_pid_record = await pid_service.save_pid_record(new_pid_record)
+    except Exception as e:
+        logger.error(f"Error occurred during document creation: {e}")
+        logger.info("Deleting stored file due to error during document creation.")
+        # If any error occurs, clean up the stored file
+        try:
+            await file_storage_service.delete_file(new_document_record.storage_id)
+        except Exception as e:
+            logger.warning(f"Failed to delete stored file after document creation error: {e}")
+
+        if stored_on_db:
+            # If the document was stored in the DB but PID creation failed, remove the document record
+            logger.info("Deleting document record from DB due to error during PID creation.")
+            try:
+                await document_record_storage.delete_document(new_document_record.pid)
+            except Exception as db_e:
+                logger.warning(f"Failed to clean up document record after PID creation failure: {db_e}")
+        raise e
 
     return DocumentRecordGet(
         pid=new_document_record.pid,

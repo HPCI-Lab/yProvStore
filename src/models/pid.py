@@ -24,6 +24,7 @@ class PidType(Enum):
 
 @dataclass
 class PidRecord:
+    # !! NOTE: when adding new attributes, update `to_dict` method and `HandleValueType` in `services/pid/handle/base.py`
     pid: str
     type: PidType
 
@@ -34,6 +35,8 @@ class PidRecord:
     parent_doc_pid: str | None = None  # previous document pid in the lineage
     successive_doc_pid: str | None = None  # next document pid in the lineage
     lineage_id: str | None = None
+    hash: str | None = None
+    hash_algorithm: str | None = None
 
     # Attributes for PID lineage
     first_document_pid: str | None = None
@@ -109,6 +112,8 @@ class PidRecord:
             "type": self.type.value,
             "version": self.version,
             "url": self.url,
+            "hash": self.hash,
+            "hash_algorithm": self.hash_algorithm,
             "created_at": self.created_at,
             "parent_doc_pid": self.parent_doc_pid,
             "successive_doc_pid": self.successive_doc_pid,
