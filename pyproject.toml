@@ -16,6 +16,9 @@ dependencies = [
   "rdflib>=7.1.4",
   "uvicorn>=0.35.0",
   "minio>=7.2.7",
+  "zstd>=1.5.7.2",
+  "aiofiles>=24.1.0",
+  "zstandard>=0.25.0",
 ]
 
 [project.optional-dependencies]

@@ -98,7 +98,7 @@ class DocumentRecordStorageServiceImpl(DocumentRecordStorageService, SQLEntityDB
         return [db_document.to_document_record() for db_document in db_documents]
     
     async def delete_document(self, pid: str) -> None:
-        await super().delete(pid)
+        await super().delete(pid, soft_delete=False)
 
 
 class DocumentStorageProvider(Provider):

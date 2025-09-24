@@ -61,9 +61,41 @@ async def download_document_prefix(
     document_record = await document_storage_service.get_document_by_pid(pid)
 
     try:
-        file_data = await file_storage_service.retrieve_file(document_record.storage_id)
+        # obtain async generator (do NOT await it)
+        stream_gen = file_storage_service.retrieve_file(document_record.storage_id)
+
+        # try to get first chunk to surface storage errors (NotFound/ServiceUnavailable) early
+        try:
+            first_chunk = await stream_gen.__anext__()
+        except StopAsyncIteration:
+            # empty file -> return an empty async generator
+            async def empty_gen():
+                if False:
+                    yield b""
+                return
+            return StreamingResponse(
+                empty_gen(),
+                media_type="application/octet-stream",
+                headers={
+                    "Content-Disposition": f"attachment; filename={pid}.json"
+                }
+            )
+        except NotFoundException:
+            raise NotFoundException(f"Document with PID '{pid}' not found.")
+        except ServiceUnavailableException as e:
+            raise ServiceUnavailableException(f"Failed to retrieve document with PID '{pid}'") from e
+        except Exception as e:
+            # any other exception from the storage read should be surfaced as service unavailable
+            raise ServiceUnavailableException(f"Failed to retrieve document with PID '{pid}'") from e
+
+        # delegating generator: yield the first chunk already read, then the rest
+        async def delegating_gen():
+            yield first_chunk
+            async for chunk in stream_gen:
+                yield chunk
+
         return StreamingResponse(
-            BytesIO(file_data),
+            delegating_gen(),
             media_type="application/octet-stream",
             headers={
                 "Content-Disposition": f"attachment; filename={pid}.json"

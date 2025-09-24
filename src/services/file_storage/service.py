@@ -1,19 +1,27 @@
-import hashlib
 import io
-import importlib
-import logging
 import os
+import hashlib
+import asyncio
+import logging
 import tempfile
-from typing import Optional
+import importlib
 
-from dishka import Provider, provide, Scope
+import aiofiles
+from typing import AsyncIterator
+import zstandard as zstd
 from fastapi import UploadFile
+from dishka import Provider, provide, Scope
 
 from application import settings
 from application.settings import TMP_PATH
 from application.exceptions.types import ConflictException, NotFoundException, ServiceUnavailableException
 
+
 logger = logging.getLogger(__name__)
+
+
+ZSTD_LEVEL = 1  # low CPU, reasonable compression
+READ_CHUNK = 1024 * 1024  # 1 MiB read chunks for streaming
 
 
 class FileStorageService:
@@ -40,11 +48,12 @@ class FileStorageService:
         """
         raise NotImplementedError
 
-    async def retrieve_file(self, storage_id: str) -> bytes:
+    async def retrieve_file(self, storage_id: str) -> AsyncIterator[bytes]:
         """
-        Retrieve a file from the storage system.
+        Retrieve a file from the storage system as an async iterator of decompressed chunks.
 
         :param storage_id: Unique identifier for the file in the storage system.
+        :return: Async iterator yielding decompressed bytes chunks.
         """
         raise NotImplementedError
     
@@ -61,8 +70,6 @@ class LocalFileStorageServiceImpl(FileStorageService):
     """
     Local file storage implementation for testing purposes.
     """
-
-    # TODO: manage compression
 
     def __init__(self):
         self.documents_path = TMP_PATH / "documents"
@@ -83,8 +90,15 @@ class LocalFileStorageServiceImpl(FileStorageService):
                     prefix_dir.mkdir(parents=True, exist_ok=True)
             elif len(split) > 2:
                 raise Exception("Invalid file path structure.")
+
+            # Compress the provided bytes with zstd before persisting
+            cctx = zstd.ZstdCompressor(level=ZSTD_LEVEL)
+            compressed_data = cctx.compress(file_data)
+
             with open(file_path, 'wb') as f:
-                f.write(file_data)
+                f.write(compressed_data)
+
+            # Return SHA-256 computed on original (uncompressed) bytes
             return hashlib.sha256(file_data).hexdigest()
         except Exception as e:
             logger.error(f"Error storing file {storage_id}: {e}")
@@ -95,21 +109,34 @@ class LocalFileStorageServiceImpl(FileStorageService):
         if file_path.exists():
             raise ConflictException(f"File with ID '{storage_id}' already exists.")
 
-        # stream and hash into a temp file
+        # stream, hash and compress into a temp file
         hasher = hashlib.sha256()
         tmp_path = None
 
         try:
+            # create a temporary file path
             with tempfile.NamedTemporaryFile(delete=False) as tmp:
                 tmp_path = tmp.name
-                # read in chunks from UploadFile (async)
+                # prepare zstd stream compressor
+                cctx = zstd.ZstdCompressor(level=ZSTD_LEVEL)
+                cobj = cctx.compressobj()
+
+                # read in chunks from UploadFile (async) and write compressed bytes synchronously
                 while True:
-                    chunk = await upload_file.read(1024 * 1024)  # 1 MiB chunks
+                    chunk = await upload_file.read(READ_CHUNK)  # async read
                     if not chunk:
                         break
-                    tmp.write(chunk)      # sync write to disk
-                    hasher.update(chunk)  # update hash incrementally
+                    hasher.update(chunk)           # update hash on original bytes
+                    compressed = cobj.compress(chunk)
+                    if compressed:
+                        tmp.write(compressed)
 
+                # flush compressor and write remainder
+                tail = cobj.flush()
+                if tail:
+                    tmp.write(tail)
+
+            # compute hash of original data
             hash_hex = hasher.hexdigest()
 
             split = storage_id.split('/')
@@ -119,9 +146,15 @@ class LocalFileStorageServiceImpl(FileStorageService):
                 if not prefix_dir.exists():
                     prefix_dir.mkdir(parents=True, exist_ok=True)
             elif len(split) > 2:
+                # cleanup temp before raising
+                try:
+                    if tmp_path:
+                        os.unlink(tmp_path)
+                except Exception:
+                    pass
                 raise Exception("Invalid file path structure")
 
-            # Move temp file to final location
+            # Move temp (compressed) file to final location
             os.rename(tmp_path, file_path)
             tmp_path = None  # prevent deletion in finally
 
@@ -138,14 +171,30 @@ class LocalFileStorageServiceImpl(FileStorageService):
                 except Exception:
                     pass
 
-    async def retrieve_file(self, storage_id: str) -> bytes:
+    async def retrieve_file(self, storage_id: str) -> AsyncIterator[bytes]:
         file_path = self.documents_path / storage_id
         if not file_path.exists():
             raise NotFoundException(f"File with ID '{storage_id}' not found.")
 
         try:
-            with open(file_path, 'rb') as f:
-                return f.read()
+            # stream read compressed file and decompress incrementally to avoid loading whole file
+            dctx = zstd.ZstdDecompressor()
+            dobj = dctx.decompressobj()
+
+            async with aiofiles.open(file_path, 'rb') as f:
+                while True:
+                    comp_chunk = await f.read(READ_CHUNK)
+                    if not comp_chunk:
+                        break
+                    decompressed = dobj.decompress(comp_chunk)
+                    if decompressed:
+                        yield decompressed
+
+                # flush any remaining decompressed bytes
+                tail = dobj.flush()
+                if tail:
+                    yield tail
+
         except Exception as e:
             logger.error(f"Error retrieving file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to retrieve file.")
@@ -221,15 +270,22 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 logger.warning(f"Unexpected error during stat_object for {storage_id}: {e}. Proceeding to upload.")
 
         try:
-            data_stream = io.BytesIO(file_data)
+            # Compress the provided bytes with zstd to reduce upload size
+            cctx = zstd.ZstdCompressor(level=ZSTD_LEVEL)
+            compressed_data = cctx.compress(file_data)
+
+            # Compute hash over original bytes (keeps behaviour consistent with other methods)
             file_hash = hashlib.sha256(file_data).hexdigest()
+
+            # Upload compressed payload, include metadata about original hash and compression
+            compressed_stream = io.BytesIO(compressed_data)
             self.client.put_object(
                 self.bucket,
                 storage_id,
-                data=data_stream,
-                length=len(file_data),
+                data=compressed_stream,
+                length=len(compressed_data),
                 content_type="application/octet-stream",
-                metadata={"sha256": file_hash}
+                metadata={"sha256": file_hash, "compression": "zstd"}
             )
             return file_hash
         except Exception as e:
@@ -238,7 +294,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 raise ServiceUnavailableException("Failed to store file.")
             logger.error(f"Unexpected error storing file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to store file.")
-        
+
     async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile) -> str:
         # Check for conflict
         try:
@@ -257,64 +313,139 @@ class MinioFileStorageServiceImpl(FileStorageService):
         hasher = hashlib.sha256()
         tmp_path = None
 
+        # compression params
+        
+
+        # NOTE: writing compressed bytes to disk; aiofiles performs non-blocking writes
         try:
+            # create a temporary file path
             with tempfile.NamedTemporaryFile(delete=False) as tmp:
                 tmp_path = tmp.name
-                # read in chunks from UploadFile (async)
+
+            # streaming read (async) -> compress -> async write (aiofiles)
+            cctx = zstd.ZstdCompressor(level=ZSTD_LEVEL)
+            cobj = cctx.compressobj()
+
+            async with aiofiles.open(tmp_path, "wb") as f:
                 while True:
-                    chunk = await upload_file.read(1024 * 1024)  # 1 MiB chunks
+                    chunk = await upload_file.read(READ_CHUNK)  # async read
                     if not chunk:
                         break
-                    tmp.write(chunk)      # sync write to disk
-                    hasher.update(chunk)  # update hash incrementally
+                    # update hash on original bytes
+                    hasher.update(chunk)
+                    # compress incrementally
+                    compressed = cobj.compress(chunk)
+                    if compressed:
+                        await f.write(compressed)
 
+                # flush compressor and write remainder
+                tail = cobj.flush()
+                if tail:
+                    await f.write(tail)
+
+            # compute meta and compressed size
             hash_hex = hasher.hexdigest()
-            size = os.path.getsize(tmp_path)
+            compressed_size = os.path.getsize(tmp_path)
 
-            # Upload temp file to MinIO
-            with open(tmp_path, "rb") as data_stream:
-                metadata = {"sha256": hash_hex}
-                self.client.put_object(
-                    self.bucket,
-                    storage_id,
-                    data=data_stream,
-                    length=size,
-                    content_type=upload_file.content_type or "application/octet-stream",
-                    metadata=metadata,
-                )
+            # The blocking put_object call in a thread pool to avoid blocking loop
+            loop = asyncio.get_running_loop()
+
+            def upload_sync():
+                # open file and call blocking minio put_object inside the executor thread
+                with open(tmp_path, "rb") as data_stream:
+                    metadata = {"sha256": hash_hex, "compression": "zstd"}
+                    self.client.put_object(
+                        self.bucket,
+                        storage_id,
+                        data=data_stream,
+                        length=compressed_size,
+                        content_type=upload_file.content_type or "application/octet-stream",
+                        metadata=metadata,
+                    )
+
+            await loop.run_in_executor(None, upload_sync)
+
             return hash_hex
 
         except Exception as e:
-            # Log and re-raise or map to ServiceUnavailableException
             logger.exception(f"Error storing file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to store file.")
         finally:
             # cleanup temp file if present
-            if tmp_path:
-                try:
-                    os.unlink(tmp_path)
-                except Exception:
-                    pass
+            logger.info(f"Cleaning up temp file {tmp_path}")
+            # if tmp_path:
+            #     try:
+            #         os.unlink(tmp_path)
+            #     except Exception:
+            #         pass
 
-    async def retrieve_file(self, storage_id: str) -> bytes:
+    async def retrieve_file(self, storage_id: str) -> AsyncIterator[bytes]:
+        """
+        Retrieve a file from MinIO as an async iterator of (decompressed) chunks.
+        """
+        # check metadata first to decide whether to decompress
         try:
-            response = self.client.get_object(self.bucket, storage_id)
             try:
-                data = response.read()
-                return data
-            finally:
-                response.close()
-                response.release_conn()
+                stat = self.client.stat_object(self.bucket, storage_id)
+                # metadata keys can be present as provided or prefixed; check both
+                meta = getattr(stat, "metadata", {}) or {}
+                compression_meta = meta.get("compression") or meta.get("x-amz-meta-compression")
+            except Exception as e:
+                # map not found
+                if isinstance(e, getattr(self, "_S3Error", tuple())) and getattr(e, "code", "") in ("NoSuchKey", "NoSuchObject", "NotFound"):
+                    raise NotFoundException(f"File with ID '{storage_id}' not found.")
+                # if stat_object failed for other reasons, log and proceed to attempt get_object (best-effort)
+                logger.warning(f"Unexpected error during stat_object for {storage_id}: {e}. Proceeding to get_object.")
+                compression_meta = None
+
+            response = self.client.get_object(self.bucket, storage_id)
         except Exception as e:
             if isinstance(e, getattr(self, "_S3Error", tuple())):
-                # Map not found
                 if getattr(e, "code", "") in ("NoSuchKey", "NoSuchObject", "NotFound"):
                     raise NotFoundException(f"File with ID '{storage_id}' not found.")
-                logger.error(f"MinIO get_object error for {storage_id}: {e}")
+                logger.error(f"MinIO get_object/stat_object error for {storage_id}: {e}")
                 raise ServiceUnavailableException("Failed to retrieve file.")
             logger.error(f"Unexpected error retrieving file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to retrieve file.")
+
+        # stream read in executor to avoid blocking loop
+        loop = asyncio.get_running_loop()
+        dctx = None
+        dobj = None
+        try:
+            is_zstd = (compression_meta and str(compression_meta).lower() == "zstd")
+            if is_zstd:
+                dctx = zstd.ZstdDecompressor()
+                dobj = dctx.decompressobj()
+            else:
+                logger.warning(f"File {storage_id} does not indicate zstd compression; not decompressing.")
+
+            while True:
+                # perform blocking read in executor
+                comp_chunk = await loop.run_in_executor(None, response.read, READ_CHUNK)
+                if not comp_chunk:
+                    break
+
+                if is_zstd:
+                    out = dobj.decompress(comp_chunk)
+                    if out:
+                        yield out
+                else:
+                    yield comp_chunk
+
+            if is_zstd:
+                tail = dobj.flush()
+                if tail:
+                    yield tail
+
+        finally:
+            try:
+                response.close()
+                response.release_conn()
+            except Exception:
+                pass
         
+
     async def delete_file(self, storage_id: str) -> None:
         try:
             self.client.remove_object(self.bucket, storage_id)
@@ -348,3 +479,17 @@ class FileStorageServiceProvider(Provider):
         if self.use_local:
             return LocalFileStorageServiceImpl()
         return MinioFileStorageServiceImpl()
+    
+
+class CompressionServiceProvider(Provider):
+    """
+    Provider for the CompressionService. Currently only Zstd is supported.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(scope=Scope.APP, *args, **kwargs)
+
+    @provide
+    def compression_service(self) -> zstd:
+        # Currently only Zstd is supported; could be extended in future
+        return zstd

@@ -92,12 +92,22 @@ def create_document(ctx, json_file, value, parent_pid):
     # Load document_data from file or string
     try:
         if json_file:
-            console.print(f"Uploading document from JSON file: [cyan]{json_file}[/cyan]")
-            with open(json_file, 'r') as f:
-                document_data = json.load(f)
+            # Stream-upload the JSON file as multipart/form-data so we don't load it into memory.
+            console.print(f"Uploading document from JSON file (streamed): [cyan]{json_file}[/cyan]")
+            # Open file and pass file object to make_request via 'files' so requests streams from disk.
+            # The backend should accept the form field 'document_file' containing the JSON file.
+            with open(json_file, 'rb') as f:
+                files = {
+                    'document_file': (os.path.basename(json_file), f, 'application/json')
+                }
+                # No JSON body in this case; use multipart file upload.
+                response = make_request("POST", api_url, "/documents", params=params, files=files)
         else:
             console.print("Uploading document from JSON string.")
             document_data = json.loads(value)
+            # Make the API request with JSON payload for the string case.
+            payload = {"document_data": document_data}
+            response = make_request("POST", api_url, "/documents", params=params, json=payload)
     except json.JSONDecodeError as e:
         console.print(f"❌ [bold red]Error:[/bold red] Invalid JSON provided: {e}")
         return
@@ -105,10 +115,7 @@ def create_document(ctx, json_file, value, parent_pid):
         console.print(f"❌ [bold red]Error:[/bold red] Cannot read file '{json_file}': {e}")
         return
 
-    # Make the API request
-    payload = {"document_data": document_data}
-    response = make_request("POST", api_url, "/documents", params=params, json=payload)
-
+    # Handle response (same as before)
     if response and response.status_code == 200:
         console.print("✅ [bold green]Document created successfully![/bold green]")
         console.print_json(data=response.json())
