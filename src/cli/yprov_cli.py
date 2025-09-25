@@ -6,6 +6,7 @@ from rich.console import Console
 from commands.auth import auth
 from commands.documents import documents
 from commands.pids import pids
+from commands.blockchain import blockchain
 from utils.api_client import make_request
 
 console = Console()
@@ -63,6 +64,7 @@ def check(ctx):
 cli.add_command(auth)
 cli.add_command(documents)
 cli.add_command(pids)
+cli.add_command(blockchain)
 
 
 if __name__ == '__main__':
