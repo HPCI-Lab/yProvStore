@@ -33,6 +33,7 @@ yProv is a joint project between [University of Trento](https://www.unitn.it) an
     - [Managing Document Permissions](#managing-document-permissions)
     - [Managing Document Metadata](#managing-document-metadata)
     - [Graph Operations on Documents](#graph-operations-on-documents)
+    - [Blockchain Operations](#blockchain-operations)
     - [Managing PIDs](#managing-pids)
     - [Troubleshooting CLI](#troubleshooting-cli)
 
@@ -316,6 +317,10 @@ yprov documents metadata update <document_pid> --key1 <key1> --key2 <value2>
 yprov documents metadata schema
 yprov documents graph list <document_pid> [--entity-types <type>] [--entity-ids <id>] [--is-element] [--is-relation] [--in-json] [--display-data] [--output <file_path>]
 yprov documents graph subgraph <document_pid> --entity-id <entity_id> [--direction <direction>] [--output <file_path>]
+yprov blockchain create --pid <pid> --url <url> --hash <hash> --owners <owners> [--timestamp <timestamp>] [--file <file_path>]
+yprov blockchain read <pid>
+yprov blockchain list --start-time <start_time> --end-time <end_time> [--format <table|json>]
+yprov blockchain test
 yprov pids list [--page <page_number>] [--page-size <page_size>]
 yprov pids get <pid>
 ```
@@ -754,6 +759,158 @@ You can explore and analyze the provenance graph structure of documents. Graph o
       * The output is always a PROV-JSON document, not a table.
       * If the resulting JSON is too large to display in the console, it will be automatically saved to a file named `subgraph_<prefix>_<id>.json`.
       * Any warnings from the server are always displayed.
+
+-----
+
+### Blockchain Operations
+
+The `blockchain` command group provides functionality to interact with blockchain networks for document provenance storage. These commands allow you to create, read, and query documents stored on the blockchain, providing an immutable record of document provenance.
+
+**Prerequisites:**
+
+Before using blockchain operations, ensure you have set the required environment variables for your blockchain network connection:
+
+- `CONNECTOR_PEER_TLSCERT_PATH` - Path to the peer TLS certificate
+- `CONNECTOR_USR_PKEY_PATH` - Path to the user private key
+- `CONNECTOR_PEER_ENDPOINT` - Blockchain peer endpoint
+- `CONNECTOR_USR_CERT_PATH` - Path to the user certificate  
+- `CONNECTOR_PEER_MSP_ID` - Membership Service Provider ID
+- `CONNECTOR_PEER_HOSTNAME` - Peer hostname (optional, defaults to peer endpoint)
+
+* **Create a document on the blockchain**
+
+  ```bash
+  yprov blockchain create --pid <pid> --url <url> --hash <hash> --owners <owners> [--timestamp <timestamp>]
+  ```
+
+  Create a new document record on the blockchain with the specified provenance information.
+
+  **Options:**
+
+  * `--pid` - Unique identifier for the document (required)
+  * `--url` - URL where the document can be accessed (required)
+  * `--hash` - Hash of the document content (required)
+  * `--owners` - Comma-separated list of document owners (required)
+  * `--timestamp` - Document timestamp in ISO-8601 format (optional, defaults to current time)
+  * `--file` - Path to a JSON file containing document data (alternative to individual options)
+
+  **Examples:**
+
+  * Create a document with command-line options:
+
+    ```bash
+    yprov blockchain create \
+      --pid "prefix/example-doc" \
+      --url "https://example.com/documents/example-doc.json" \
+      --hash "sha256:abc123def456" \
+      --owners "user1@example.com,user2@example.com"
+    ```
+
+  * Create a document from a JSON file:
+
+    ```bash
+    yprov blockchain create --file document_data.json
+    ```
+
+    The JSON file should contain:
+
+    ```json
+    {
+      "pid": "prefix/example-doc",
+      "url": "https://example.com/documents/example-doc.json",
+      "hash": "sha256:abc123def456",
+      "owners": ["user1@example.com", "user2@example.com"],
+      "timestamp": "2024-01-01T12:00:00Z"
+    }
+    ```
+
+  **Notes:**
+
+  * Cannot use both `--file` and individual options simultaneously
+  * Owners list is automatically normalized (duplicates removed)
+  * If timestamp is not provided, current time will be used
+
+* **Read a document from the blockchain**
+
+  ```bash
+  yprov blockchain read <pid>
+  ```
+
+  Retrieve and display a document's information from the blockchain by its PID.
+
+  **Examples:**
+
+  * Read a document:
+
+    ```bash
+    yprov blockchain read "prefix/example-doc"
+    ```
+
+  * The command displays document information in a formatted table and offers an option to view the raw JSON data.
+
+* **List documents by time interval**
+
+  ```bash
+  yprov blockchain list --start-time <start_time> --end-time <end_time> [--format <format>]
+  ```
+
+  Query and list documents created within a specific time interval.
+
+  **Options:**
+
+  * `--start-time` - Start time for the query (ISO-8601 format or timestamp) (required)
+  * `--end-time` - End time for the query (ISO-8601 format or timestamp) (required)
+  * `--format` - Output format: `table` (default) or `json`
+
+  **Examples:**
+
+  * List documents in a date range with table format:
+
+    ```bash
+    yprov blockchain list \
+      --start-time "2024-01-01T00:00:00Z" \
+      --end-time "2024-01-31T23:59:59Z"
+    ```
+
+  * List documents with JSON output:
+
+    ```bash
+    yprov blockchain list \
+      --start-time "1640995200000" \
+      --end-time "1672531200000" \
+      --format json
+    ```
+
+  **Notes:**
+
+  * Time can be provided in ISO-8601 format or as Unix timestamps
+  * Table format truncates long values for readability
+  * JSON format provides complete document data
+
+* **Test blockchain connection**
+
+  ```bash
+  yprov blockchain test
+  ```
+
+  Test the connection to the blockchain network by creating, reading, and querying test documents.
+
+  **Examples:**
+
+  ```bash
+  yprov blockchain test
+  ```
+
+  **Notes:**
+
+  * This command will create actual test documents on the blockchain
+  * Tests document creation, reading, and interval querying functionality
+  * Displays current environment variable values for debugging
+  * Use this command to verify your blockchain configuration before production use
+
+**Error Handling:**
+
+All blockchain commands provide detailed error messages and will display the current status of required environment variables when connection issues occur. If you encounter authentication or connection errors, verify that all required environment variables are properly set and that your certificates and keys are valid.
 
 -----
 
