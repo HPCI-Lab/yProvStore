@@ -1,8 +1,14 @@
 #!/bin/bash
 
-# Save current directory and move to the directory of this script
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-pushd "$SCRIPT_DIR" > /dev/null || exit 1
+#  Get the directory of this script, resolving any symlinks
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 # Check if 'uv' is installed
 if ! command -v uv &> /dev/null; then
@@ -22,9 +28,9 @@ source .venv/bin/activate
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
-    echo "Node.js is not installed. Please install Node.js from https://nodejs.org/ and re-run this script."
-    popd > /dev/null || true
-    exit 1
+  echo "Node.js is not installed. Please install Node.js from https://nodejs.org/ and re-run this script."
+  popd > /dev/null || true
+  exit 1
 fi
 
 # Install the required Python packages

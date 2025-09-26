@@ -79,7 +79,7 @@ class FabricConnector:
     PACKAGE_NAME = "yprov-cli"
     WRAPPER_PATH = "lib/dist/wrapper.js"
 
-    def create_document(self, document: BlockchainDocument) -> dict:
+    def create_document(self, document: BlockchainDocument) -> str:
         """
         Create a new document on the blockchain.
 
@@ -87,7 +87,7 @@ class FabricConnector:
             document (BlockchainDocument): The document to create.
 
         Returns:
-            dict: The result of the creation operation.
+            str: The result of the creation operation.
         """
         # basic validation of document fields before sending to JS
 
@@ -98,7 +98,7 @@ class FabricConnector:
 
         return self._call_js(JSMethods.CREATE_DOCUMENT, asdict(document))
     
-    def read_document(self, pid: str) -> dict:
+    def read_document(self, pid: str) -> str:
         """
         Read a document from the blockchain by its PID.
 
@@ -106,11 +106,11 @@ class FabricConnector:
             pid (str): The PID of the document to read.
 
         Returns:
-            dict: The result of the read operation.
+            str: The result of the read operation.
         """
         return self._call_js(JSMethods.READ_DOCUMENT, {"pid": pid})
     
-    def get_documents_by_interval(self, start_time: str, end_time: str) -> dict:
+    def get_documents_by_interval(self, start_time: str, end_time: str) -> str:
         """
         Get documents created within a specific time interval.
 
@@ -119,11 +119,11 @@ class FabricConnector:
             end_time (str): The end of the time interval.
 
         Returns:
-            dict: The result of the query operation.
+            str: The result of the query operation.
         """
         return self._call_js(JSMethods.GET_DOCUMENTS_BY_INTERVAL, {"startTime": start_time, "endTime": end_time})
 
-    def _call_js(self, method: JSMethods, params: dict | None = None, extra_env: dict | None = None, timeout: int = 30):
+    def _call_js(self, method: JSMethods, params: dict | None = None, extra_env: dict | None = None, timeout: int = 30) -> str:
         """
         Call the Node.js wrapper script with the specified method and parameters.
 

@@ -222,43 +222,36 @@ def test_connection():
             pid=f"TEST_PID_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
             url="https://example.com/test-resource",
             hash="test_hash_" + datetime.now().strftime('%Y%m%d%H%M%S'),
-            timestamp=datetime.now().isoformat(),
+            timestamp=str(int(datetime.now().timestamp() * 1000)),  # current time in ms
             owners=["test_owner"]
         )
         
         console.print("Creating test document...")
         create_result = connector.create_document(test_doc)
+
+        console.print("✅ [green]Document creation: SUCCESS[/green]")
+        console.print(f"[blue]{create_result}[/blue]\n")
         
-        if create_result.get('ok'):
-            console.print("✅ [green]Document creation: SUCCESS[/green]")
-            
-            # Try to read the created document
-            console.print("Reading test document...")
-            read_result = connector.read_document(test_doc.pid)
-            
-            if read_result.get('ok'):
-                console.print("✅ [green]Document reading: SUCCESS[/green]")
-            else:
-                console.print("❌ [red]Document reading: FAILED[/red]")
-            
-            # Try interval query
-            console.print("Testing interval query...")
-            start_time = str(int(datetime.now().timestamp() * 1000) - 60000)  # 1 minute ago
-            end_time = str(int(datetime.now().timestamp() * 1000) + 60000)   # 1 minute from now
-            
-            interval_result = connector.get_documents_by_interval(start_time, end_time)
-            if interval_result.get('ok'):
-                console.print("✅ [green]Interval query: SUCCESS[/green]")
-            else:
-                console.print("❌ [red]Interval query: FAILED[/red]")
-            
-            console.print("\n✅ [bold green]Blockchain connection test completed successfully![/bold green]")
-        else:
-            console.print("❌ [red]Document creation: FAILED[/red]")
-            console.print("❌ [bold red]Blockchain connection test failed.[/bold red]")
+        # Try to read the created document
+        console.print("Reading test document...")
+        read_result = connector.read_document(test_doc.pid)
+        
+        console.print("✅ [green]Document reading: SUCCESS[/green]")
+        console.print(f"[blue]{read_result}[/blue]\n")
+
+        # Try interval query
+        console.print("Testing interval query...")
+        start_time = str(int(datetime.now().timestamp() * 1000) - 60000)  # 1 minute ago
+        end_time = str(int(datetime.now().timestamp() * 1000) + 60000)   # 1 minute from now
+        
+        interval_result = connector.get_documents_by_interval(start_time, end_time)
+        console.print("✅ [green]Interval query: SUCCESS[/green]")
+        console.print(f"[blue]{interval_result}[/blue]\n")
+        
+        console.print("\n✅ [bold green]Blockchain connection test completed successfully![/bold green]")
     
     except Exception as e:
-        console.print("❌ [bold red]Blockchain connection test failed:[/bold red]")
+        console.print("\n❌ [bold red]Blockchain connection test failed:[/bold red]")
         console.print(f"   {str(e)}")
         console.print("\n[dim]Make sure all required environment variables are set:[/dim]")
         console.print(f"[dim]- CONNECTOR_PEER_TLSCERT_PATH={os.getenv('CONNECTOR_PEER_TLSCERT_PATH')}[/dim]")
