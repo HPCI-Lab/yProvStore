@@ -305,7 +305,7 @@ yprov auth signup
 yprov auth login
 yprov auth verify
 yprov auth logout
-yprov documents create --json-file <path/to/document.json> [--parent-pid <parent_pid>]
+yprov documents create --json-file <path/to/document.json> [--parent-pid <parent_pid>] [--trustworthy]
 yprov documents list [--page <page_number>] [--page-size <page_size>] [--updated-after <timestamp>]
 yprov documents get <document_pid>
 yprov documents download <document_pid> [--output-folder <path>] [--output <file_path>]
@@ -408,6 +408,30 @@ Once authenticated, you can create, list, and download provenance documents.
       --json-file examples/doc.json \
       --parent-pid <parent_pid_here>
     ```
+
+    For enhanced trustworthiness, you can create a blockchain record alongside the document:
+
+    ```bash
+    # Create document with blockchain record for trustworthiness
+    yprov documents create \
+      --json-file examples/doc.json \
+      --trustworthy
+
+    # Or with both parent PID and blockchain record
+    yprov documents create \
+      --json-file examples/doc.json \
+      --parent-pid <parent_pid_here> \
+      --trustworthy
+    ```
+
+    **Options:**
+
+    - `--json-file`: Path to a JSON file containing the document data
+    - `--value`: A JSON string containing the document data (mutually exclusive with `--json-file`)
+    - `--parent-pid`: PID of the parent document, if any
+    - `--trustworthy`: Also create a record of the document on the blockchain for enhanced trustworthiness and immutable provenance tracking
+
+    **Note:** To use the `--trustworthy` option, you need to configure the blockchain connection environment variables as described in the [Blockchain Operations](#blockchain-operations) section. If the blockchain configuration is missing or invalid, the document record creation will fail with an appropriate error message.
 
   * **List all available documents** (with pagination).
 

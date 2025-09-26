@@ -5,7 +5,7 @@ from fastapi import APIRouter, status, Query
 from pydantic import BaseModel, Field
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
-from application.documentation.openapi_generation import EXAMPLE_EMAIL, EXAMPLE_UUID, EXAMPLE_DOCUMENT_VERSION, EXAMPLE_DOCUMENT_STORAGE
+from application.documentation.openapi_generation import EXAMPLE_EMAIL, EXAMPLE_UUID, EXAMPLE_DOCUMENT_VERSION, EXAMPLE_DOCUMENT_STORAGE, EXAMPLE_HASH
 from services.document_storage.service import DocumentRecordStorageService
 from services.user_storage.service import UserStorageService
 
@@ -28,6 +28,7 @@ class DocumentRecordGet(BaseModel):
     version: int = Field(..., examples=[EXAMPLE_DOCUMENT_VERSION])
     storage_url: str = Field(..., examples=[EXAMPLE_DOCUMENT_STORAGE])
     owner_email: str | None = Field(..., examples=[EXAMPLE_EMAIL])
+    hash: str | None = Field(None, examples=[EXAMPLE_HASH], description="SHA-256 hash of the document content, if available.")
     parent_document_pid: str | None = Field(None, examples=[EXAMPLE_UUID], description="PID of the previous document version.")
 
 
@@ -74,6 +75,7 @@ async def list_documents(
             pid=record.pid,
             version=record.version,
             storage_url=record.storage_url,
+            hash=record.hash,
             owner_email=user_emails.get(record.owner_id, "Unknown"),
             parent_document_pid=record.parent_doc_pid
         )

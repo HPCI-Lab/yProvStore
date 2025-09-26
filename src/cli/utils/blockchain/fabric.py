@@ -4,6 +4,7 @@ import logging
 import subprocess
 from enum import Enum
 from shutil import which
+from typing import Union
 from datetime import datetime
 from importlib import resources
 from urllib.parse import urlparse
@@ -24,8 +25,11 @@ class BlockchainDocument:
     pid: str
     url: str
     hash: str
-    timestamp: str
+    timestamp: Union[str, int]
     owners: list[str]
+
+    def __post_init__(self):
+        self.validate()
 
     def validate(self):
         if not isinstance(self.pid, str) or not self.pid.strip():
@@ -40,12 +44,8 @@ class BlockchainDocument:
         if not isinstance(self.hash, str) or not self.hash.strip():
             raise ValueError("Document hash must be a non-empty string")
 
-        if not isinstance(self.timestamp, str) or not self.timestamp.strip():
-            raise ValueError("Document timestamp must be a non-empty ISO-8601 string")
-        try:
-            datetime.fromisoformat(self.timestamp)
-        except Exception:
-            raise ValueError("Document timestamp must be a valid ISO-8601 datetime string")
+        # Validate and normalize timestamp
+        self.timestamp = _validate_timestamp(self.timestamp, "Document timestamp")
 
         if not isinstance(self.owners, list) or not self.owners:
             raise ValueError("Document owners must be a non-empty list of owner identifiers")
@@ -94,8 +94,7 @@ class FabricConnector:
         if not isinstance(document, BlockchainDocument):
             raise TypeError("document must be a BlockchainDocument instance")
 
-        document.validate()
-
+        # Convert to dict after validation (timestamp is now normalized to ISO format)
         return self._call_js(JSMethods.CREATE_DOCUMENT, asdict(document))
     
     def read_document(self, pid: str) -> str:
@@ -110,18 +109,45 @@ class FabricConnector:
         """
         return self._call_js(JSMethods.READ_DOCUMENT, {"pid": pid})
     
-    def get_documents_by_interval(self, start_time: str, end_time: str) -> str:
+    def get_documents_by_interval(self, start_time: Union[str, int], end_time: Union[str, int]) -> str:
         """
         Get documents created within a specific time interval.
 
         Args:
-            start_time (str): The start of the time interval.
-            end_time (str): The end of the time interval.
+            start_time: The start of the time interval (ISO string or milliseconds)
+            end_time: The end of the time interval (ISO string or milliseconds)
 
         Returns:
             str: The result of the query operation.
         """
-        return self._call_js(JSMethods.GET_DOCUMENTS_BY_INTERVAL, {"startTime": start_time, "endTime": end_time})
+        # Validate and normalize timestamps
+        normalized_start = _validate_timestamp(start_time, "start_time")
+        normalized_end = _validate_timestamp(end_time, "end_time")
+        
+        return self._call_js(JSMethods.GET_DOCUMENTS_BY_INTERVAL, {
+            "startTime": normalized_start, 
+            "endTime": normalized_end
+        })
+    
+    def get_env_vars(self) -> dict:
+        """
+        Get the environment variables required for Fabric connection.
+        Returns:
+            dict: A dictionary of environment variables.
+        Raises:
+            RuntimeError: If any required environment variable is missing.
+        """
+        env_vars = {
+            "CONNECTOR_PEER_TLSCERT_PATH": os.getenv("CONNECTOR_PEER_TLSCERT_PATH"),
+            "CONNECTOR_USR_PKEY_PATH": os.getenv("CONNECTOR_USR_PKEY_PATH"),
+            "CONNECTOR_PEER_ENDPOINT": os.getenv("CONNECTOR_PEER_ENDPOINT"),
+            "CONNECTOR_PEER_HOSTNAME": os.getenv("CONNECTOR_PEER_HOSTNAME") or os.getenv("CONNECTOR_PEER_ENDPOINT"),
+            "CONNECTOR_USR_CERT_PATH": os.getenv("CONNECTOR_USR_CERT_PATH"),
+            "CONNECTOR_PEER_MSP_ID": os.getenv("CONNECTOR_PEER_MSP_ID"),
+        }
+        missing = [k for k, v in env_vars.items() if not v]
+        if missing:
+            raise RuntimeError(f"Missing required env vars for Fabric connection: {', '.join(missing)}")
 
     def _call_js(self, method: JSMethods, params: dict | None = None, extra_env: dict | None = None, timeout: int = 30) -> str:
         """
@@ -135,17 +161,7 @@ class FabricConnector:
         Returns:
             dict: The result from the Node.js script.
         """
-        env_vars = {
-            "CONNECTOR_PEER_TLSCERT_PATH": os.getenv("CONNECTOR_PEER_TLSCERT_PATH"),
-            "CONNECTOR_USR_PKEY_PATH": os.getenv("CONNECTOR_USR_PKEY_PATH"),
-            "CONNECTOR_PEER_ENDPOINT": os.getenv("CONNECTOR_PEER_ENDPOINT"),
-            "CONNECTOR_PEER_HOSTNAME": os.getenv("CONNECTOR_PEER_HOSTNAME") or os.getenv("CONNECTOR_PEER_ENDPOINT"),
-            "CONNECTOR_USR_CERT_PATH": os.getenv("CONNECTOR_USR_CERT_PATH"),
-            "CONNECTOR_PEER_MSP_ID": os.getenv("CONNECTOR_PEER_MSP_ID"),
-        }
-        missing = [k for k, v in env_vars.items() if not v]
-        if missing:
-            raise RuntimeError(f"Missing required env vars for Fabric connection: {', '.join(missing)}")
+        env_vars = self.get_env_vars()
         if extra_env:
             env_vars.update(extra_env)
 
@@ -191,3 +207,62 @@ class FabricConnector:
         except Exception:
             # fallback: assume we're running from source checkout
             return os.path.join(os.path.dirname(__file__), self.WRAPPER_PATH)
+
+
+def _validate_timestamp(timestamp: Union[str, int], field_name: str = "timestamp") -> str:
+    """
+    Validate a timestamp in either ISO-8601 format or milliseconds since epoch,
+    and return it as a milliseconds-since-epoch string.
+
+    Args:
+        timestamp: The timestamp to validate (ISO string, milliseconds as int or string)
+        field_name: Name of the field for error messages
+
+    Returns:
+        str: The timestamp as milliseconds since epoch (string)
+
+    Raises:
+        ValueError: If the timestamp is invalid
+    """
+    if timestamp is None:
+        raise ValueError(f"{field_name} cannot be None")
+
+    # Handle string timestamps
+    if isinstance(timestamp, str):
+        if not timestamp.strip():
+            raise ValueError(f"{field_name} must be a non-empty string")
+        ts = timestamp.strip()
+
+        # Try parsing as ISO-8601 first
+        try:
+            dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            # If datetime is naive, treat it as UTC
+            if dt.tzinfo is None:
+                epoch = datetime(1970, 1, 1)
+                seconds = (dt - epoch).total_seconds()
+            else:
+                seconds = dt.timestamp()
+            ms = int(seconds * 1000)
+            if ms < 0:
+                raise ValueError(f"{field_name} milliseconds timestamp cannot be negative")
+            return str(ms)
+        except ValueError:
+            pass
+
+        # Try parsing as milliseconds string
+        try:
+            ms_timestamp = int(ts)
+            if ms_timestamp < 0:
+                raise ValueError(f"{field_name} milliseconds timestamp cannot be negative")
+            return str(ms_timestamp)
+        except (ValueError, OSError):
+            raise ValueError(f"{field_name} must be a valid ISO-8601 datetime string or milliseconds since epoch")
+
+    # Handle integer timestamps (milliseconds)
+    elif isinstance(timestamp, int):
+        if timestamp < 0:
+            raise ValueError(f"{field_name} milliseconds timestamp cannot be negative")
+        return str(timestamp)
+
+    else:
+        raise ValueError(f"{field_name} must be a string (ISO-8601 or milliseconds) or integer (milliseconds)")

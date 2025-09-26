@@ -4,7 +4,7 @@ from fastapi import status, APIRouter
 from pydantic import BaseModel, Field
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
-from application.documentation.openapi_generation import EXAMPLE_EMAIL, EXAMPLE_UUID, EXAMPLE_DOCUMENT_VERSION, EXAMPLE_DOCUMENT_STORAGE
+from application.documentation.openapi_generation import EXAMPLE_EMAIL, EXAMPLE_UUID, EXAMPLE_DOCUMENT_VERSION, EXAMPLE_DOCUMENT_STORAGE, EXAMPLE_HASH
 from application.exceptions.responses import EXCEPTION_SCHEMA
 from application.exceptions.types import NotFoundException, ServiceUnavailableException
 from services.document_storage.service import DocumentRecordStorageService
@@ -27,6 +27,7 @@ class DocumentRecordGet(BaseModel):
     version: int = Field(..., examples=[EXAMPLE_DOCUMENT_VERSION])
     storage_url: str = Field(..., examples=[EXAMPLE_DOCUMENT_STORAGE])
     owner_email: str = Field(..., examples=[EXAMPLE_EMAIL])
+    hash: str | None = Field(None, examples=[EXAMPLE_HASH], description="SHA-256 hash of the document content, if available.")
     parent_document_pid: str | None = Field(None, examples=[EXAMPLE_UUID], description="PID of the previous document version.")
 
 
@@ -70,5 +71,6 @@ async def get_document_prefix(
         version=record.version,
         storage_url=record.storage_url,
         owner_email=owner_email or "Unknown",
+        hash=record.hash,
         parent_document_pid=record.parent_doc_pid
     )

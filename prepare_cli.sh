@@ -9,6 +9,7 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+pushd "$SCRIPT_DIR" > /dev/null || exit 1
 
 # Check if 'uv' is installed
 if ! command -v uv &> /dev/null; then

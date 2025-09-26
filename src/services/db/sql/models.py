@@ -82,6 +82,7 @@ class DBDocumentRecord(BaseDBModel):
             storage_id=self.storage_id,
             owner_id=self.owner_id,
             parent_doc_pid=self.parent_doc_pid,
+            hash=self.hash,
             created_at=self.created_at,
             updated_at=self.updated_at
         )

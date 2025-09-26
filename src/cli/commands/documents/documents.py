@@ -1,10 +1,13 @@
 import os
 import click
 import json
+from datetime import datetime
 from rich.console import Console
 from rich.table import Table
 
 from utils.api_client import make_request
+from utils.blockchain.fabric import FabricConnector, BlockchainDocument
+
 from .permissions import permissions
 from .metadata import metadata
 from .graph import graph
@@ -78,8 +81,13 @@ def get_document(ctx, pid):
     '--parent-pid',
     help="PID of the parent document, if any."
 )
+@click.option(
+    '--trustworthy',
+    is_flag=True,
+    help="Also create a record of the document on the blockchain for enhanced trustworthiness."
+)
 @click.pass_context
-def create_document(ctx, json_file, value, parent_pid):
+def create_document(ctx, json_file, value, parent_pid, trustworthy):
     """Publish a new document, from a JSON file or a JSON string."""
     # Enforce exactly one input source
     if bool(json_file) == bool(value):
@@ -88,6 +96,15 @@ def create_document(ctx, json_file, value, parent_pid):
 
     api_url = ctx.obj['API_URL']
     params = {'parent_document_pid': parent_pid} if parent_pid else {}
+
+    # Validate blockchain required variables beforehand if --trustworthy is set
+    if trustworthy:
+        try:
+            fabric_connector = FabricConnector()
+            fabric_connector.get_env_vars()
+        except RuntimeError as e:
+            console.print(f"❌ [bold red]Error:[/bold red] {e}")
+            return
 
     # Load document_data from file or string
     try:
@@ -118,7 +135,56 @@ def create_document(ctx, json_file, value, parent_pid):
     # Handle response (same as before)
     if response and response.status_code == 200:
         console.print("✅ [bold green]Document created successfully![/bold green]")
-        console.print_json(data=response.json())
+        response_data = response.json()
+        console.print_json(data=response_data)
+        
+        # If --trustworthy flag is set, also create blockchain record
+        if trustworthy:
+            console.print("\n📝 Creating blockchain record for enhanced trustworthiness...")
+            try:
+                # Extract document info from API response
+                doc_info = response_data.get('document_record', response_data)
+                pid = doc_info.get('pid')
+                document_hash = doc_info.get('hash')  # Assuming the API returns the document hash
+                owner_email = doc_info.get('owner_email')
+                
+                if not pid:
+                    console.print("❌ [bold red]Error:[/bold red] Could not extract PID from API response.")
+                    return
+                
+                if not document_hash:
+                    console.print("❌ [bold yellow]Warning:[/bold yellow] No document hash found in API response. Using placeholder.")
+                    document_hash = "placeholder_hash_" + datetime.now().strftime('%Y%m%d%H%M%S')
+                
+                if not owner_email:
+                    console.print("❌ [bold yellow]Warning:[/bold yellow] No owner email found in API response. Using placeholder.")
+                    owner_email = "unknown_owner"
+                
+                # Construct document URL (assuming the API provides a way to access the document)
+                api_url = ctx.obj['API_URL']
+                document_url = f"{api_url}/documents/{pid}/download"
+                
+                # Create blockchain document
+                blockchain_doc = BlockchainDocument(
+                    pid=pid,
+                    url=document_url,
+                    hash=document_hash,
+                    timestamp=datetime.now().isoformat(),
+                    owners=[owner_email]
+                )
+                console.print(f"[blue]Storing document record to blockchain:\n{json.dumps(blockchain_doc.__dict__, indent=2)}[/blue]")
+                
+                # Connect to blockchain and create document
+                connector = FabricConnector()
+                blockchain_result = connector.create_document(blockchain_doc)
+                
+                console.print("✅ [bold green]Document record created successfully on blockchain![/bold green]")
+                console.print(f"Blockchain transaction:\n[dim]{blockchain_result}[/dim]")
+
+            except Exception as e:
+                console.print("❌ [bold red]Error creating blockchain record:[/bold red]")
+                console.print(f"   {str(e)}")
+                console.print("   [dim]Document was still created successfully on the API server.[/dim]")
     else:
         console.print(f"❌ [bold red]Error[/bold red] {response.status_code if response else ''}: {response.text if response else 'No response.'}")
 

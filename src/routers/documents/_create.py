@@ -187,5 +187,6 @@ async def create_document(
         version=new_document_record.version,
         storage_url=new_document_record.storage_url,
         owner_email=logged_user.email,
+        hash=new_document_record.hash,
         parent_document_pid=new_document_record.parent_doc_pid
     )
