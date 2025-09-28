@@ -35,7 +35,8 @@ documentation = {
     "summary": "Get Document Record info",
     "description": "This endpoint retrieves a specific document record info by its PID and prefix.",
     "status_code": status.HTTP_200_OK,
-    "response_description": "Returns the document record with its unique identifier (pid), version, storage URL, owner email, and optional parent document PID.",
+    "response_description": "Returns the document record with its unique identifier (pid), version, storage URL, owner email, and optional parent document PID." + \
+                            " The hash field contains the SHA-256 hash of the document content, if available.",
     "responses": {
         status.HTTP_404_NOT_FOUND: EXCEPTION_SCHEMA[NotFoundException, "The specified document PID does not exist."],
         status.HTTP_503_SERVICE_UNAVAILABLE: EXCEPTION_SCHEMA[ServiceUnavailableException]

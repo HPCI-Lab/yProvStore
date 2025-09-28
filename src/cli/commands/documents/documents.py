@@ -1,6 +1,7 @@
 import os
-import click
 import json
+import click
+import hashlib
 from datetime import datetime
 from rich.console import Console
 from rich.table import Table
@@ -201,46 +202,139 @@ def create_document(ctx, json_file, value, parent_pid, trustworthy):
     type=click.Path(exists=True, file_okay=False, dir_okay=True, writable=True),
     help="Folder to save the file in. The filename will default to the document's PID."
 )
+@click.option(
+    '--trustworthy/--no-trustworthy',
+    default=False,
+    help="Verify SHA256: compare local file hash with yProvStore and blockchain values."
+)
 @click.pass_context
-def download_document(ctx, pid, output, output_folder):
-    """Download a document file by its PID."""
-
-    # Determine the final output path based on the provided options
-    if output:
-        # If a full output path is given, it takes precedence
-        output_path = output
-        output_folder = os.path.dirname(output_path)
-    elif output_folder:
-        # If only a folder is given, construct the path using the PID as the filename
-        output_path = os.path.join(output_folder, f"{pid}.json")
-    else:
-        # If no location is specified, save the file in the current directory
-        output_path = f"{pid}.json"
-        output_folder = os.getcwd()
-
+def download_document(ctx, pid, output, output_folder, trustworthy):
+    """Download a document file by its PID. Optionally verify its SHA256 hash."""
     api_url = ctx.obj['API_URL']
+
+    # Determine base folder + final output path
+    if output:
+        output_path = output
+        output_folder = os.path.dirname(output_path) or os.getcwd()
+    else:
+        base_folder = output_folder or os.getcwd()
+        split = pid.split('/')
+        if len(split) == 2:
+            prefix, doc_id = split
+            prefix_path = os.path.join(base_folder, prefix)
+            os.makedirs(prefix_path, exist_ok=True)
+            output_path = os.path.join(prefix_path, f"{doc_id}.json")
+        elif len(split) > 2:
+            console.print(f"❌ [bold red]Error:[/bold red] Invalid PID format '{pid}'. Expected format is 'prefix/pid' or 'pid'.")
+            return
+        else:
+            # single-part PID
+            output_path = os.path.join(base_folder, f"{pid}.json")
+
     console.print(f"Downloading document [cyan]{pid}[/cyan] to [yellow]{output_path}[/yellow]...")
 
-    split = pid.split('/')
-    if len(split) == 2:
-        # If the PID includes a prefix, create the prefix folder it if it doesn't exist
-        prefix_path = os.path.join(output_folder, split[0])
-        if not os.path.exists(prefix_path):
-            os.makedirs(prefix_path)
-    elif (len(split) > 2):
-        console.print(f"❌ [bold red]Error:[/bold red] Invalid PID format '{pid}'. Expected format is 'prefix/pid' or 'pid'.")
+    # perform the download (streaming)
+    response = make_request("GET", api_url, f"/documents/{pid}/download", stream=True)
+    if not response:
+        console.print(f"❌ [bold red]Error:[/bold red] No response from server while downloading '{pid}'.")
         return
 
-    response = make_request("GET", api_url, f"/documents/{pid}/download", stream=True)
-
-    if response and response.status_code == 200:
+    if response.status_code != 200:
+        console.print(f"❌ [bold red]Error:[/bold red] Failed to download document ({response.status_code}).")
         try:
-            with open(output_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
+            # show server message if present
+            console.print(response.text)
+        except Exception:
+            pass
+        return
+
+    try:
+        with open(output_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
                     f.write(chunk)
-            console.print(f"✅ [bold green]Download complete![/bold green] File saved to [yellow]{output_path}[/yellow].")
-        except IOError as e:
-            console.print(f"[bold red]Error writing to file:[/bold red] {e}")
+        console.print(f"✅ [bold green]Download complete![/bold green] File saved to [yellow]{output_path}[/yellow].")
+    except IOError as e:
+        console.print(f"[bold red]Error writing to file:[/bold red] {e}")
+        return
+
+    # If trustworthy verification requested, recompute and compare hashes
+    if trustworthy:
+        console.print("🔎 Verifying document trustworthiness (local SHA256 vs yProvStore vs blockchain)...")
+
+        # helper to compute sha256 of file (streaming)
+        def compute_sha256(path):
+            h = hashlib.sha256()
+            try:
+                with open(path, 'rb') as fh:
+                    for chunk in iter(lambda: fh.read(8192), b''):
+                        h.update(chunk)
+                return h.hexdigest()
+            except Exception as e:
+                console.print(f"[bold red]Error computing SHA256 of local file:[/bold red] {e}")
+                return None
+
+        local_hash = compute_sha256(output_path)
+        if not local_hash:
+            console.print("[bold red]Failed to compute local hash; aborting verification.[/bold red]")
+            return
+
+        # 1) Get DB hash from API /documents/{pid}
+        db_hash = None
+        response_meta = make_request("GET", api_url, f"/documents/{pid}")
+        if response_meta and response_meta.status_code == 200:
+            try:
+                meta = response_meta.json()
+                # look for common hash keys
+                db_hash = meta.get('sha256') or meta.get('hash') or meta.get('documentHash') or meta.get('document_hash')
+            except Exception as e:
+                console.print(f"[bold yellow]Warning:[/bold yellow] Could not parse JSON from metadata response: {e}")
+        else:
+            console.print(f"[bold yellow]Warning:[/bold yellow] Can't fetch document metadata from API (status: {getattr(response_meta, 'status_code', 'no response')}).")
+
+        # 2) Get blockchain hash via FabricConnector
+        bc_hash = None
+        try:
+            connector = FabricConnector()
+            bc_raw = connector.read_document(pid)
+            # bc_raw may be JSON string or already a dict-like; try to convert safely
+            if isinstance(bc_raw, str):
+                try:
+                    bc_json = json.loads(bc_raw)
+                except json.JSONDecodeError:
+                    # if it's just a raw hash string, treat it as such
+                    bc_json = {'hash': bc_raw}
+            else:
+                bc_json = bc_raw
+
+            # extract possible keys
+            if isinstance(bc_json, dict):
+                bc_hash = bc_json.get('hash')
+            else:
+                console.print(f"[bold yellow]Warning:[/bold yellow] Unexpected blockchain document format {type(bc_json)}:\n[dim]{bc_json}[/dim]")
+        except Exception as e:
+            console.print(f"[bold yellow]Warning:[/bold yellow] Blockchain read failed: {e}")
+
+        # Print and compare results
+        console.print("\nHashes:")
+        console.print(f" • Local:      [cyan]{local_hash}[/cyan]")
+        console.print(f" • yProvStore: [cyan]{db_hash or 'N/A'}[/cyan]")
+        console.print(f" • Blockchain: [cyan]{bc_hash or 'N/A'}[/cyan]\n")
+
+        ok_db = (db_hash is not None and local_hash == db_hash)
+        ok_bc = (bc_hash is not None and local_hash == bc_hash)
+
+        if ok_db and ok_bc:
+            console.print("✅ [bold green]All checks passed:[/bold green] local hash matches yProvStore and blockchain.")
+        else:
+            if not db_hash:
+                console.print("❌ [bold red]yProvStore hash unavailable or could not be read.[/bold red]")
+            elif not ok_db:
+                console.print("❌ [bold red]Mismatch:[/bold red] local hash does not match yProvStore hash.")
+            if not bc_hash:
+                console.print("❌ [bold red]Blockchain hash unavailable or could not be read.[/bold red]")
+            elif not ok_bc:
+                console.print("❌ [bold red]Mismatch:[/bold red] local hash does not match blockchain hash.")
 
 
 documents.add_command(permissions)
