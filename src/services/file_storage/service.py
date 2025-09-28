@@ -20,6 +20,7 @@ from application.exceptions.types import ConflictException, NotFoundException, S
 logger = logging.getLogger(__name__)
 
 
+ZSTD_MAGIC = b'\x28\xb5\x2f\xfd'  # zstd magic number for file header detection
 ZSTD_LEVEL = 1  # low CPU, reasonable compression
 READ_CHUNK = 1024 * 1024  # 1 MiB read chunks for streaming
 
@@ -177,23 +178,42 @@ class LocalFileStorageServiceImpl(FileStorageService):
             raise NotFoundException(f"File with ID '{storage_id}' not found.")
 
         try:
-            # stream read compressed file and decompress incrementally to avoid loading whole file
-            dctx = zstd.ZstdDecompressor()
-            dobj = dctx.decompressobj()
+            # Peek at the start of the file to check for zstd compression
+            compression_meta = None
+            async with aiofiles.open(file_path, 'rb') as fpeek:
+                head = await fpeek.read(4)
+                if head == ZSTD_MAGIC:
+                    compression_meta = "zstd"
 
-            async with aiofiles.open(file_path, 'rb') as f:
-                while True:
-                    comp_chunk = await f.read(READ_CHUNK)
-                    if not comp_chunk:
-                        break
-                    decompressed = dobj.decompress(comp_chunk)
-                    if decompressed:
-                        yield decompressed
+            is_zstd = (compression_meta and str(compression_meta).lower() == "zstd")
 
-                # flush any remaining decompressed bytes
-                tail = dobj.flush()
-                if tail:
-                    yield tail
+            if is_zstd:
+                logger.debug(f"File {storage_id} is zstd-compressed; decompressing on-the-fly.")
+                # stream read compressed file and decompress incrementally to avoid loading whole file
+                dctx = zstd.ZstdDecompressor()
+                dobj = dctx.decompressobj()
+                async with aiofiles.open(file_path, 'rb') as f:
+                    while True:
+                        comp_chunk = await f.read(READ_CHUNK)
+                        if not comp_chunk:
+                            break
+                        decompressed = dobj.decompress(comp_chunk)
+                        if decompressed:
+                            yield decompressed
+
+                    # flush any remaining decompressed bytes
+                    tail = dobj.flush()
+                    if tail:
+                        yield tail
+            else:
+                logger.warning(f"File {storage_id} does not indicate zstd compression; streaming raw bytes.")
+                # file is not zstd-compressed: stream raw bytes
+                async with aiofiles.open(file_path, 'rb') as f:
+                    while True:
+                        chunk = await f.read(READ_CHUNK)
+                        if not chunk:
+                            break
+                        yield chunk
 
         except Exception as e:
             logger.error(f"Error retrieving file {storage_id}: {e}")
@@ -313,9 +333,6 @@ class MinioFileStorageServiceImpl(FileStorageService):
         hasher = hashlib.sha256()
         tmp_path = None
 
-        # compression params
-        
-
         # NOTE: writing compressed bytes to disk; aiofiles performs non-blocking writes
         try:
             # create a temporary file path
@@ -372,12 +389,11 @@ class MinioFileStorageServiceImpl(FileStorageService):
             raise ServiceUnavailableException("Failed to store file.")
         finally:
             # cleanup temp file if present
-            logger.info(f"Cleaning up temp file {tmp_path}")
-            # if tmp_path:
-            #     try:
-            #         os.unlink(tmp_path)
-            #     except Exception:
-            #         pass
+            if tmp_path:
+                try:
+                    os.unlink(tmp_path)
+                except Exception:
+                    pass
 
     async def retrieve_file(self, storage_id: str) -> AsyncIterator[bytes]:
         """

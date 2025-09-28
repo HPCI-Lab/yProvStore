@@ -199,7 +199,7 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
         #         logger.error(f"AttributeError [{parent_value}] in generating filter condition for [{self._model_type.__name__}]: {e}")
         #         return None
         supported_operations = ["eq", "ne", "lt", "le", "gt", "ge", "in", "like", "ilike", "is_null", "is_not_null"]
-        print(f"Generating filter condition for [{self._model_type.__name__}] with parent_value [{parent_value}] and nested_value [{nested_value}]")
+        # print(f"Generating filter condition for [{self._model_type.__name__}] with parent_value [{parent_value}] and nested_value [{nested_value}]")
         if nested_value in supported_operations:
             try:
                 operations = {
