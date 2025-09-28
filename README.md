@@ -483,11 +483,25 @@ Once authenticated, you can create, list, and download provenance documents.
     Download a document file by its PID.
 
     Options:
-      -o, --output FILE          Full path to save the file (e.g.,
-                                'my_dir/my_doc.json'). This overrides --output-folder.
-      --output-folder DIRECTORY  Folder to save the file in. The filename will
-                                default to the document's PID.
+      -o, --output FILE                 Full path to save the file (e.g.,
+                                        'my_dir/my_doc.json'). This overrides --output-folder.
+      --output-folder DIRECTORY         Folder to save the file in. The filename will
+                                        default to the document's PID.
+      --trustworthy / --no-trustworthy  Verify SHA256: recompute the local file hash and
+                                        compare it with the hash stored in the yProvStore database
+                                        and the one on the blockchain. Defaults to --no-trustworthy.
     ```
+
+    Notes:
+    - `--output` takes precedence over `--output-folder`.
+    - If `PID` uses the `prefix/pid` form, the CLI will create a `prefix/` subfolder (inside the chosen output folder or the current directory) and save the file as `prefix/pid.json`.
+    - When `--trustworthy` is passed the command will:
+       1. recompute the downloaded file's SHA-256,
+       2. fetch the DB hash from `GET /documents/{pid}`,
+       3. read the blockchain-stored hash via the Fabric connector (! this requires proper blockchain configuration, see the [Blockchain Operations](#blockchain-operations) section),
+       4. print a summary and indicate whether the three hashes match.
+
+    Examples:
 
     * Save to the current directory (e.g., `<pid>.json`):
 
@@ -505,6 +519,18 @@ Once authenticated, you can create, list, and download provenance documents.
 
       ```bash
       yprov documents download <your_document_pid> --output /path/to/my_doc.json
+      ```
+
+    * Download and verify hash against DB and blockchain:
+
+      ```bash
+      yprov documents download <your_document_pid> --trustworthy
+      ```
+
+    * Force skip verification (explicit) (is the default behavior):
+
+      ```bash
+      yprov documents download <your_document_pid> --no-trustworthy
       ```
 
 
