@@ -280,6 +280,14 @@ This will set up the CLI environment by initiating the virtual environment and m
 
 > **Note**: After you have finished using the CLI, you can deactivate the virtual environment by running `deactivate` in your terminal.
 
+#### Optional Dependencies
+
+For enhanced functionality, you may want to install additional packages:
+
+- **zstandard**: Required for compression features (`--compressed` option in create and download commands)
+  ```bash
+  pip install zstandard
+  ```
 
 **Prepare the CLI before its usage:**
 
@@ -305,10 +313,10 @@ yprov auth signup
 yprov auth login
 yprov auth verify
 yprov auth logout
-yprov documents create --json-file <path/to/document.json> [--parent-pid <parent_pid>] [--trustworthy]
+yprov documents create --json-file <path/to/document.json> [--parent-pid <parent_pid>] [--compressed] [--trustworthy]
 yprov documents list [--page <page_number>] [--page-size <page_size>] [--updated-after <timestamp>]
 yprov documents get <document_pid>
-yprov documents download <document_pid> [--output-folder <path>] [--output <file_path>]
+yprov documents download <document_pid> [--output-folder <path>] [--output <file_path>] [--compressed] [--debug]
 yprov documents permissions add <document_pid> --user-email <email> --permission-level <level>
 yprov documents permissions list <document_pid>
 yprov documents permissions delete <document_pid> --user-email <email>
@@ -424,14 +432,25 @@ Once authenticated, you can create, list, and download provenance documents.
       --trustworthy
     ```
 
+    For faster uploads of large documents, you can enable compression:
+
+    ```bash
+    # Upload with zstd compression to reduce transfer time
+    yprov documents create \
+      --json-file examples/doc.json \
+      --compressed
+    ```
+
     **Options:**
 
     - `--json-file`: Path to a JSON file containing the document data
     - `--value`: A JSON string containing the document data (mutually exclusive with `--json-file`)
     - `--parent-pid`: PID of the parent document, if any
+    - `--compressed`: Compress the document data using zstd before uploading to reduce transfer size (requires `zstandard` library)
     - `--trustworthy`: Also create a record of the document on the blockchain for enhanced trustworthiness and immutable provenance tracking
 
-    **Note:** To use the `--trustworthy` option, you need to configure the blockchain connection environment variables as described in the [Blockchain Operations](#blockchain-operations) section. If the blockchain configuration is missing or invalid, the document record creation will fail with an appropriate error message.
+    **Notes:** 
+    - To use the `--trustworthy` option, you need to configure the blockchain connection environment variables as described in the [Blockchain Operations](#blockchain-operations) section. If the blockchain configuration is missing or invalid, the document record creation will fail with an appropriate error message.
 
   * **List all available documents** (with pagination).
 
@@ -487,6 +506,9 @@ Once authenticated, you can create, list, and download provenance documents.
                                         'my_dir/my_doc.json'). This overrides --output-folder.
       --output-folder DIRECTORY         Folder to save the file in. The filename will
                                         default to the document's PID.
+      --compressed                      Request compressed download from server to reduce
+                                        transfer size (requires zstd).
+      --debug                           Enable debug output for troubleshooting compression issues.
       --trustworthy / --no-trustworthy  Verify SHA256: recompute the local file hash and
                                         compare it with the hash stored in the yProvStore database
                                         and the one on the blockchain. Defaults to --no-trustworthy.
@@ -495,6 +517,8 @@ Once authenticated, you can create, list, and download provenance documents.
     Notes:
     - `--output` takes precedence over `--output-folder`.
     - If `PID` uses the `prefix/pid` form, the CLI will create a `prefix/` subfolder (inside the chosen output folder or the current directory) and save the file as `prefix/pid.json`.
+    - The `--compressed` option requests the server to send compressed data (zstd format), which is automatically decompressed before saving. This can significantly reduce download time for large documents.
+    - The `--debug` option provides detailed information about the download process, including compression status and data inspection.
     - When `--trustworthy` is passed the command will:
        1. recompute the downloaded file's SHA-256,
        2. fetch the DB hash from `GET /documents/{pid}`,
@@ -521,10 +545,28 @@ Once authenticated, you can create, list, and download provenance documents.
       yprov documents download <your_document_pid> --output /path/to/my_doc.json
       ```
 
+    * Download with compression for faster transfer:
+
+      ```bash
+      yprov documents download <your_document_pid> --compressed
+      ```
+
+    * Download with compression and debug information:
+
+      ```bash
+      yprov documents download <your_document_pid> --compressed --debug
+      ```
+
     * Download and verify hash against DB and blockchain:
 
       ```bash
       yprov documents download <your_document_pid> --trustworthy
+      ```
+
+    * Combine compression with hash verification:
+
+      ```bash
+      yprov documents download <your_document_pid> --compressed --trustworthy
       ```
 
     * Force skip verification (explicit) (is the default behavior):

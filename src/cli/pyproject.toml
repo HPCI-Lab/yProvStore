@@ -6,7 +6,8 @@ dependencies = [
     "click>=8.0",
     "requests>=2.25",
     "rich>=13.0",
-    "appdirs"
+    "appdirs",
+    "zstandard>=0.25.0",
 ]
 
 [project.scripts]

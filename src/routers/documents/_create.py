@@ -1,7 +1,8 @@
 import json
 import logging
+from typing import Optional
 
-from fastapi import APIRouter, status, UploadFile, Form, Request
+from fastapi import APIRouter, status, UploadFile, Form, Request, Header
 from pydantic import BaseModel
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
@@ -12,7 +13,7 @@ from application.exceptions.types import UnauthorizedException, ForbiddenExcepti
 from services.document_storage.service import DocumentRecordStorageService
 from services.permission_storage.service import DocumentPermissionStorageService
 from services.pid.service import PidService
-from services.file_storage.service import FileStorageService
+from services.file_storage.service import FileStorageService, CompressionService
 from routers.documents._get import DocumentRecordGet
 from routers.common.dependencies import LoggedUser
 
@@ -86,11 +87,13 @@ async def create_document(
     request: Request,
     document_record_storage: FromDishka[DocumentRecordStorageService],
     file_storage_service: FromDishka[FileStorageService],
+    compression_service: FromDishka[CompressionService],
     permission_service: FromDishka[DocumentPermissionStorageService],
     pid_service: FromDishka[PidService],
     logged_user: LoggedUser,
     parent_document_pid: str | None = None,
     document_file: UploadFile | None = None,
+    content_encoding: Optional[str] = Header(None),  # client may send Content-Encoding header
 ) -> DocumentRecordGet:
     """
     Endpoint to publish a new document in the system.
@@ -118,6 +121,13 @@ async def create_document(
     if not new_pid:
         raise Exception("Failed to generate a new PID.")
 
+    skip_compression = False
+    if content_encoding:
+        # Validate and set the content encoding
+        if content_encoding != file_storage_service.get_compression_standard().value:
+            raise BadRequestException(f"Unsupported Content-Encoding: {content_encoding}. Supported: {file_storage_service.get_compression_standard().value}")        
+        skip_compression = True
+
     if parent_document_pid:
         # Validate if the parent document exists
 
@@ -138,14 +148,14 @@ async def create_document(
     file_hash = None
     if data and data.document_data:
         document_data_bytes = json.dumps(data.document_data).encode('utf-8')
-        file_hash = await file_storage_service.store_file(new_document_record.storage_id, document_data_bytes)
+        file_hash = await file_storage_service.store_file(new_document_record.storage_id, document_data_bytes, skip_compression=skip_compression)
     else:
         try:
             if not document_file or not document_file.content_type or document_file.content_type not in ['application/json', 'text/plain']:
                 raise BadRequestException(
                     "Unsupported file type: " + (document_file.content_type if document_file else "None") + ". Only JSON or plain text files are allowed."
                 )
-            file_hash = await file_storage_service.store_file_from_uploadfile(new_document_record.storage_id, document_file)
+            file_hash = await file_storage_service.store_file_from_uploadfile(new_document_record.storage_id, document_file, skip_compression=skip_compression)
         except Exception as e:
             raise BadRequestException(f"Failed to read document file: {e}")
 

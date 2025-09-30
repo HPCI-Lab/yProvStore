@@ -5,7 +5,7 @@ from .db.service import DBServiceProvider
 from .user_storage.service import UserStorageProvider
 from .document_storage.service import DocumentStorageProvider
 from .pid.service import PidServiceProvider
-from .file_storage.service import FileStorageServiceProvider
+from .file_storage.service import FileStorageServiceProvider, CompressionServiceProvider
 from .permission_storage.service import PermissionStorageProvider
 from .metadata.service import DocumentMetadataServiceProvider
 from .graph.service import GraphServiceProvider
@@ -21,6 +21,7 @@ providers = [
     FastapiProvider,
     DocumentStorageProvider,
     PidServiceProvider,
+    CompressionServiceProvider,
     FileStorageServiceProvider,
     PermissionStorageProvider,
     DocumentMetadataServiceProvider,

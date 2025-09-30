@@ -9,12 +9,56 @@ from rich.table import Table
 from utils.api_client import make_request
 from utils.blockchain.fabric import FabricConnector, BlockchainDocument
 
+try:
+    import zstandard as zstd
+    ZSTD_AVAILABLE = True
+except ImportError:
+    ZSTD_AVAILABLE = False
+
 from .permissions import permissions
 from .metadata import metadata
 from .graph import graph
 
 
 console = Console()
+
+
+def compress_data(data: bytes) -> bytes:
+    """Compress data using zstd compression."""
+    if not ZSTD_AVAILABLE:
+        raise RuntimeError("zstandard library is not available")
+    
+    compressor = zstd.ZstdCompressor(level=1)  # Use level 1 for fast compression
+    return compressor.compress(data)
+
+
+def decompress_data(data: bytes) -> bytes:
+    """Decompress data using zstd decompression."""
+    if not ZSTD_AVAILABLE:
+        raise RuntimeError("zstandard library is not available")
+    
+    decompressor = zstd.ZstdDecompressor()
+    return decompressor.decompress(data)
+
+
+def decompress_data_streaming(data: bytes) -> bytes:
+    """Decompress data using zstd streaming decompression (more robust)."""
+    if not ZSTD_AVAILABLE:
+        raise RuntimeError("zstandard library is not available")
+    
+    decompressor = zstd.ZstdDecompressor()
+    
+    # Try streaming decompression first (more robust)
+    try:
+        from io import BytesIO
+        input_stream = BytesIO(data)
+        output_stream = BytesIO()
+        
+        decompressor.copy_stream(input_stream, output_stream)
+        return output_stream.getvalue()
+    except Exception:
+        # Fallback to regular decompression
+        return decompressor.decompress(data)
 
 
 @click.group()
@@ -87,12 +131,23 @@ def get_document(ctx, pid):
     is_flag=True,
     help="Also create a record of the document on the blockchain for enhanced trustworthiness."
 )
+@click.option(
+    '--compressed',
+    is_flag=True,
+    help="Compress the document data using zstd before uploading to reduce transfer size."
+)
 @click.pass_context
-def create_document(ctx, json_file, value, parent_pid, trustworthy):
+def create_document(ctx, json_file, value, parent_pid, trustworthy, compressed):
     """Publish a new document, from a JSON file or a JSON string."""
     # Enforce exactly one input source
     if bool(json_file) == bool(value):
         console.print("❌ [bold red]Error:[/bold red] You must provide exactly one of --json-file or --value.")
+        return
+
+    # Check if compression is requested but zstd is not available
+    if compressed and not ZSTD_AVAILABLE:
+        console.print("❌ [bold red]Error:[/bold red] Compression requested but zstandard library is not installed.")
+        console.print("   Install it with: [cyan]pip install zstandard[/cyan]")
         return
 
     api_url = ctx.obj['API_URL']
@@ -109,23 +164,61 @@ def create_document(ctx, json_file, value, parent_pid, trustworthy):
 
     # Load document_data from file or string
     try:
+        headers = {}
+        if compressed:
+            headers["Content-Encoding"] = "zstd"
+            console.print("🗜️ [blue]Compressing document data with zstd...[/blue]")
+
         if json_file:
-            # Stream-upload the JSON file as multipart/form-data so we don't load it into memory.
-            console.print(f"Uploading document from JSON file (streamed): [cyan]{json_file}[/cyan]")
-            # Open file and pass file object to make_request via 'files' so requests streams from disk.
-            # The backend should accept the form field 'document_file' containing the JSON file.
-            with open(json_file, 'rb') as f:
+            if compressed:
+                # For compressed file upload, read the file, compress it, and send as bytes
+                console.print(f"Uploading compressed document from JSON file: [cyan]{json_file}[/cyan]")
+                with open(json_file, 'rb') as f:
+                    file_data = f.read()
+                
+                compressed_data = compress_data(file_data)
+                console.print(f"[dim]Original size: {len(file_data)} bytes, Compressed size: {len(compressed_data)} bytes ({len(compressed_data)/len(file_data)*100:.1f}%)[/dim]")
+                
+                # Create a file-like object from compressed data
+                from io import BytesIO
+                compressed_file = BytesIO(compressed_data)
                 files = {
-                    'document_file': (os.path.basename(json_file), f, 'application/json')
+                    'document_file': (os.path.basename(json_file), compressed_file, 'application/json')
                 }
-                # No JSON body in this case; use multipart file upload.
-                response = make_request("POST", api_url, "/documents", params=params, files=files)
+                response = make_request("POST", api_url, "/documents", params=params, files=files, headers=headers)
+            else:
+                # Stream-upload the JSON file as multipart/form-data so we don't load it into memory.
+                console.print(f"Uploading document from JSON file (streamed): [cyan]{json_file}[/cyan]")
+                # Open file and pass file object to make_request via 'files' so requests streams from disk.
+                # The backend should accept the form field 'document_file' containing the JSON file.
+                with open(json_file, 'rb') as f:
+                    files = {
+                        'document_file': (os.path.basename(json_file), f, 'application/json')
+                    }
+                    # No JSON body in this case; use multipart file upload.
+                    response = make_request("POST", api_url, "/documents", params=params, files=files)
         else:
-            console.print("Uploading document from JSON string.")
             document_data = json.loads(value)
-            # Make the API request with JSON payload for the string case.
-            payload = {"document_data": document_data}
-            response = make_request("POST", api_url, "/documents", params=params, json=payload)
+            
+            if compressed:
+                console.print("Uploading compressed document from JSON string.")
+                # Convert to JSON bytes and compress
+                json_bytes = json.dumps(document_data).encode('utf-8')
+                compressed_data = compress_data(json_bytes)
+                console.print(f"[dim]Original size: {len(json_bytes)} bytes, Compressed size: {len(compressed_data)} bytes ({len(compressed_data)/len(json_bytes)*100:.1f}%)[/dim]")
+                
+                # Send compressed data as file upload with Content-Encoding header
+                from io import BytesIO
+                compressed_file = BytesIO(compressed_data)
+                files = {
+                    'document_file': ('document.json', compressed_file, 'application/json')
+                }
+                response = make_request("POST", api_url, "/documents", params=params, files=files, headers=headers)
+            else:
+                console.print("Uploading document from JSON string.")
+                # Make the API request with JSON payload for the string case.
+                payload = {"document_data": document_data}
+                response = make_request("POST", api_url, "/documents", params=params, json=payload)
     except json.JSONDecodeError as e:
         console.print(f"❌ [bold red]Error:[/bold red] Invalid JSON provided: {e}")
         return
@@ -207,9 +300,25 @@ def create_document(ctx, json_file, value, parent_pid, trustworthy):
     default=False,
     help="Verify SHA256: compare local file hash with yProvStore and blockchain values."
 )
+@click.option(
+    '--compressed',
+    is_flag=True,
+    help="Request compressed download from server to reduce transfer size (requires zstd)."
+)
+@click.option(
+    '--debug',
+    is_flag=True,
+    help="Enable debug output for troubleshooting compression issues."
+)
 @click.pass_context
-def download_document(ctx, pid, output, output_folder, trustworthy):
+def download_document(ctx, pid, output, output_folder, trustworthy, compressed, debug):
     """Download a document file by its PID. Optionally verify its SHA256 hash."""
+    # Check if compression is requested but zstd is not available
+    if compressed and not ZSTD_AVAILABLE:
+        console.print("❌ [bold red]Error:[/bold red] Compressed download requested but zstandard library is not installed.")
+        console.print("   Install it with: [cyan]pip install zstandard[/cyan]")
+        return
+
     api_url = ctx.obj['API_URL']
 
     # Determine base folder + final output path
@@ -231,13 +340,25 @@ def download_document(ctx, pid, output, output_folder, trustworthy):
             # single-part PID
             output_path = os.path.join(base_folder, f"{pid}.json")
 
-    console.print(f"Downloading document [cyan]{pid}[/cyan] to [yellow]{output_path}[/yellow]...")
+    if compressed:
+        console.print(f"Downloading document [cyan]{pid}[/cyan] (compressed) to [yellow]{output_path}[/yellow]...")
+    else:
+        console.print(f"Downloading document [cyan]{pid}[/cyan] to [yellow]{output_path}[/yellow]...")
+
+    # Set up headers for compressed download if requested
+    headers = {}
+    if compressed:
+        headers["Accept-Encoding"] = "zstd"
 
     # perform the download (streaming)
-    response = make_request("GET", api_url, f"/documents/{pid}/download", stream=True)
+    response = make_request("GET", api_url, f"/documents/{pid}/download", stream=True, headers=headers)
     if not response:
         console.print(f"❌ [bold red]Error:[/bold red] No response from server while downloading '{pid}'.")
         return
+
+    if debug:
+        console.print(f"[dim]Response status: {response.status_code}[/dim]")
+        console.print(f"[dim]Response headers: {dict(response.headers)}[/dim]")
 
     if response.status_code != 200:
         console.print(f"❌ [bold red]Error:[/bold red] Failed to download document ({response.status_code}).")
@@ -249,10 +370,76 @@ def download_document(ctx, pid, output, output_folder, trustworthy):
         return
 
     try:
-        with open(output_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
+        # Check if the response is compressed
+        is_compressed = response.headers.get('Content-Encoding') == 'zstd'
+        
+        if debug:
+            console.print(f"[dim]Content-Encoding header: {response.headers.get('Content-Encoding', 'None')}[/dim]")
+            console.print(f"[dim]Is compressed: {is_compressed}[/dim]")
+            console.print(f"[dim]Requested compression: {compressed}[/dim]")
+        
+        if compressed and is_compressed:
+            console.print("🗜️ [blue]Receiving compressed data, decompressing...[/blue]")
+            # For compressed responses, we need to collect all data first, then decompress
+            compressed_data = b''
+            original_size = 0
+            # Read raw response stream to get compressed bytes
+            for chunk in response.raw.stream(1024, decode_content=False):
                 if chunk:
-                    f.write(chunk)
+                    compressed_data += chunk
+                    original_size += len(chunk)
+            
+            console.print(f"[dim]Received {original_size} bytes of compressed data[/dim]")
+            
+            # Check if we actually received zstd data by looking at the magic header
+            if len(compressed_data) >= 4:
+                magic_header = compressed_data[:4]
+                expected_zstd_magic = b'\x28\xb5\x2f\xfd'
+                
+                if debug:
+                    console.print(f"[dim]Data header: {magic_header.hex()}, Expected zstd magic: {expected_zstd_magic.hex()}[/dim]")
+                    console.print(f"[dim]First 16 bytes: {compressed_data[:16].hex()}[/dim]")
+                
+                if magic_header != expected_zstd_magic:
+                    console.print(f"[bold yellow]Warning:[/bold yellow] Data doesn't appear to be zstd compressed (wrong magic header)")
+                    console.print(f"[yellow]Saving data as-is without decompression...[/yellow]")
+                    # Save the data without decompression
+                    with open(output_path, 'wb') as f:
+                        f.write(compressed_data)
+                    console.print(f"✅ [bold green]Download complete![/bold green] File saved to [yellow]{output_path}[/yellow].")
+                    return
+            else:
+                console.print(f"[bold red]Error:[/bold red] Received data is too small ({len(compressed_data)} bytes) to be valid zstd")
+                return
+            
+            # Decompress the data
+            try:
+                decompressed_data = decompress_data_streaming(compressed_data)
+                console.print(f"[dim]Compressed size: {original_size} bytes, Decompressed size: {len(decompressed_data)} bytes (saved {(1-original_size/len(decompressed_data))*100:.1f}% bandwidth)[/dim]")
+                
+                # Write decompressed data to file
+                with open(output_path, 'wb') as f:
+                    f.write(decompressed_data)
+            except Exception as e:
+                console.print(f"[bold red]Error decompressing data:[/bold red] {e}")
+                console.print(f"[yellow]Attempting to save raw data without decompression...[/yellow]")
+                try:
+                    with open(output_path, 'wb') as f:
+                        f.write(compressed_data)
+                    console.print(f"[yellow]Raw data saved to [cyan]{output_path}[/cyan]. You may need to decompress it manually.[/yellow]")
+                except Exception as save_error:
+                    console.print(f"[bold red]Error saving raw data:[/bold red] {save_error}")
+                return
+        else:
+            # Regular streaming download
+            if compressed and not is_compressed:
+                console.print("[yellow]Server did not return compressed data, downloading normally...[/yellow]")
+            
+            with open(output_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+        
         console.print(f"✅ [bold green]Download complete![/bold green] File saved to [yellow]{output_path}[/yellow].")
     except IOError as e:
         console.print(f"[bold red]Error writing to file:[/bold red] {e}")
