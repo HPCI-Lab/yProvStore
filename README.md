@@ -90,7 +90,7 @@ For a quick setup, you can follow the [TL;DR: Quick Setup & Installation](#tldr-
     > MINIO_ROOT_USER=minioadmin
     > MINIO_ROOT_PASSWORD=minioadmin
     > MINIO_BUCKET_NAME=yprov-documents
-    > MINIO_ENDPOINT=localhost:9000  # Change if your MinIO server (for example within docker which whould be `yprovstore-minio:9000` which is the default value)
+    > MINIO_ENDPOINT=localhost:9000  # Change to your MinIO server (for example within docker it whould be `yprovstore-minio:9000`, which is also the default value)
     > MINIO_SECURE=False  # !! IMPORTANT: if testing locally you need to disable HTTPS
     > ```
 
@@ -279,15 +279,6 @@ call prepare_cli.bat
 This will set up the CLI environment by initiating the virtual environment and making the `yprov` command available in your terminal.
 
 > **Note**: After you have finished using the CLI, you can deactivate the virtual environment by running `deactivate` in your terminal.
-
-#### Optional Dependencies
-
-For enhanced functionality, you may want to install additional packages:
-
-- **zstandard**: Required for compression features (`--compressed` option in create and download commands)
-  ```bash
-  pip install zstandard
-  ```
 
 **Prepare the CLI before its usage:**
 
