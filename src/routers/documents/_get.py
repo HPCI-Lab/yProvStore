@@ -29,6 +29,7 @@ class DocumentRecordGet(BaseModel):
     owner_email: str = Field(..., examples=[EXAMPLE_EMAIL])
     hash: str | None = Field(None, examples=[EXAMPLE_HASH], description="SHA-256 hash of the document content, if available.")
     parent_document_pid: str | None = Field(None, examples=[EXAMPLE_UUID], description="PID of the previous document version.")
+    lineage_id: str | None = Field(None, examples=[EXAMPLE_UUID], description="Lineage identifier, if available.")
 
 
 documentation = {
@@ -73,5 +74,6 @@ async def get_document_prefix(
         storage_url=record.storage_url,
         owner_email=owner_email or "Unknown",
         hash=record.hash,
-        parent_document_pid=record.parent_doc_pid
+        parent_document_pid=record.parent_doc_pid,
+        lineage_id=record.lineage_id
     )

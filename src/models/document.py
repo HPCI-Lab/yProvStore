@@ -10,6 +10,7 @@ class DocumentRecord:
     storage_id: str
     owner_id: str
     parent_doc_pid: str | None = None  # previous document pid in the lineage
+    lineage_id: str | None = None  # lineage identifier
     created_at: str | None = None  # timestamp of creation
     updated_at: str | None = None  # timestamp of the last update
     hash: str | None = None  # optional hash 256 of the document content

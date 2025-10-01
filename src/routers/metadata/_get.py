@@ -9,6 +9,7 @@ from application.exceptions.responses import EXCEPTION_SCHEMA
 from application.exceptions.types import NotFoundException, ServiceUnavailableException
 from services.document_storage.service import DocumentRecordStorageService
 from services.metadata.service import DocumentMetadataService
+from services.pid.service import PidService
 from models import DocumentMetadata
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,7 @@ async def get_metadata_prefix(
     prefix: str,
     pid: str,
     document_record_storage: FromDishka[DocumentRecordStorageService],
+    pid_service: FromDishka[PidService],
     metadata_service: FromDishka[DocumentMetadataService],
 ) -> DocumentMetadataGet:
     """
@@ -65,7 +67,14 @@ async def get_metadata_prefix(
 
     pid = f"{prefix}/{pid}"
     # Fetch the document record by PID to verify it is handled by this server instance
-    await document_record_storage.get_document_by_pid(pid)
+    document_record = await document_record_storage.get_document_by_pid(pid)
 
-    metadata = await metadata_service.get_document_metadata(pid)
+    pid_record = await pid_service.get_pid_record(pid)
+
+    if pid_record.lineage_id != document_record.lineage_id:
+        logger.warning(f"PID record lineage_id '{pid_record.lineage_id}' does not match document record lineage_id '{document_record.lineage_id}' for PID '{pid}'. Updating document record.")
+        document_record.lineage_id = pid_record.lineage_id
+        await document_record_storage.update_document(document_record)
+
+    metadata = await metadata_service.get_document_metadata(pid, pid_record)
     return DocumentMetadataGet.from_metadata(metadata)

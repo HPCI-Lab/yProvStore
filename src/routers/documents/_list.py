@@ -30,6 +30,7 @@ class DocumentRecordGet(BaseModel):
     owner_email: str | None = Field(..., examples=[EXAMPLE_EMAIL])
     hash: str | None = Field(None, examples=[EXAMPLE_HASH], description="SHA-256 hash of the document content, if available.")
     parent_document_pid: str | None = Field(None, examples=[EXAMPLE_UUID], description="PID of the previous document version.")
+    lineage_id: str | None = Field(None, examples=[EXAMPLE_UUID], description="Lineage identifier, if available.")
 
 
 documentation = {
@@ -78,7 +79,8 @@ async def list_documents(
             storage_url=record.storage_url,
             hash=record.hash,
             owner_email=user_emails.get(record.owner_id, "Unknown"),
-            parent_document_pid=record.parent_doc_pid
+            parent_document_pid=record.parent_doc_pid,
+            lineage_id=record.lineage_id
         )
         for record in records
     ]

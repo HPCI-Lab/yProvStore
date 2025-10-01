@@ -73,19 +73,21 @@ class PidService:
     async def new_pid_record_from_document(
         self, pid: str, url: str, parent_doc_pid: str | None = None, hash: str | None = None, 
         allow_lineage_branching: bool = False,
-    ) -> PidRecord:
+    ) -> tuple[PidRecord, callable]:
         """
         Create a new PID record from a document.
         This method manages the creation of a PID lineage if the parent document PID is provided.
-        !! Note: This method does not save the new PID record to the storage. It only creates the record object.
+        !! Note: This method does not save any new PID record to the storage. It returns the new PID record and a coroutine to finalize the saving.
+        The caller must execute the returned coroutine to finalize the saving of all involved PID records.
 
         :param pid: The PID to use for the new document. If None, a new PID will be generated.
         :param url: The storage url of the document.
         :param parent_doc_pid: The PID of the parent document, if any.
         :param hash: Optional hash 256 of the document content.
         :param allow_lineage_branching: If True, allows creating a new lineage even if the latest version of the parent document is higher than the current document version.
-        :return: A PidRecord object of the new created document.
+        :return: A PidRecord object of the new created document and a coroutine to finalize the saving of all involved PID records.
         """
+        save_fns: list[tuple[callable, list, dict]] = []
         parent_doc_record = None
         lineage_record = None
         new_version = 1
@@ -105,7 +107,8 @@ class PidService:
                     # If parent version is 1 then this is the first document update -> create a new lineage PID
                     lineage_id = await self.new_pid()
                     lineage_record = PidRecord(pid=lineage_id, type=PidType.LINEAGE, first_document_pid=parent_doc_pid, latest_document_pid=pid, latest_version=new_version)
-                    lineage_record = await self.save_pid_record(lineage_record)
+                    # lineage_record = await self.save_pid_record(lineage_record)
+                    save_fns.append((self.save_pid_record, [parent_doc_record], {}))
 
                     # Update the parent document record with the new lineage PID
                     parent_doc_record.lineage_id = lineage_record.pid
@@ -120,7 +123,8 @@ class PidService:
                 raise ValueError(f"Cannot create a new document in the lineage {lineage_record.pid} because the latest version is higher than the parent document version.")
 
             parent_doc_record.successive_doc_pid = pid
-            await self.update_pid_record(parent_doc_record)
+            # await self.update_pid_record(parent_doc_record)
+            save_fns.append((self.update_pid_record, [parent_doc_record], {}))
 
             if int(lineage_record.latest_version) > int(parent_doc_record.version):
                 # Create a new lineage starting in the middle of the document pid lineage
@@ -129,12 +133,15 @@ class PidService:
                     pid=await self.new_pid(), type=PidType.LINEAGE, first_document_pid=parent_doc_pid,
                     latest_document_pid=pid, latest_version=new_version
                 )
+                # lineage_record = await self.save_pid_record(lineage_record)
+                save_fns.append((self.save_pid_record, [lineage_record], {}))
             else:
                 # Increment the version of the existing lineage record
                 new_version = int(lineage_record.latest_version) + 1
                 lineage_record.latest_document_pid = pid
                 lineage_record.latest_version = new_version
                 await self.update_pid_record(lineage_record)
+                save_fns.append((self.update_pid_record, [lineage_record], {}))
 
         new_pid_record = PidRecord(
             pid=pid,
@@ -147,7 +154,14 @@ class PidService:
             lineage_id=lineage_record.pid if lineage_record else None,
             created_at=datetime.now(PID_TIMEZONE).strftime(PID_DATE_FORMAT)
         )
-        return new_pid_record
+        save_fns.append((self.save_pid_record, [new_pid_record], {}))
+
+        async def finalize_pid_records():
+            for fn, args, kwargs in save_fns:
+                logger.debug(f"Finalizing PID record save: {fn.__name__} with args={args} kwargs={kwargs}")
+                await fn(*args, **kwargs)
+
+        return new_pid_record, finalize_pid_records
 
 
 class LocalPidServiceImpl(PidService):

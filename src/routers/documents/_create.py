@@ -13,7 +13,7 @@ from application.exceptions.types import UnauthorizedException, ForbiddenExcepti
 from services.document_storage.service import DocumentRecordStorageService
 from services.permission_storage.service import DocumentPermissionStorageService
 from services.pid.service import PidService
-from services.file_storage.service import FileStorageService, CompressionService
+from services.file_storage.service import FileStorageService
 from routers.documents._get import DocumentRecordGet
 from routers.common.dependencies import LoggedUser
 
@@ -87,7 +87,6 @@ async def create_document(
     request: Request,
     document_record_storage: FromDishka[DocumentRecordStorageService],
     file_storage_service: FromDishka[FileStorageService],
-    compression_service: FromDishka[CompressionService],
     permission_service: FromDishka[DocumentPermissionStorageService],
     pid_service: FromDishka[PidService],
     logged_user: LoggedUser,
@@ -128,6 +127,7 @@ async def create_document(
             raise BadRequestException(f"Unsupported Content-Encoding: {content_encoding}. Supported: {file_storage_service.get_compression_standard().value}")        
         skip_compression = True
 
+    parent_document_record = None
     if parent_document_pid:
         # Validate if the parent document exists
 
@@ -160,20 +160,27 @@ async def create_document(
             raise BadRequestException(f"Failed to read document file: {e}")
 
     stored_on_db = False
+    previous_parent_lineage_id = parent_document_record.lineage_id if parent_document_record else None
     try:
         # Create the PID record (but do not save it yet)
-        new_pid_record = await pid_service.new_pid_record_from_document(
+        new_pid_record, finalize_fn = await pid_service.new_pid_record_from_document(
             new_pid, new_document_record.storage_url, parent_doc_pid=parent_document_pid, hash=file_hash
         )
 
         # Save the document record to db
         new_document_record.version = new_pid_record.version or 1
         new_document_record.hash = file_hash
+        new_document_record.lineage_id = new_pid_record.lineage_id
         new_document_record = await document_record_storage.save_document(new_document_record)
+
+        if parent_document_record and parent_document_record.lineage_id != new_document_record.lineage_id:
+            logger.info(f"Updating parent document record lineage_id from '{parent_document_record.lineage_id}' to '{new_document_record.lineage_id}'")
+            parent_document_record.lineage_id = new_document_record.lineage_id
+            await document_record_storage.update_document(parent_document_record)
         stored_on_db = True
 
-        # Save the PID record only after the document record is successfully saved
-        new_pid_record = await pid_service.save_pid_record(new_pid_record)
+        # Finalize saving all involved PID records
+        await finalize_fn()
     except Exception as e:
         logger.error(f"Error occurred during document creation: {e}")
         logger.info("Deleting stored file due to error during document creation.")
@@ -190,6 +197,16 @@ async def create_document(
                 await document_record_storage.delete_document(new_document_record.pid)
             except Exception as db_e:
                 logger.warning(f"Failed to clean up document record after PID creation failure: {db_e}")
+
+            if parent_document_record:
+                # If the parent document's lineage_id was changed, revert it
+                if parent_document_record.lineage_id != previous_parent_lineage_id:
+                    logger.info(f"Reverting parent document record lineage_id back to '{previous_parent_lineage_id}'")
+                    parent_document_record.lineage_id = previous_parent_lineage_id
+                    try:
+                        await document_record_storage.update_document(parent_document_record)
+                    except Exception as revert_e:
+                        logger.warning(f"Failed to revert parent document lineage_id after error: {revert_e}")
         raise e
 
     return DocumentRecordGet(
@@ -198,5 +215,6 @@ async def create_document(
         storage_url=new_document_record.storage_url,
         owner_email=logged_user.email,
         hash=new_document_record.hash,
-        parent_document_pid=new_document_record.parent_doc_pid
+        parent_document_pid=new_document_record.parent_doc_pid,
+        lineage_id=new_document_record.lineage_id
     )

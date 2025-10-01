@@ -60,6 +60,7 @@ class DBDocumentRecord(BaseDBModel):
     owner_id = Column(String(255), ForeignKey('users.id'), nullable=False)
     parent_doc_pid = Column(String(255), nullable=True)
     hash = Column(String(64), nullable=True)  # SHA-256 hash
+    lineage_id = Column(String(255), nullable=True)
 
     owner = relationship("DBUser", back_populates="documents")
     permissions = relationship("DBDocumentPermission", back_populates="document_record")
@@ -82,6 +83,7 @@ class DBDocumentRecord(BaseDBModel):
             storage_id=self.storage_id,
             owner_id=self.owner_id,
             parent_doc_pid=self.parent_doc_pid,
+            lineage_id=self.lineage_id,
             hash=self.hash,
             created_at=self.created_at,
             updated_at=self.updated_at
@@ -96,6 +98,8 @@ class DBDocumentRecord(BaseDBModel):
         self.storage_id = document_record.storage_id
         self.owner_id = document_record.owner_id
         self.parent_doc_pid = document_record.parent_doc_pid
+        self.lineage_id = document_record.lineage_id
+        self.hash = document_record.hash
 
     @classmethod
     def from_document_record(cls, document_record: DocumentRecord) -> 'DBDocumentRecord':
@@ -108,7 +112,8 @@ class DBDocumentRecord(BaseDBModel):
             storage_id=document_record.storage_id,
             owner_id=document_record.owner_id,
             parent_doc_pid=document_record.parent_doc_pid,
-            hash=document_record.hash
+            hash=document_record.hash,
+            lineage_id=document_record.lineage_id
         )
 
 

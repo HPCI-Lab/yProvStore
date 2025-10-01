@@ -1,6 +1,6 @@
 from dishka import provide, Scope, Provider
 
-from models import DocumentMetadata
+from models import DocumentMetadata, PidRecord
 from services.pid.service import PidService
 
 
@@ -8,11 +8,12 @@ class DocumentMetadataService:
     """
     Service for managing document metadata.
     """
-    async def get_document_metadata(self, pid: str) -> DocumentMetadata:
+    async def get_document_metadata(self, pid: str, pid_record: PidRecord | None = None) -> DocumentMetadata:
         """
         Retrieves metadata for a specific document by its PID.
         
         :param pid: The unique identifier of the document.
+        :param pid_record: Optional PID record to use for metadata retrieval.
         :return: DocumentMetadata object.
         """
         raise NotImplementedError
@@ -36,9 +37,10 @@ class PIDRecordDocumentMetadataService(DocumentMetadataService):
         super().__init__()
         self.pid_service = pid_service
 
-    async def get_document_metadata(self, pid: str) -> DocumentMetadata:
+    async def get_document_metadata(self, pid: str, pid_record: PidRecord | None = None) -> DocumentMetadata:
         # Fetch the PID record
-        pid_record = await self.pid_service.get_pid_record(pid)
+        if pid_record is None:
+            pid_record = await self.pid_service.get_pid_record(pid)
 
         return DocumentMetadata.from_dict(pid_record.other)
     
