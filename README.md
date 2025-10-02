@@ -305,7 +305,7 @@ yprov auth login
 yprov auth verify
 yprov auth logout
 yprov documents create --json-file <path/to/document.json> [--parent-pid <parent_pid>] [--compressed] [--trustworthy]
-yprov documents list [--page <page_number>] [--page-size <page_size>] [--updated-after <timestamp>]
+yprov documents list [--page <page_number>] [--page-size <page_size>] [--updated-after <timestamp>] [--created-after <timestamp>]
 yprov documents get <document_pid>
 yprov documents download <document_pid> [--output-folder <path>] [--output <file_path>] [--compressed] [--debug]
 yprov documents permissions add <document_pid> --user-email <email> --permission-level <level>
@@ -446,12 +446,13 @@ Once authenticated, you can create, list, and download provenance documents.
   * **List all available documents** (with pagination).
 
     ```bash
-    yprov documents list [--page <page_number>] [--page-size <page_size>] [--updated-after <timestamp>]
+    yprov documents list [--page <page_number>] [--page-size <page_size>] [--updated-after <timestamp>] [--created-after <timestamp>]
     ```
 
     - `--page <page_number>`: Page number to retrieve (zero-indexed, default: 0).
     - `--page-size <page_size>`: Number of documents per page (default: 10).
     - `--updated-after <timestamp>`: Only return documents updated after this timestamp (ISO 8601 format, e.g., `2024-06-01T00:00:00Z` or `2024-06-01`).
+    - `--created-after <timestamp>`: Only return documents created after this timestamp (ISO 8601 format, e.g., `2024-06-01T00:00:00Z` or `2024-06-01`).
 
     Examples:
 
@@ -477,6 +478,18 @@ Once authenticated, you can create, list, and download provenance documents.
 
       ```bash
       yprov documents list --updated-after 2024-06-01T00:00:00Z
+      ```
+
+    * List documents created after June 1, 2024:
+
+      ```bash
+      yprov documents list --created-after 2024-06-01
+      ```
+
+    * List documents created after a specific timestamp:
+
+      ```bash
+      yprov documents list --created-after 2024-06-01T00:00:00Z
       ```
 
   * **Get detailed information** for a specific document by its PID.

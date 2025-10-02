@@ -54,6 +54,11 @@ async def list_documents(
         description="Return documents updated after this timestamp (ISO 8601 format).",
         examples=["2024-06-01T00:00:00Z", "2024-06-01"]
     ),
+    created_after: datetime | None = Query(
+        None,
+        description="Return documents created after this timestamp (ISO 8601 format).",
+        examples=["2024-06-01T00:00:00Z", "2024-06-01"]
+    )
 ) -> list[DocumentRecordGet]:
     """
     Endpoint to list all document records available in the storage.
@@ -65,7 +70,8 @@ async def list_documents(
     records = await document_record_storage.list_documents(
         page=page,
         page_size=page_size,
-        updated_after=updated_after
+        updated_after=updated_after,
+        created_after=created_after
     )
 
     user_emails: dict[str, str] = await user_storage_service.get_user_emails(

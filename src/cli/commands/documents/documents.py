@@ -71,13 +71,16 @@ def documents():
 @click.option('--page', default=0, show_default=True, type=int, help="Page number (zero-indexed).")
 @click.option('--page-size', default=10, show_default=True, type=int, help="Number of documents per page.")
 @click.option('--updated-after', type=str, help="List only documents updated after this ISO 8601 datetime (e.g., '2024-06-01T00:00:00Z').")
+@click.option('--created-after', type=str, help="List only documents created after this ISO 8601 datetime (e.g., '2024-06-01T00:00:00Z').")
 @click.pass_context
-def list_documents(ctx, page, page_size, updated_after):
+def list_documents(ctx, page, page_size, updated_after, created_after):
     """List all available document records, with pagination and optional updated-after filter."""
     api_url = ctx.obj['API_URL']
     params = {'page': page, 'page_size': page_size}
     if updated_after:
         params['updated_after'] = updated_after
+    if created_after:
+        params['created_after'] = created_after
     response = make_request("GET", api_url, "/documents", params=params)
 
     if response and response.status_code == 200:
