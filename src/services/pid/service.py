@@ -108,7 +108,7 @@ class PidService:
                     lineage_id = await self.new_pid()
                     lineage_record = PidRecord(pid=lineage_id, type=PidType.LINEAGE, first_document_pid=parent_doc_pid, latest_document_pid=pid, latest_version=new_version)
                     # lineage_record = await self.save_pid_record(lineage_record)
-                    save_fns.append((self.save_pid_record, [parent_doc_record], {}))
+                    save_fns.append((self.save_pid_record, [lineage_record], {}))
 
                     # Update the parent document record with the new lineage PID
                     parent_doc_record.lineage_id = lineage_record.pid
@@ -140,7 +140,7 @@ class PidService:
                 new_version = int(lineage_record.latest_version) + 1
                 lineage_record.latest_document_pid = pid
                 lineage_record.latest_version = new_version
-                await self.update_pid_record(lineage_record)
+                # await self.update_pid_record(lineage_record)
                 save_fns.append((self.update_pid_record, [lineage_record], {}))
 
         new_pid_record = PidRecord(
