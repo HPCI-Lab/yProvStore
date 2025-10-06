@@ -21,6 +21,7 @@ JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "jwt-secret-key")
 JWT_EXPIRATION_MINUTES = int(os.getenv("JWT_EXPIRATION_MINUTES", 60))
 
 DB_CONNECTION_STRING = os.getenv("DB_CONNECTION_STRING", "sqlite:///yprov.db")
+DB_MAX_POOL_SIZE = int(os.getenv("DB_MAX_POOL_SIZE", 20))  # Remember this applies to each process if using multiple workers
 
 TMP_PATH = Path(os.getenv("TMP_PATH", os.path.join(os.path.dirname(__file__), "..", "..", "tmp")))
 if not TMP_PATH.exists():
@@ -33,10 +34,11 @@ USE_LOCAL_FILE_STORAGE_SERVICE = os.getenv("USE_LOCAL_FILE_STORAGE_SERVICE", "Fa
 PID_PREFIX = os.getenv("PID_PREFIX", "21.T11961")
 PID_SERVER_URL = os.getenv("PID_SERVER_URL", "https://pidhs.disi.unitn.it:8000")
 PID_ADMIN_VALUE_INDEX = int(os.getenv("PID_ADMIN_VALUE_INDEX", 100))
-PID_PRIVATE_KEY_PATH = os.getenv("PID_PRIVATE_KEY_PATH", "keys/admpriv.pem")
-PID_ADMIN_HANDLE = os.getenv("PID_ADMIN_HANDLE", "0.NA/21.T11961")
-PID_ADMIN_HANDLE_INDEX = int(os.getenv("PID_ADMIN_HANDLE_INDEX", 300))
-PID_ADMIN_HANDLE_PERMISSIONS = os.getenv("PID_ADMIN_HANDLE_PERMISSIONS", "011111110011")  # TODO: Verify permissions
+PID_PRIVATE_KEY_PATH = os.getenv("PID_PRIVATE_KEY_PATH", "keys/privkey.pem")
+PID_ADMIN_HANDLE = os.getenv("PID_ADMIN_HANDLE", "21.T11961/ADMINLIST")
+PID_ADMIN_HANDLE_INDEX = int(os.getenv("PID_ADMIN_HANDLE_INDEX", 301))
+PID_ADMIN_HANDLE_PERMISSIONS = os.getenv("PID_ADMIN_HANDLE_PERMISSIONS", "110001110001")
+PID_SERVICE_MAX_CONCURRENT_REQUESTS = int(os.getenv("PID_SERVICE_MAX_CONCURRENT_REQUESTS", 10))  # Remember this applies to each process if using multiple workers
 
 # === MinIO Settings === #
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "yprovstore-minio:9000")

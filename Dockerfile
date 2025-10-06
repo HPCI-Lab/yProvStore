@@ -35,4 +35,4 @@ EXPOSE 8000
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Command to run the application, pointing to src/run.py
-CMD ["uv", "run", "fastapi", "run", "src/run.py", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+CMD ["uv", "run", "fastapi", "run", "src/run.py", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

@@ -10,7 +10,7 @@ from Cryptodome.Signature import pkcs1_15
 from Cryptodome.Hash import SHA256
 from Cryptodome.PublicKey import RSA
 
-from application.settings import PID_SERVER_URL, PID_ADMIN_HANDLE, PID_PRIVATE_KEY_PATH, PID_ADMIN_HANDLE_INDEX
+from application.settings import PID_SERVER_URL, PID_ADMIN_HANDLE, PID_PRIVATE_KEY_PATH, PID_ADMIN_HANDLE_INDEX, PID_SERVICE_MAX_CONCURRENT_REQUESTS
 from application.exceptions.types import IntegrityException, ConflictException
 
 
@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 
 # Disable UnsecureRequestWarning prints for self-signed https requests
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+_handle_semaphore = asyncio.Semaphore(PID_SERVICE_MAX_CONCURRENT_REQUESTS)
 
 
 class HandlePaths:
@@ -46,37 +49,38 @@ class HandleConnector:
     async def send_http_request(self, method: str, url: str, data: dict | list | None = None, headers: dict | None = None, raise_not_found: bool = True) -> dict | None:
         if method not in ["GET", "POST", "PUT", "DELETE"]:
             raise Exception(f"Unsupported HTTP method: {method}")
-        try:
-            if headers is None:
-                headers = self._get_session_auth_header()
-            logger.debug(f"Sending {method} request to {url} with headers: {headers} and data: {data}")
-            response = await self.http_client.request(method, url, json=data, headers=headers, timeout=10.0)
-            # In case of error the response has the following properties:
-            # - "responseCode": Handle protocol response code for the message. (handle coders are described in README.md inside this file folder)
-            # - "message": For error responses, an error message.
-            if response.status_code == 404 and not raise_not_found:
-                return None
-            response.raise_for_status()  # Raise an exception for 4xx/5xx responses
-            return response.json()
-        except httpx.HTTPStatusError as e:
-            # Re-raise with more context from the server's response if available
-            error_details = e.response.json()
-            logger.debug(f"Handle Server response details: {error_details}")
-            response_code = error_details.get("responseCode", "Unknown")
-            message = error_details.get("message", "No message provided")
-            logger.error(f"Handle Server Error: {e.response.status_code} - {response_code}: {message}")
-            if str(response_code) == "101":
-                raise ConflictException("Handle already exists")
-            raise IntegrityException("Failed to communicate with Handle Server")
-        except httpx.RequestError as e:
-            logger.error(f"HTTP Request Error: {e}")
-            raise IntegrityException("Failed to communicate with Handle Server")
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON Decode Error decoding handle server response: {e}")
-            raise IntegrityException("Failed to decode response from Handle Server")
-        except Exception as e:
-            logger.error(f"Unexpected error during HTTP request to handle server: {e}")
-            raise IntegrityException("Failed to communicate with Handle Server")
+        async with _handle_semaphore:
+            try:
+                if headers is None:
+                    headers = self._get_session_auth_header()
+                logger.debug(f"Sending {method} request to {url} with headers: {headers} and data: {data}")
+                response = await self.http_client.request(method, url, json=data, headers=headers, timeout=10.0)
+                # In case of error the response has the following properties:
+                # - "responseCode": Handle protocol response code for the message. (handle coders are described in README.md inside this file folder)
+                # - "message": For error responses, an error message.
+                if response.status_code == 404 and not raise_not_found:
+                    return None
+                response.raise_for_status()  # Raise an exception for 4xx/5xx responses
+                return response.json()
+            except httpx.HTTPStatusError as e:
+                # Re-raise with more context from the server's response if available
+                error_details = e.response.json()
+                logger.debug(f"Handle Server response details: {error_details}")
+                response_code = error_details.get("responseCode", "Unknown")
+                message = error_details.get("message", "No message provided")
+                logger.error(f"Handle Server Error: {e.response.status_code} - {response_code}: {message}")
+                if str(response_code) == "101":
+                    raise ConflictException("Handle already exists")
+                raise IntegrityException("Failed to communicate with Handle Server")
+            except httpx.RequestError as e:
+                logger.error(f"HTTP Request Error: {e}")
+                raise IntegrityException("Failed to communicate with Handle Server")
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON Decode Error decoding handle server response: {e}")
+                raise IntegrityException("Failed to decode response from Handle Server")
+            except Exception as e:
+                logger.error(f"Unexpected error during HTTP request to handle server: {e}")
+                raise IntegrityException("Failed to communicate with Handle Server")
 
     async def _authenticate(self):
         # 1. Generate client nonce
