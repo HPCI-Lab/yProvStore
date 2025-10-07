@@ -242,6 +242,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
         except Exception:  # pragma: no cover
             raise ServiceUnavailableException(
                 "MinIO client not installed. Please add 'minio' to dependencies to use MinIO storage.")
+        self.COMPRESSION_STANDARD = super().get_compression_standard()
 
         self.bucket = settings.MINIO_BUCKET
         self.client = MinioClient(
