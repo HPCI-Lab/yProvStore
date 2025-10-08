@@ -17,8 +17,11 @@ services:
       - PID_ADMIN_HANDLE=0.NA/21.T11961
       - PID_SERVER_URL=https://pidhs.disi.unitn.it:8000
       - APP_URL=http://localhost:8000
+      - DB_CONNECTION_STRING=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     env_file:
       - .env
+    depends_on:
+      - postgres
       # NOTE: be sure to define JWT_SECRET_KEY in the environment .env file
 
   minio:
@@ -35,8 +38,25 @@ services:
       # NOTE: be sure to define these env vars in the environment .env file:
       #       MINIO_ROOT_USER, MINIO_ROOT_PASSWORD, MINIO_BUCKET
 
+  postgres:
+    image: postgres:17
+    container_name: yprovstore-postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   minio_data:
+  pgdata:
 
 secrets:
   pid_admin_key:

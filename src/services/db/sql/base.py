@@ -3,12 +3,12 @@ import logging
 from sqlalchemy import create_engine, DateTime, Column, func, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from application.settings import DB_CONNECTION_STRING, DB_MAX_POOL_SIZE
+from application.settings import DB_CONNECTION_STRING, DB_MAX_POOL_SIZE, DB_MAX_OVERFLOW, DB_TIMEOUT
 
 
 Base = declarative_base()
 
-engine = create_engine(DB_CONNECTION_STRING, echo=False, pool_size=DB_MAX_POOL_SIZE, max_overflow=0)
+engine = create_engine(DB_CONNECTION_STRING, echo=False, pool_size=DB_MAX_POOL_SIZE, max_overflow=DB_MAX_OVERFLOW, timeout=DB_TIMEOUT)
 logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
 
 # Create all tables

@@ -22,6 +22,8 @@ JWT_EXPIRATION_MINUTES = int(os.getenv("JWT_EXPIRATION_MINUTES", 60))
 
 DB_CONNECTION_STRING = os.getenv("DB_CONNECTION_STRING", "sqlite:///yprov.db")
 DB_MAX_POOL_SIZE = int(os.getenv("DB_MAX_POOL_SIZE", 20))  # Remember this applies to each process if using multiple workers
+DB_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", -1))
+DB_TIMEOUT = int(os.getenv("DB_TIMEOUT", 5))
 
 TMP_PATH = Path(os.getenv("TMP_PATH", os.path.join(os.path.dirname(__file__), "..", "..", "tmp")))
 if not TMP_PATH.exists():
@@ -38,7 +40,7 @@ PID_PRIVATE_KEY_PATH = os.getenv("PID_PRIVATE_KEY_PATH", "keys/privkey.pem")
 PID_ADMIN_HANDLE = os.getenv("PID_ADMIN_HANDLE", "21.T11961/ADMINLIST")
 PID_ADMIN_HANDLE_INDEX = int(os.getenv("PID_ADMIN_HANDLE_INDEX", 301))
 PID_ADMIN_HANDLE_PERMISSIONS = os.getenv("PID_ADMIN_HANDLE_PERMISSIONS", "110001110001")
-PID_SERVICE_MAX_CONCURRENT_REQUESTS = int(os.getenv("PID_SERVICE_MAX_CONCURRENT_REQUESTS", 10))  # Remember this applies to each process if using multiple workers
+# PID_SERVICE_MAX_CONCURRENT_REQUESTS = int(os.getenv("PID_SERVICE_MAX_CONCURRENT_REQUESTS", 10))  # Remember this applies to each process if using multiple workers
 
 # === MinIO Settings === #
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "yprovstore-minio:9000")
