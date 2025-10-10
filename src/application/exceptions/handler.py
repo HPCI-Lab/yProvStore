@@ -42,7 +42,8 @@ def resolve_status_code(exc: Exception) -> int:
 
     # sqlalchemy exceptions
     error_mapping.update({
-        OperationalError: status.HTTP_503_SERVICE_UNAVAILABLE,
+        TimeoutError: status.HTTP_429_TOO_MANY_REQUESTS,
+        OperationalError: status.HTTP_429_TOO_MANY_REQUESTS,
         InterfaceError: status.HTTP_503_SERVICE_UNAVAILABLE
     })
 

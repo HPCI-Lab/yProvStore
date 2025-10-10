@@ -1,0 +1,812 @@
+[
+  {
+    "file": "..\\..\\examples\\doc.json",
+    "original_size": 768,
+    "results": [
+      {
+        "method": "gzip",
+        "level": 1,
+        "compressed_size": 255,
+        "ratio": 0.33203125,
+        "time_s": 9.910000017043785e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 2,
+        "compressed_size": 251,
+        "ratio": 0.3268229166666667,
+        "time_s": 2.519999998185085e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 3,
+        "compressed_size": 250,
+        "ratio": 0.3255208333333333,
+        "time_s": 1.9300000076327706e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 4,
+        "compressed_size": 242,
+        "ratio": 0.3151041666666667,
+        "time_s": 2.300000005561742e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 5,
+        "compressed_size": 238,
+        "ratio": 0.3098958333333333,
+        "time_s": 2.1800000013172394e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 6,
+        "compressed_size": 238,
+        "ratio": 0.3098958333333333,
+        "time_s": 1.539999993838137e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 7,
+        "compressed_size": 236,
+        "ratio": 0.3072916666666667,
+        "time_s": 1.939999992828234e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 8,
+        "compressed_size": 236,
+        "ratio": 0.3072916666666667,
+        "time_s": 1.4400000054592965e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 9,
+        "compressed_size": 236,
+        "ratio": 0.3072916666666667,
+        "time_s": 1.3099999705445953e-05,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 0,
+        "compressed_size": 316,
+        "ratio": 0.4114583333333333,
+        "time_s": 7.320000031540985e-05,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 1,
+        "compressed_size": 270,
+        "ratio": 0.3515625,
+        "time_s": 2.769999991869554e-05,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 2,
+        "compressed_size": 256,
+        "ratio": 0.3333333333333333,
+        "time_s": 9.129999989454518e-05,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 3,
+        "compressed_size": 229,
+        "ratio": 0.2981770833333333,
+        "time_s": 2.679999988686177e-05,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 4,
+        "compressed_size": 221,
+        "ratio": 0.2877604166666667,
+        "time_s": 0.00027289999979984714,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 5,
+        "compressed_size": 199,
+        "ratio": 0.2591145833333333,
+        "time_s": 0.00033910000001924345,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 6,
+        "compressed_size": 199,
+        "ratio": 0.2591145833333333,
+        "time_s": 0.00030309999965538736,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 7,
+        "compressed_size": 196,
+        "ratio": 0.2552083333333333,
+        "time_s": 0.00037539999993896345,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 8,
+        "compressed_size": 196,
+        "ratio": 0.2552083333333333,
+        "time_s": 0.0003625999997893814,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 9,
+        "compressed_size": 198,
+        "ratio": 0.2578125,
+        "time_s": 0.00039470000001529115,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 10,
+        "compressed_size": 201,
+        "ratio": 0.26171875,
+        "time_s": 0.0008880000000317523,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 11,
+        "compressed_size": 192,
+        "ratio": 0.25,
+        "time_s": 0.0012405999996190076,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 1,
+        "compressed_size": 254,
+        "ratio": 0.3307291666666667,
+        "time_s": 0.00038629999971817597,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 2,
+        "compressed_size": 265,
+        "ratio": 0.3450520833333333,
+        "time_s": 1.7700000171316788e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 3,
+        "compressed_size": 244,
+        "ratio": 0.3177083333333333,
+        "time_s": 1.4899999769113492e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 4,
+        "compressed_size": 231,
+        "ratio": 0.30078125,
+        "time_s": 0.0003949000001739478,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 5,
+        "compressed_size": 225,
+        "ratio": 0.29296875,
+        "time_s": 2.390000008745119e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 6,
+        "compressed_size": 224,
+        "ratio": 0.2916666666666667,
+        "time_s": 1.9999999949504854e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 7,
+        "compressed_size": 224,
+        "ratio": 0.2916666666666667,
+        "time_s": 1.5499999790336005e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 8,
+        "compressed_size": 224,
+        "ratio": 0.2916666666666667,
+        "time_s": 1.4799999917158857e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 9,
+        "compressed_size": 224,
+        "ratio": 0.2916666666666667,
+        "time_s": 0.0001716000001579232,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 10,
+        "compressed_size": 224,
+        "ratio": 0.2916666666666667,
+        "time_s": 2.790000007735216e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 11,
+        "compressed_size": 229,
+        "ratio": 0.2981770833333333,
+        "time_s": 0.00022919999992154771,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 12,
+        "compressed_size": 228,
+        "ratio": 0.296875,
+        "time_s": 5.800000008093775e-05,
+        "available": true
+      }
+    ]
+  },
+  {
+    "file": "..\\..\\examples\\OUTPUT.json",
+    "original_size": 85396,
+    "results": [
+      {
+        "method": "gzip",
+        "level": 1,
+        "compressed_size": 7605,
+        "ratio": 0.08905569347510423,
+        "time_s": 0.00034970000024259207,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 2,
+        "compressed_size": 7460,
+        "ratio": 0.08735772167314629,
+        "time_s": 0.00029850000009901123,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 3,
+        "compressed_size": 7409,
+        "ratio": 0.08676050400487142,
+        "time_s": 0.0003264000001763634,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 4,
+        "compressed_size": 7116,
+        "ratio": 0.08332942994988056,
+        "time_s": 0.0006401000000550994,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 5,
+        "compressed_size": 6659,
+        "ratio": 0.07797789123612348,
+        "time_s": 0.000689400000283058,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 6,
+        "compressed_size": 6421,
+        "ratio": 0.07519087545084079,
+        "time_s": 0.0010162000003219873,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 7,
+        "compressed_size": 6282,
+        "ratio": 0.07356316455103283,
+        "time_s": 0.0010971000001518405,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 8,
+        "compressed_size": 6133,
+        "ratio": 0.07181835214764158,
+        "time_s": 0.0016634999997222621,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 9,
+        "compressed_size": 6044,
+        "ratio": 0.07077614876575015,
+        "time_s": 0.0013346000000638014,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 0,
+        "compressed_size": 8540,
+        "ratio": 0.10000468406014333,
+        "time_s": 9.750000026542693e-05,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 1,
+        "compressed_size": 6988,
+        "ratio": 0.08183053070401423,
+        "time_s": 0.00018509999972593505,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 2,
+        "compressed_size": 6309,
+        "ratio": 0.07387933861070776,
+        "time_s": 0.0003998000001956825,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 3,
+        "compressed_size": 6175,
+        "ratio": 0.07231017846269146,
+        "time_s": 0.0003600000000005821,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 4,
+        "compressed_size": 5788,
+        "ratio": 0.06777835027401752,
+        "time_s": 0.0006242000004021975,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 5,
+        "compressed_size": 5304,
+        "ratio": 0.06211063750058551,
+        "time_s": 0.0012479000001803797,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 6,
+        "compressed_size": 5276,
+        "ratio": 0.06178275329055225,
+        "time_s": 0.0015079999998306448,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 7,
+        "compressed_size": 5223,
+        "ratio": 0.061162115321560726,
+        "time_s": 0.003176100000018778,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 8,
+        "compressed_size": 5197,
+        "ratio": 0.06085765141224413,
+        "time_s": 0.004004799999620445,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 9,
+        "compressed_size": 5181,
+        "ratio": 0.06067028900651084,
+        "time_s": 0.004645600000003469,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 10,
+        "compressed_size": 4572,
+        "ratio": 0.053538807438287504,
+        "time_s": 0.02759379999997691,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 11,
+        "compressed_size": 4243,
+        "ratio": 0.04968616797039674,
+        "time_s": 0.14436040000009598,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 1,
+        "compressed_size": 6403,
+        "ratio": 0.07498009274439084,
+        "time_s": 0.00011989999984507449,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 2,
+        "compressed_size": 6386,
+        "ratio": 0.07478102018829921,
+        "time_s": 0.0001223000003847119,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 3,
+        "compressed_size": 6320,
+        "ratio": 0.0740081502646494,
+        "time_s": 0.00012389999983497546,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 4,
+        "compressed_size": 6288,
+        "ratio": 0.07363342545318281,
+        "time_s": 0.00030700000024808105,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 5,
+        "compressed_size": 6046,
+        "ratio": 0.07079956906646681,
+        "time_s": 0.0006716000002597866,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 6,
+        "compressed_size": 5863,
+        "ratio": 0.06865661155089231,
+        "time_s": 0.0005794999997306149,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 7,
+        "compressed_size": 5715,
+        "ratio": 0.06692350929785938,
+        "time_s": 0.0006665000000793952,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 8,
+        "compressed_size": 5651,
+        "ratio": 0.06617405967492622,
+        "time_s": 0.0006980000002840825,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 9,
+        "compressed_size": 5736,
+        "ratio": 0.06716942245538433,
+        "time_s": 0.000813799999832554,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 10,
+        "compressed_size": 5698,
+        "ratio": 0.06672443674176777,
+        "time_s": 0.0009910999997373438,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 11,
+        "compressed_size": 5698,
+        "ratio": 0.06672443674176777,
+        "time_s": 0.0011432999999669846,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 12,
+        "compressed_size": 5656,
+        "ratio": 0.06623261042671788,
+        "time_s": 0.0019614999996520055,
+        "available": true
+      }
+    ]
+  },
+  {
+    "file": "..\\..\\examples\\prov_valid.json",
+    "original_size": 1315,
+    "results": [
+      {
+        "method": "gzip",
+        "level": 1,
+        "compressed_size": 465,
+        "ratio": 0.35361216730038025,
+        "time_s": 6.979999989198404e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 2,
+        "compressed_size": 449,
+        "ratio": 0.3414448669201521,
+        "time_s": 2.790000007735216e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 3,
+        "compressed_size": 444,
+        "ratio": 0.3376425855513308,
+        "time_s": 2.570000015111873e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 4,
+        "compressed_size": 426,
+        "ratio": 0.3239543726235741,
+        "time_s": 3.0100000003585592e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 5,
+        "compressed_size": 422,
+        "ratio": 0.3209125475285171,
+        "time_s": 3.1399999897985253e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 6,
+        "compressed_size": 421,
+        "ratio": 0.32015209125475286,
+        "time_s": 2.6500000330997864e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 7,
+        "compressed_size": 421,
+        "ratio": 0.32015209125475286,
+        "time_s": 2.2400000034394907e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 8,
+        "compressed_size": 421,
+        "ratio": 0.32015209125475286,
+        "time_s": 2.0200000108161476e-05,
+        "available": true
+      },
+      {
+        "method": "gzip",
+        "level": 9,
+        "compressed_size": 421,
+        "ratio": 0.32015209125475286,
+        "time_s": 2.0200000108161476e-05,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 0,
+        "compressed_size": 544,
+        "ratio": 0.41368821292775665,
+        "time_s": 2.6900000193563756e-05,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 1,
+        "compressed_size": 505,
+        "ratio": 0.3840304182509506,
+        "time_s": 2.119999999194988e-05,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 2,
+        "compressed_size": 483,
+        "ratio": 0.3673003802281369,
+        "time_s": 4.49000003754918e-05,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 3,
+        "compressed_size": 433,
+        "ratio": 0.32927756653992396,
+        "time_s": 3.2500000088475645e-05,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 4,
+        "compressed_size": 420,
+        "ratio": 0.3193916349809886,
+        "time_s": 0.00012729999980365392,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 5,
+        "compressed_size": 387,
+        "ratio": 0.29429657794676806,
+        "time_s": 0.0002878999998756626,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 6,
+        "compressed_size": 384,
+        "ratio": 0.2920152091254753,
+        "time_s": 0.0004291999998713436,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 7,
+        "compressed_size": 386,
+        "ratio": 0.2935361216730038,
+        "time_s": 0.0005643999998028448,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 8,
+        "compressed_size": 386,
+        "ratio": 0.2935361216730038,
+        "time_s": 0.0005280999998831248,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 9,
+        "compressed_size": 382,
+        "ratio": 0.2904942965779468,
+        "time_s": 0.0005861999998160172,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 10,
+        "compressed_size": 379,
+        "ratio": 0.28821292775665397,
+        "time_s": 0.0008427000002484419,
+        "available": true
+      },
+      {
+        "method": "br",
+        "level": 11,
+        "compressed_size": 367,
+        "ratio": 0.27908745247148287,
+        "time_s": 0.001342699999895558,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 1,
+        "compressed_size": 483,
+        "ratio": 0.3673003802281369,
+        "time_s": 1.6599999980826396e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 2,
+        "compressed_size": 478,
+        "ratio": 0.3634980988593156,
+        "time_s": 1.2299999980314169e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 3,
+        "compressed_size": 470,
+        "ratio": 0.3574144486692015,
+        "time_s": 1.1899999663000926e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 4,
+        "compressed_size": 442,
+        "ratio": 0.3361216730038023,
+        "time_s": 1.5300000086426735e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 5,
+        "compressed_size": 426,
+        "ratio": 0.3239543726235741,
+        "time_s": 1.7899999875226058e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 6,
+        "compressed_size": 425,
+        "ratio": 0.3231939163498099,
+        "time_s": 1.939999992828234e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 7,
+        "compressed_size": 424,
+        "ratio": 0.3224334600760456,
+        "time_s": 1.740000016070553e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 8,
+        "compressed_size": 424,
+        "ratio": 0.3224334600760456,
+        "time_s": 1.4599999758502236e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 9,
+        "compressed_size": 424,
+        "ratio": 0.3224334600760456,
+        "time_s": 2.990000029967632e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 10,
+        "compressed_size": 424,
+        "ratio": 0.3224334600760456,
+        "time_s": 2.429999995001708e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 11,
+        "compressed_size": 425,
+        "ratio": 0.3231939163498099,
+        "time_s": 5.03999999637017e-05,
+        "available": true
+      },
+      {
+        "method": "zstd",
+        "level": 12,
+        "compressed_size": 424,
+        "ratio": 0.3224334600760456,
+        "time_s": 6.630000007135095e-05,
+        "available": true
+      }
+    ]
+  }
+]

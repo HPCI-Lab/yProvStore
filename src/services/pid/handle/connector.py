@@ -10,7 +10,7 @@ from Cryptodome.Signature import pkcs1_15
 from Cryptodome.Hash import SHA256
 from Cryptodome.PublicKey import RSA
 
-from application.settings import PID_SERVER_URL, PID_ADMIN_HANDLE, PID_PRIVATE_KEY_PATH, PID_ADMIN_HANDLE_INDEX, PID_SERVICE_MAX_CONCURRENT_REQUESTS
+from application.settings import PID_SERVER_URL, PID_ADMIN_HANDLE, PID_PRIVATE_KEY_PATH, PID_ADMIN_HANDLE_INDEX
 from application.exceptions.types import IntegrityException, ConflictException
 
 

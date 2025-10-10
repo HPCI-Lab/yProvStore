@@ -12,11 +12,6 @@ services:
       - ./src:/app/src
     environment:
       - PID_PRIVATE_KEY_PATH=/run/secrets/pid_admin_key
-      - USE_LOCAL_PID_SERVICE=false
-      - PID_PREFIX=21.T11961
-      - PID_ADMIN_HANDLE=0.NA/21.T11961
-      - PID_SERVER_URL=https://pidhs.disi.unitn.it:8000
-      - APP_URL=http://localhost:8000
       - DB_CONNECTION_STRING=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     env_file:
       - .env

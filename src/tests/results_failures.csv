@@ -1,0 +1,5 @@
+Method,Name,Error,Occurrences
+POST,post_document_compressed_zstd,RemoteDisconnected('Remote end closed connection without response'),3
+POST,post_document_multipart,CatchResponseError('server error 500'),9
+POST,post_document_compressed_zstd,CatchResponseError('server error 500'),7
+POST,post_document_multipart,RemoteDisconnected('Remote end closed connection without response'),9
