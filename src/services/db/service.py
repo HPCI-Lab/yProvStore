@@ -1,10 +1,10 @@
 import logging
-from typing import Iterable
+from typing import AsyncGenerator
 from sqlalchemy import inspect
-from sqlalchemy.orm import Session as SessionType
+from sqlalchemy.ext.asyncio import AsyncSession as SessionType
 from dishka import Provider, provide, Scope
 
-from services.db.sql.base import Session, engine
+from services.db.sql.base import AsyncSessionLocal, engine
 from alembic.config import Config
 from alembic.script import ScriptDirectory
 from sqlalchemy import text
@@ -46,9 +46,9 @@ class DBServiceProvider(Provider):
             logger.warning("alembic.ini not found, skipping migration check.")
 
     @provide(scope=Scope.REQUEST)
-    def get_db_session(self) -> Iterable[SessionType]:
-        session = Session()
+    async def get_db_session(self) -> AsyncGenerator[SessionType, None]:
+        session = AsyncSessionLocal()
         try:
             yield session
         finally:
-            session.close()
+            await session.close()

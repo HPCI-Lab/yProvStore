@@ -19,7 +19,8 @@ dependencies = [
   "zstd>=1.5.7.2",
   "aiofiles>=24.1.0",
   "zstandard>=0.25.0",
-  "psycopg2-binary>=2.9.10",
+  "asyncpg>=0.30.0",
+  "locust>=2.42.0",
 ]
 
 [project.optional-dependencies]

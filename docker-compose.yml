@@ -12,7 +12,7 @@ services:
       - ./src:/app/src
     environment:
       - PID_PRIVATE_KEY_PATH=/run/secrets/pid_admin_key
-      - DB_CONNECTION_STRING=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - DB_CONNECTION_STRING=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pgbouncer:6432/${POSTGRES_DB}
     env_file:
       - .env
     depends_on:
@@ -40,6 +40,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./pgbouncer/postgres/init:/docker-entrypoint-initdb.d
     env_file:
       - .env
     restart: unless-stopped
@@ -48,6 +49,29 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest  # common small pgbouncer image
+    container_name: yprovstore-pgbouncer
+    restart: unless-stopped
+    ports:
+      - "6432:6432"   # expose pgbouncer to other docker services
+    volumes:
+      - ./pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 6432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    env_file:
+      - .env
 
 volumes:
   minio_data:
