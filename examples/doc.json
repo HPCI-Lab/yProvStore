@@ -1,0 +1,30 @@
+{
+    "activity": {
+        "_:activity1": {
+            "prov:startedAtTime": "2023-10-01T12:00:00Z",
+            "prov:endedAtTime": "2023-10-01T12:05:00Z"
+        }
+    },
+    "entity": {
+        "_:entity1": {
+            "prov:location": "https://example.com/entity1",
+            "yprov:pid": "entity1_pid"
+        },
+        "_:entity2": {
+            "prov:location": "https://example.com/entity2",
+            "yprov:pid": "entity2_pid"
+        }
+    },
+    "used": {
+        "_:id1": {
+            "prov:entity": "_:entity1",
+            "prov:activity": "_:activity1"
+        }
+    },
+    "wasGeneratedBy": {
+        "_:id2": {
+            "prov:entity": "_:entity2",
+            "prov:activity": "_:activity1"
+        }
+    }
+}

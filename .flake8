@@ -1,0 +1,8 @@
+[flake8]
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    build,
+    dist
+ignore = E121,E125,E501,W291,W293

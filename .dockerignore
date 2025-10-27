@@ -1,0 +1,10 @@
+*.egg-info
+build
+.venv
+__pycache__
+.idea
+*.db
+tmp/
+keys
+.env
+node_modules/

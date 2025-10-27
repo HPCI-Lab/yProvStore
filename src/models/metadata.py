@@ -1,0 +1,94 @@
+import logging
+from dataclasses import dataclass
+from typing import GenericAlias
+from typing import get_origin, get_args
+from types import UnionType
+
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class DocumentMetadata:
+    """
+    Represents metadata for a document.
+    NOTE: only str and list types are allowed for the attributes.
+    """
+    title: str | None = None
+    description: str | None = None
+    keywords: list[str] | None = None  # later converted to strings separated by pipe `|` character
+    author: str | None = None
+
+    # When adding new fields, update also:
+    # - services/pid/handle/base.py
+    # - DocumentMetadataGet in routers/metadata/_get.py
+
+    def __post_init__(self):
+        self._init_dataclass_fields()
+    
+    @classmethod
+    def from_dict(cls, data: dict | None) -> 'DocumentMetadata':
+        """
+        Create a DocumentMetadata instance from a dictionary.
+        
+        :param data: Dictionary containing metadata fields.
+        :return: DocumentMetadata instance.
+        """
+        if not data:
+            return cls()
+        return cls(**data)
+    
+    def to_dict(self) -> dict:
+        """
+        Convert the DocumentMetadata instance to a dictionary for JSON serialization.
+        
+        :return: Dictionary representation of the metadata.
+        """
+        dict_values = {}
+        for field in self.__dataclass_fields__:
+            value = getattr(self, field)
+            field_type = self.get_attribute_type(field)
+            if field_type is list:
+                if isinstance(value, list):
+                    value = "|".join(value) if value else None
+            dict_values[field] = str(value) if value is not None else None
+        return dict_values
+    
+    @classmethod
+    def get_attribute_type(cls, attribute_name: str) -> type:
+        """
+        Get the type of a specific attribute in the DocumentMetadata class.
+        
+        :param attribute_name: Name of the attribute to check.
+        :return: Type of the attribute.
+        """
+
+        if attribute_name not in cls.__annotations__:
+            raise Exception(f"Attribute '{attribute_name}' does not exist in DocumentMetadata.")
+        attribute = DocumentMetadata.__annotations__[attribute_name]
+        attribute_type = get_origin(attribute)
+        if attribute_type == UnionType:
+            types_tuple = tuple(t for t in get_args(attribute) if t is not type(None))
+            if len(types_tuple) > 1:
+                logger.warning(f"Multiple types found for metadata attribute '{attribute_name}': {types_tuple}. Using the first type: {types_tuple[0]}")
+            attribute_type = types_tuple[0]
+            
+        if type(attribute_type) is GenericAlias:
+            # f"The attribute '{attribute_name}' is a list of type: {attribute_type.__args__[0]}."
+            attribute_type = attribute_type.__origin__  # Get the original type (e.g., list, dict)
+        return attribute_type
+    
+    def _init_dataclass_fields(self):
+        """
+        Initialize the dataclass fields with default values.
+        This is useful for ensuring that all fields are set correctly.
+        """
+        for field in self.__dataclass_fields__:
+            field_type = self.get_attribute_type(field)
+            if field_type is str and getattr(self, field) == "":
+                setattr(self, field, None)
+            elif field_type is list and isinstance(getattr(self, field), str):
+                # Convert string to list if it is a string
+                setattr(self, field, [item.strip() for item in getattr(self, field).split('|')] if getattr(self, field) else [])
+            elif field_type not in (str, list):
+                raise TypeError(f"Unsupported type for metadata attribute '{field}': {field_type}. Only str and list types are allowed.")
