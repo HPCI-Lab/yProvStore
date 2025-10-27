@@ -20,10 +20,7 @@ JWT_ENCODING_ALGORITHM = os.getenv("JWT_ENCODING_ALGORITHM", "HS256")
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "jwt-secret-key")
 JWT_EXPIRATION_MINUTES = int(os.getenv("JWT_EXPIRATION_MINUTES", 60))
 
-DB_CONNECTION_STRING = os.getenv("DB_CONNECTION_STRING", "sqlite:///yprov.db")
-DB_MAX_POOL_SIZE = int(os.getenv("DB_MAX_POOL_SIZE", 20))  # Remember this applies to each process if using multiple workers
-DB_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", -1))
-DB_TIMEOUT = int(os.getenv("DB_TIMEOUT", 5))
+DB_CONNECTION_STRING = os.getenv("DB_CONNECTION_STRING", "sqlite+aiosqlite:///yprov.db")
 
 TMP_PATH = Path(os.getenv("TMP_PATH", os.path.join(os.path.dirname(__file__), "..", "..", "tmp")))
 if not TMP_PATH.exists():
