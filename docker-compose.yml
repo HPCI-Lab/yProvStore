@@ -1,4 +1,5 @@
 services:
+
   api:
     build: .
     container_name: yprovstore-api
@@ -12,7 +13,18 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/status || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
       # NOTE: be sure to define JWT_SECRET_KEY in the environment .env file
 
   minio:
@@ -36,15 +48,29 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./pgbouncer/postgres/init:/docker-entrypoint-initdb.d
-    env_file:
-      - .env
+      - ./postgres/init:/docker-entrypoint-initdb.d
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    env_file:
+      - .env
+      # NOTE: be sure to define these env vars in the environment .env file:
+      #       POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+
+  pgbouncer-init:
+    image: postgres:17-alpine
+    container_name: yprovstore-pgbouncer-init
+    volumes:
+      - ./pgbouncer:/pgbouncer
+    env_file:
+      - .env
+    command: ./pgbouncer/init.sh
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   pgbouncer:
     image: edoburu/pgbouncer:latest
@@ -53,14 +79,12 @@ services:
     ports:
       - "6432:6432"
     volumes:
-      - ./pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
-      - ./pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - ./pgbouncer/configuration:/etc/pgbouncer:ro
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      pgbouncer-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -h localhost -p 6432"]
       interval: 10s
@@ -68,6 +92,8 @@ services:
       retries: 5
     env_file:
       - .env
+      # NOTE: be sure to define these env vars in the environment .env file:
+      #       POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
 
 volumes:
   minio_data:

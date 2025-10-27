@@ -3,7 +3,6 @@
 # the left side key is the database name clients will use
 # the right side is how to reach the real Postgres server
 
-# TODO: replace hardcoded values to env vars when deploying in production !!!
 yprovstore = host=postgres port=5432 dbname=${POSTGRES_DB} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD}
 
 [pgbouncer]

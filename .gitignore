@@ -8,3 +8,4 @@ tmp/
 keys
 .env
 node_modules/
+pgbouncer/configuration
