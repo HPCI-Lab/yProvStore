@@ -1,5 +1,5 @@
 from dishka import Provider, provide, Scope
-from sqlalchemy.orm import Session as SessionType
+from sqlalchemy.ext.asyncio import AsyncSession as SessionType
 
 from application.exceptions.types import ConflictException, NotFoundException
 from models import User

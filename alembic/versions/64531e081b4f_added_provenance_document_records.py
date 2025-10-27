@@ -22,7 +22,7 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.create_table('document_records',
     sa.Column('id', sa.String(255), nullable=False),
-    sa.Column('version', sa.String(50), nullable=False),
+    sa.Column('version', sa.Integer, nullable=False),
     sa.Column('storage_id', sa.String(255), nullable=False),
     sa.Column('owner_id', sa.String(255), nullable=False),
     sa.Column('parent_doc_pid', sa.String(255), nullable=True),

@@ -1,0 +1,35 @@
+[databases]
+# client connects to pgbouncer; pgbouncer forwards to postgres
+# the left side key is the database name clients will use
+# the right side is how to reach the real Postgres server
+
+yprovstore = host=postgres port=5432 dbname=${POSTGRES_DB} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD}
+
+[pgbouncer]
+# listen for clients on 0.0.0.0:6432 inside the container
+listen_addr = 0.0.0.0
+listen_port = 6432
+
+# auth
+auth_type = md5
+auth_file = /etc/pgbouncer/userlist.txt
+
+# pooling mode best for web apps
+pool_mode = transaction
+
+# server-side (Postgres) pool sizing
+default_pool_size = 80
+reserve_pool_size = 5
+reserve_pool_timeout = 5
+
+# clients allowed to connect to pgbouncer
+max_client_conn = 1000
+
+# timeouts and housekeeping
+server_idle_timeout = 300
+server_check_delay = 30
+query_timeout = 0
+
+logfile = /var/log/pgbouncer/pgbouncer.log
+pidfile = /var/run/pgbouncer/pgbouncer.pid
+admin_users = ${POSTGRES_USER}
