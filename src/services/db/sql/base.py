@@ -20,7 +20,7 @@ if DB_CONNECTION_STRING.startswith("postgresql"):
             "application_name": "yprovstore-api",
             # "statement_timeout": "5000",   # in ms as string
         }
-    },
+    }
 engine = create_async_engine(
     DB_CONNECTION_STRING,
     poolclass=NullPool,
