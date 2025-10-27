@@ -35,7 +35,6 @@ target_metadata = Base.metadata
 # ... etc.
 # 🔁 Override the URL from environment variable
 database_url = os.getenv("DB_CONNECTION_STRING", "sqlite:///./yprov.db")
-print(f"Using database URL: {database_url}")
 if database_url:
     config.set_main_option("sqlalchemy.url", database_url)
 

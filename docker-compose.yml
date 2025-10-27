@@ -1,17 +1,13 @@
 services:
-  # FastAPI Application Service
   api:
     build: .
     container_name: yprovstore-api
     secrets:
-      - pid_admin_key
+      - pid_user_key
     ports:
       - "8000:8000"
-    volumes:
-      # Mounts local code for live-reloading in development
-      - ./src:/app/src
     environment:
-      - PID_PRIVATE_KEY_PATH=/run/secrets/pid_admin_key
+      - PID_PRIVATE_KEY_PATH=/run/secrets/pid_user_key
       - DB_CONNECTION_STRING=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pgbouncer:6432/${POSTGRES_DB}
     env_file:
       - .env
@@ -51,11 +47,11 @@ services:
       retries: 5
 
   pgbouncer:
-    image: edoburu/pgbouncer:latest  # common small pgbouncer image
+    image: edoburu/pgbouncer:latest
     container_name: yprovstore-pgbouncer
     restart: unless-stopped
     ports:
-      - "6432:6432"   # expose pgbouncer to other docker services
+      - "6432:6432"
     volumes:
       - ./pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
       - ./pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
@@ -78,5 +74,5 @@ volumes:
   pgdata:
 
 secrets:
-  pid_admin_key:
-    file: ./keys/admpriv.pem
+  pid_user_key:
+    file: ./keys/user_private.pem

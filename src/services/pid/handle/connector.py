@@ -70,6 +70,9 @@ class HandleConnector:
             raise IntegrityException("Failed to communicate with Handle Server")
         except httpx.RequestError as e:
             logger.error(f"HTTP Request Error: {e}")
+            logger.error(f"Error type: {type(e).__name__}")
+            if hasattr(e, 'message'):
+                logger.error(f"Error message: {e.message}")
             raise IntegrityException("Failed to communicate with Handle Server")
         except json.JSONDecodeError as e:
             logger.error(f"JSON Decode Error decoding handle server response: {e}")
