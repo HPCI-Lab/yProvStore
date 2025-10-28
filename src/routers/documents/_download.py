@@ -26,15 +26,28 @@ router = APIRouter(
 documentation = {
     "summary": "Download a Document file by its PID",
     "description": ("This endpoint allows the user to download a document by its PID. "
-                    "The document is retrieved from the storage system using the provided PID and prefix."),
+                    "The document is retrieved from the storage system using the provided PID and prefix. "
+                    "By default, the document is returned as a streaming response. "
+                    "Use the `stream` query parameter set to `false` to return the entire JSON content in the response body instead."),
     "status_code": status.HTTP_200_OK,
-    "response_description": "Returns the requested document file.",
-    "response_class": Response,
+    "response_description": "Returns the requested document file as a streaming response (default) or complete JSON content.",
+    "response_model": None,
     "responses": {
         status.HTTP_200_OK: {
             "description": "The requested document file has been successfully retrieved.",
             "content": {
-                "application/octet-stream": {}
+                "application/octet-stream": {
+                    "schema": {
+                        "type": "string",
+                        "format": "binary"
+                    }
+                },
+                "application/json": {
+                    "schema": {
+                        "type": "object",
+                        "description": "Complete JSON document content (when stream=false)"
+                    }
+                }
             }
         },
         status.HTTP_401_UNAUTHORIZED: EXCEPTION_SCHEMA[UnauthorizedException],
@@ -50,15 +63,19 @@ async def download_document_prefix(
     prefix: str,
     file_storage_service: FromDishka[FileStorageService],
     document_storage_service: FromDishka[DocumentRecordStorageService],
+    stream: bool = True,
     accept_encoding: Optional[str] = Header(None),  # client can send Accept-Encoding header
-) -> StreamingResponse:
+) -> StreamingResponse | Response:
     """
     Download a document file by its PID and prefix.
 
     :param pid: The unique identifier of the document to be downloaded.
     :param prefix: The prefix to be used for the document PID.
     :param file_storage_service: The service to handle file storage operations.
-    :return: The requested document file.
+    :param document_storage_service: The service to handle document record operations.
+    :param stream: Whether to return a streaming response (True, default) or complete content (False).
+    :param accept_encoding: Optional Accept-Encoding header from the client.
+    :return: The requested document file as a streaming response or complete JSON content.
     """
 
     pid = f"{prefix}/{pid}"
@@ -121,6 +138,18 @@ async def download_document_prefix(
         encoding_headers = {}
         if skip_decompression:
             encoding_headers["Content-Encoding"] = file_storage_service.get_compression_standard().value
+        
+        if not stream:
+            # read all content into memory (not ideal for large files)
+            content_bytes = b""
+            async for chunk in delegating_gen():
+                content_bytes += chunk
+            content_str = content_bytes.decode('utf-8')
+            return Response(
+                content=content_str,
+                media_type="application/json",
+                headers=encoding_headers
+            )
         return StreamingResponse(
             delegating_gen(),
             media_type="application/octet-stream",
