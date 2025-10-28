@@ -1,0 +1,1201 @@
+{
+    "prefix": {
+        "xsd_1": "http://www.w3.org/2000/10/XMLSchema#",
+        "prov-ml": "prov-ml",
+        "default": "www.example.org"
+    },
+    "entity": {
+        "MetricsType.ZARR_True_zstd": [
+            {
+                "prov-ml:provenance_path": "prov",
+                "prov-ml:artifact_uri": "prov/MetricsType.ZARR_True_zstd_0/artifacts",
+                "prov-ml:run_id": "0",
+                "prov-ml:type": "LearningStage",
+                "prov-ml:user_id": "gabriele.padovani",
+                "prov-ml:python_version": "3.11.11 (main, Dec 11 2024, 16:28:39) [GCC 11.2.0]",
+                "prov-ml:global_rank": "0"
+            },
+            {
+                "prov-ml:type": "Experiment",
+                "prov-ml:experiment_name": "MetricsType.ZARR_True_zstd"
+            }
+        ],
+        "source_code": {
+            "prov-ml:type": "SourceCode",
+            "prov-ml:source_name": "provenance_graph.py",
+            "prov-ml:runtime_type": "single_core"
+        },
+        "MSE_train_Context.TRAINING": {
+            "prov-ml:type": "Metric",
+            "prov-ml:name": "MSE_train",
+            "prov-ml:context": "Context.TRAINING",
+            "prov-ml:source": "custom_metric",
+            "prov-ml:metric_epoch_list": "[0, 0, 0, ..., 4, 4, 4]",
+            "prov-ml:metric_value_list": "[0.1298884 , 0.11303814, 0.10364874, ..., 0.06990736, 0.06658398, 0.07045758]",
+            "prov-ml:metric_timestamp_list": "[1749031837202, 1749031837208, 1749031837214, ..., 1749031909494, 1749031909500, 1749031909506]",
+            "prov-ml:artifact_uri": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr"
+        },
+        "MSE_train2_Context.TRAINING": {
+            "prov-ml:type": "Metric",
+            "prov-ml:name": "MSE_train2",
+            "prov-ml:context": "Context.TRAINING",
+            "prov-ml:source": "custom_metric",
+            "prov-ml:metric_epoch_list": "[0, 0, 0, ..., 4, 4, 4]",
+            "prov-ml:metric_value_list": "[1.1298884, 1.1130382, 1.1036488, ..., 1.0699073, 1.066584 , 1.0704576]",
+            "prov-ml:metric_timestamp_list": "[1749031837202, 1749031837208, 1749031837214, ..., 1749031909494, 1749031909500, 1749031909506]",
+            "prov-ml:artifact_uri": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr"
+        },
+        "MSE_train3_Context.TRAINING": {
+            "prov-ml:type": "Metric",
+            "prov-ml:name": "MSE_train3",
+            "prov-ml:context": "Context.TRAINING",
+            "prov-ml:source": "custom_metric",
+            "prov-ml:metric_epoch_list": "[0, 0, 0, ..., 4, 4, 4]",
+            "prov-ml:metric_value_list": "[2.1298883, 2.113038 , 2.1036487, ..., 2.0699074, 2.0665839, 2.0704575]",
+            "prov-ml:metric_timestamp_list": "[1749031837202, 1749031837208, 1749031837214, ..., 1749031909494, 1749031909500, 1749031909506]",
+            "prov-ml:artifact_uri": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr"
+        },
+        "MSE_train4_Context.TRAINING": {
+            "prov-ml:type": "Metric",
+            "prov-ml:name": "MSE_train4",
+            "prov-ml:context": "Context.TRAINING",
+            "prov-ml:source": "custom_metric",
+            "prov-ml:metric_epoch_list": "[0, 0, 0, ..., 4, 4, 4]",
+            "prov-ml:metric_value_list": "[3.1298883, 3.113038 , 3.1036487, ..., 3.0699074, 3.0665839, 3.0704575]",
+            "prov-ml:metric_timestamp_list": "[1749031837202, 1749031837208, 1749031837214, ..., 1749031909494, 1749031909500, 1749031909506]",
+            "prov-ml:artifact_uri": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr"
+        },
+        "MSE_train5_Context.TRAINING": {
+            "prov-ml:type": "Metric",
+            "prov-ml:name": "MSE_train5",
+            "prov-ml:context": "Context.TRAINING",
+            "prov-ml:source": "custom_metric",
+            "prov-ml:metric_epoch_list": "[0, 0, 0, ..., 4, 4, 4]",
+            "prov-ml:metric_value_list": "[4.1298885, 4.113038 , 4.1036487, ..., 4.069907 , 4.066584 , 4.0704575]",
+            "prov-ml:metric_timestamp_list": "[1749031837202, 1749031837208, 1749031837214, ..., 1749031909494, 1749031909500, 1749031909506]",
+            "prov-ml:artifact_uri": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr"
+        },
+        "Indices_Context.TRAINING": {
+            "prov-ml:type": "Metric",
+            "prov-ml:name": "Indices",
+            "prov-ml:context": "Context.TRAINING",
+            "prov-ml:source": "custom_metric",
+            "prov-ml:metric_epoch_list": "[0, 0, 0, ..., 4, 4, 4]",
+            "prov-ml:metric_value_list": "[0.000e+00, 1.000e+00, 2.000e+00, ..., 1.872e+03, 1.873e+03, 1.874e+03]",
+            "prov-ml:metric_timestamp_list": "[1749031837202, 1749031837208, 1749031837214, ..., 1749031909494, 1749031909500, 1749031909506]",
+            "prov-ml:artifact_uri": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr"
+        },
+        "MSE_test_Context.EVALUATION": {
+            "prov-ml:type": "Metric",
+            "prov-ml:name": "MSE_test",
+            "prov-ml:context": "Context.EVALUATION",
+            "prov-ml:source": "custom_metric",
+            "prov-ml:metric_epoch_list": "[4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]",
+            "prov-ml:metric_value_list": "[0.05587808, 0.06576981, 0.0554863 , 0.07549198, 0.06760391, 0.06915025, 0.06995908, 0.07206488, 0.07016306, 0.07493784, 0.06532669, 0.07549474, 0.07204247, 0.07095319, 0.08241614, 0.06775277, 0.07729103, 0.07909758, 0.07702148, 0.09093554, 0.06658467, 0.07185571, 0.06762997, 0.0654112 , 0.06715503, 0.06391323, 0.0611122 , 0.08392747, 0.0675386 , 0.07968511, 0.06462572, 0.07415004, 0.07289433, 0.07152983, 0.07273303, 0.0712271 , 0.07355589, 0.07560561, 0.0756529 , 0.08653201, 0.0677525 , 0.078555  , 0.07193954, 0.07251213, 0.08310168, 0.07725831, 0.07431703, 0.07512271, 0.06881901, 0.07529248, 0.07211839, 0.07502677, 0.07871429, 0.06970513, 0.07545963, 0.06154899, 0.07682846, 0.06266687, 0.07024821, 0.07537992, 0.06540084, 0.07899364, 0.07253351, 0.06763561, 0.07287919, 0.08419662, 0.08327716, 0.06945535, 0.08777662, 0.0706872 , 0.0688832 , 0.0677678 , 0.06605642, 0.07386164, 0.07614726, 0.07028057, 0.08232242, 0.0794426 , 0.07971788, 0.07353826, 0.0733994 , 0.07282355, 0.07180692, 0.06593233, 0.05993478, 0.07816991, 0.0812565 , 0.07551049, 0.06294955, 0.06939783, 0.06653817, 0.078305  , 0.07424422, 0.06789082, 0.06504162, 0.06893233, 0.06340862, 0.08036064, 0.0779153 , 0.07257205, 0.06694947, 0.07502852, 0.06681425, 0.07349226, 0.08711377, 0.06814087, 0.06678835, 0.06506894, 0.06400018, 0.08633035, 0.07404323, 0.08642583, 0.06743824, 0.07527196, 0.06406685, 0.07518529, 0.07379267, 0.08012184, 0.07365673, 0.09070319, 0.06844626, 0.07880579, 0.08018129, 0.0790723 , 0.06506417, 0.06189488, 0.06700604, 0.06219685, 0.08684938, 0.07940983, 0.05851222, 0.07523099, 0.08078746, 0.07353424, 0.08557761, 0.07246213, 0.08588966, 0.07902099, 0.08581491, 0.07022845, 0.08343834, 0.05853594, 0.09199321, 0.06756791, 0.07643775, 0.06278545, 0.07411333, 0.06992546, 0.07269042, 0.06277962, 0.07862981, 0.07255726, 0.07285609, 0.06801441, 0.06426903, 0.08774366, 0.06486491, 0.04880397, 0.06200759, 0.049486  , 0.05642889, 0.07846618, 0.07390291, 0.06574767, 0.0613219 , 0.06967857, 0.05097063, 0.05476106, 0.07064848, 0.05614843, 0.05091009, 0.06252172, 0.06081906, 0.06873447, 0.06809206, 0.07599735, 0.06252746, 0.06459401, 0.06747   , 0.068383  , 0.06449999, 0.06359792, 0.06939565, 0.07095737, 0.06924891, 0.07734541, 0.07377058, 0.05279052, 0.08399796, 0.079363  , 0.07329505, 0.0776687 , 0.07907151, 0.05851409, 0.05716132, 0.05070244, 0.05515603, 0.05857915, 0.05367308, 0.07668378, 0.06492824, 0.05072363, 0.06345788, 0.05630472, 0.07294194, 0.07957511, 0.06724317, 0.0694706 , 0.06123935, 0.05954136, 0.08538771, 0.05954513, 0.07555144, 0.07944387, 0.06020679, 0.07699559, 0.06094548, 0.05757559, 0.05444511, 0.06275568, 0.06318373, 0.06399899, 0.06297666, 0.05471352, 0.05963941, 0.06242916, 0.07290357, 0.0622663 , 0.05393262, 0.05901564, 0.06401758, 0.07096545, 0.07143145, 0.07511748, 0.06782871, 0.06438237, 0.06172804, 0.05865271, 0.06632743, 0.07094643, 0.06382679, 0.06769818, 0.06792559, 0.07550256, 0.06889148, 0.10152061, 0.07678327, 0.08738303, 0.07517622, 0.0656929 , 0.06405685, 0.07777901, 0.06479423, 0.06437872, 0.06590332, 0.06281828, 0.06141106, 0.06400056, 0.07309101, 0.07855581, 0.06841489, 0.06564229, 0.06245051, 0.06819639, 0.07000959, 0.06613988, 0.07347579, 0.06480705, 0.05856419, 0.06441737, 0.06442925, 0.04928121, 0.054997  , 0.0513369 , 0.0542038 , 0.05446652, 0.05752736, 0.05294522, 0.05098485, 0.06101171, 0.05875961, 0.06753509, 0.07135053, 0.08018912, 0.07097214, 0.07051889, 0.06236241, 0.06267311, 0.06542834, 0.06618398, 0.05601013, 0.06151607, 0.05874538, 0.06703877, 0.06196788, 0.06113412, 0.07123949, 0.06278583, 0.06150729, 0.06249661, 0.07033803, 0.06801098, 0.06887227, 0.06148624, 0.07028239, 0.06254875, 0.06234575, 0.07317092, 0.07393277, 0.06498116, 0.06642748, 0.06611414, 0.06586718]",
+            "prov-ml:metric_timestamp_list": "[1749031909518, 1749031909524, 1749031909529, 1749031909534, 1749031909540, 1749031909545, 1749031909550, 1749031909556, 1749031909561, 1749031909566, 1749031909572, 1749031909577, 1749031909583, 1749031909588, 1749031909594, 1749031909599, 1749031909604, 1749031909610, 1749031909615, 1749031909620, 1749031909626, 1749031909631, 1749031909694, 1749031909700, 1749031909706, 1749031909711, 1749031909717, 1749031909722, 1749031909727, 1749031909733, 1749031909738, 1749031909744, 1749031909749, 1749031909755, 1749031909760, 1749031909765, 1749031909771, 1749031909776, 1749031909781, 1749031909787, 1749031909792, 1749031909798, 1749031909803, 1749031909808, 1749031909814, 1749031909819, 1749031909824, 1749031909830, 1749031909835, 1749031909840, 1749031909846, 1749031909851, 1749031909857, 1749031909862, 1749031909868, 1749031909874, 1749031909879, 1749031909884, 1749031909890, 1749031909895, 1749031909900, 1749031909906, 1749031909911, 1749031909916, 1749031909923, 1749031909928, 1749031909933, 1749031909939, 1749031909944, 1749031909949, 1749031909955, 1749031909960, 1749031909969, 1749031909974, 1749031909980, 1749031909985, 1749031909991, 1749031909996, 1749031910001, 1749031910007, 1749031910012, 1749031910017, 1749031910023, 1749031910028, 1749031910033, 1749031910039, 1749031910044, 1749031910049, 1749031910055, 1749031910060, 1749031910066, 1749031910071, 1749031910077, 1749031910082, 1749031910087, 1749031910093, 1749031910098, 1749031910103, 1749031910109, 1749031910114, 1749031910120, 1749031910125, 1749031910130, 1749031910136, 1749031910142, 1749031910147, 1749031910153, 1749031910158, 1749031910164, 1749031910170, 1749031910175, 1749031910181, 1749031910186, 1749031910192, 1749031910197, 1749031910202, 1749031910209, 1749031910214, 1749031910219, 1749031910225, 1749031910230, 1749031910236, 1749031910269, 1749031910275, 1749031910280, 1749031910285, 1749031910291, 1749031910296, 1749031910301, 1749031910307, 1749031910312, 1749031910318, 1749031910323, 1749031910329, 1749031910334, 1749031910339, 1749031910344, 1749031910350, 1749031910355, 1749031910361, 1749031910366, 1749031910372, 1749031910377, 1749031910383, 1749031910389, 1749031910394, 1749031910399, 1749031910405, 1749031910410, 1749031910415, 1749031910421, 1749031910426, 1749031910432, 1749031910438, 1749031910443, 1749031910448, 1749031910454, 1749031910459, 1749031910464, 1749031910470, 1749031910475, 1749031910480, 1749031910486, 1749031910491, 1749031910496, 1749031910502, 1749031910507, 1749031910512, 1749031910518, 1749031910523, 1749031910528, 1749031910534, 1749031910540, 1749031910545, 1749031910550, 1749031910555, 1749031910561, 1749031910566, 1749031910571, 1749031910577, 1749031910582, 1749031910587, 1749031910593, 1749031910598, 1749031910603, 1749031910609, 1749031910614, 1749031910619, 1749031910625, 1749031910630, 1749031910636, 1749031910641, 1749031910647, 1749031910653, 1749031910658, 1749031910665, 1749031910670, 1749031910675, 1749031910681, 1749031910686, 1749031910691, 1749031910697, 1749031910702, 1749031910708, 1749031910714, 1749031910719, 1749031910724, 1749031910730, 1749031910735, 1749031910741, 1749031910746, 1749031910752, 1749031910757, 1749031910762, 1749031910768, 1749031910773, 1749031910778, 1749031910783, 1749031910789, 1749031910794, 1749031910799, 1749031910805, 1749031910851, 1749031910857, 1749031910862, 1749031910868, 1749031910873, 1749031910878, 1749031910884, 1749031910890, 1749031910895, 1749031910900, 1749031910906, 1749031910911, 1749031910917, 1749031910922, 1749031910927, 1749031910933, 1749031910939, 1749031910944, 1749031910949, 1749031910955, 1749031910960, 1749031910965, 1749031910971, 1749031910976, 1749031910982, 1749031910987, 1749031910992, 1749031910998, 1749031911003, 1749031911008, 1749031911014, 1749031911019, 1749031911025, 1749031911030, 1749031911035, 1749031911041, 1749031911046, 1749031911051, 1749031911057, 1749031911062, 1749031911068, 1749031911073, 1749031911078, 1749031911084, 1749031911089, 1749031911094, 1749031911100, 1749031911105, 1749031911110, 1749031911116, 1749031911121, 1749031911126, 1749031911132, 1749031911137, 1749031911142, 1749031911149, 1749031911154, 1749031911160, 1749031911165, 1749031911171, 1749031911177, 1749031911183, 1749031911188, 1749031911193, 1749031911199, 1749031911204, 1749031911210, 1749031911215, 1749031911222, 1749031911227, 1749031911233, 1749031911238, 1749031911243, 1749031911249, 1749031911254, 1749031911259, 1749031911264, 1749031911270, 1749031911275, 1749031911280, 1749031911286, 1749031911291, 1749031911297, 1749031911302, 1749031911307, 1749031911313, 1749031911318, 1749031911323, 1749031911329, 1749031911334, 1749031911337]",
+            "prov-ml:artifact_uri": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr"
+        },
+        "execution_start_time": {
+            "prov-ml:parameter_value": "1749031837.1531181",
+            "prov-ml:type": "Parameter"
+        },
+        "model_name": {
+            "prov-ml:parameter_value": "mnist_model_final",
+            "prov-ml:type": "Parameter"
+        },
+        "total_params": {
+            "prov-ml:parameter_value": "7850",
+            "prov-ml:type": "Parameter"
+        },
+        "memory_of_model": {
+            "prov-ml:parameter_value": "0.0314",
+            "prov-ml:type": "Parameter"
+        },
+        "total_memory_load_of_model": {
+            "prov-ml:parameter_value": "0.09419999999999999",
+            "prov-ml:type": "Parameter"
+        },
+        "execution_end_time": {
+            "prov-ml:parameter_value": "1749031911.3428104",
+            "prov-ml:type": "Parameter"
+        },
+        "final_run_statistics": {
+            "prov-ml:type": "RunStatistics"
+        },
+        "datasets": {},
+        "train_dataset": {
+            "prov-ml:type": "Dataset",
+            "prov-ml:size": "32",
+            "prov-ml:workers": "0",
+            "prov-ml:steps": "313",
+            "prov-ml:samples": "10000"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth": [
+            {
+                "prov-ml:type": "ModelVersion",
+                "prov-ml:creation_epoch": "None",
+                "prov-ml:artifact_uri": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+                "prov-ml:creation_timestamp": "2025-06-04 12:11:51.343000",
+                "prov-ml:last_modified_timestamp": "2025-06-04 12:11:51.343000"
+            },
+            {
+                "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth"
+            }
+        ],
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_final/mnist_model_final_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_final/mnist_model_final_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_final/mnist_model_final_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_final/mnist_model_final_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_final/mnist_model_final_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_final/mnist_model_final_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_final/mnist_model_final_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_final/mnist_model_final_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_final/mnist_model_final_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_final/mnist_model_final_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr": {
+            "prov-ml:artifact_path": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr"
+        }
+    },
+    "activity": {
+        "MetricsType.ZARR_True_zstd_execution": {
+            "prov-ml:type": "LearningExecution"
+        },
+        "epoch_0": {
+            "prov-ml:type": "TrainingExecution"
+        },
+        "epoch_1": {
+            "prov-ml:type": "TrainingExecution"
+        },
+        "epoch_2": {
+            "prov-ml:type": "TrainingExecution"
+        },
+        "epoch_3": {
+            "prov-ml:type": "TrainingExecution"
+        },
+        "epoch_4": {
+            "prov-ml:type": "TrainingExecution"
+        },
+        "test": {
+            "prov-ml:type": "TestingExecution"
+        },
+        "prov-ml:ModelRegistration": {}
+    },
+    "agent": {
+        "gabriele.padovani": {}
+    },
+    "wasAssociatedWith": {
+        "_:id1": {
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution",
+            "prov:agent": "gabriele.padovani"
+        }
+    },
+    "used": {
+        "_:id2": {
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution",
+            "prov:entity": "source_code"
+        },
+        "_:id11": {
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution",
+            "prov:entity": "execution_start_time"
+        },
+        "_:id12": {
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution",
+            "prov:entity": "model_name"
+        },
+        "_:id13": {
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution",
+            "prov:entity": "total_params"
+        },
+        "_:id14": {
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution",
+            "prov:entity": "memory_of_model"
+        },
+        "_:id15": {
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution",
+            "prov:entity": "total_memory_load_of_model"
+        },
+        "_:id16": {
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution",
+            "prov:entity": "execution_end_time"
+        },
+        "_:id18": {
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution",
+            "prov:entity": "train_dataset"
+        }
+    },
+    "hadMember": {
+        "_:id3": {
+            "prov:collection": "MetricsType.ZARR_True_zstd",
+            "prov:entity": "MetricsType.ZARR_True_zstd"
+        },
+        "_:id19": {
+            "prov:collection": "datasets",
+            "prov:entity": "train_dataset"
+        },
+        "_:id23": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth"
+        },
+        "_:id24": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth"
+        },
+        "_:id25": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth"
+        },
+        "_:id26": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth"
+        },
+        "_:id27": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth"
+        },
+        "_:id28": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_final/mnist_model_final_0.pth"
+        },
+        "_:id29": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth"
+        },
+        "_:id30": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth"
+        },
+        "_:id31": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth"
+        },
+        "_:id32": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth"
+        },
+        "_:id33": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth"
+        },
+        "_:id34": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_final/mnist_model_final_0.pth"
+        },
+        "_:id35": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth"
+        },
+        "_:id36": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth"
+        },
+        "_:id37": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth"
+        },
+        "_:id38": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth"
+        },
+        "_:id39": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth"
+        },
+        "_:id40": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_final/mnist_model_final_0.pth"
+        },
+        "_:id41": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth"
+        },
+        "_:id42": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth"
+        },
+        "_:id43": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth"
+        },
+        "_:id44": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth"
+        },
+        "_:id45": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth"
+        },
+        "_:id46": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth"
+        },
+        "_:id47": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth"
+        },
+        "_:id48": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth"
+        },
+        "_:id49": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth"
+        },
+        "_:id50": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth"
+        },
+        "_:id51": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth"
+        },
+        "_:id52": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_final/mnist_model_final_0.pth"
+        },
+        "_:id53": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth"
+        },
+        "_:id54": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth"
+        },
+        "_:id55": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth"
+        },
+        "_:id56": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth"
+        },
+        "_:id57": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth"
+        },
+        "_:id58": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_final/mnist_model_final_0.pth"
+        },
+        "_:id59": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth"
+        },
+        "_:id60": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth"
+        },
+        "_:id61": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth"
+        },
+        "_:id62": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth"
+        },
+        "_:id63": {
+            "prov:collection": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth"
+        }
+    },
+    "wasGeneratedBy": {
+        "_:id4": {
+            "prov:entity": "MetricsType.ZARR_True_zstd",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "MSE_train_train_0_gen": {
+            "prov:entity": "MSE_train_Context.TRAINING",
+            "prov:activity": "epoch_0"
+        },
+        "MSE_train_train_1_gen": {
+            "prov:entity": "MSE_train_Context.TRAINING",
+            "prov:activity": "epoch_1"
+        },
+        "MSE_train_train_2_gen": {
+            "prov:entity": "MSE_train_Context.TRAINING",
+            "prov:activity": "epoch_2"
+        },
+        "MSE_train_train_3_gen": {
+            "prov:entity": "MSE_train_Context.TRAINING",
+            "prov:activity": "epoch_3"
+        },
+        "MSE_train_train_4_gen": {
+            "prov:entity": "MSE_train_Context.TRAINING",
+            "prov:activity": "epoch_4"
+        },
+        "MSE_train2_train_0_gen": {
+            "prov:entity": "MSE_train2_Context.TRAINING",
+            "prov:activity": "epoch_0"
+        },
+        "MSE_train2_train_1_gen": {
+            "prov:entity": "MSE_train2_Context.TRAINING",
+            "prov:activity": "epoch_1"
+        },
+        "MSE_train2_train_2_gen": {
+            "prov:entity": "MSE_train2_Context.TRAINING",
+            "prov:activity": "epoch_2"
+        },
+        "MSE_train2_train_3_gen": {
+            "prov:entity": "MSE_train2_Context.TRAINING",
+            "prov:activity": "epoch_3"
+        },
+        "MSE_train2_train_4_gen": {
+            "prov:entity": "MSE_train2_Context.TRAINING",
+            "prov:activity": "epoch_4"
+        },
+        "MSE_train3_train_0_gen": {
+            "prov:entity": "MSE_train3_Context.TRAINING",
+            "prov:activity": "epoch_0"
+        },
+        "MSE_train3_train_1_gen": {
+            "prov:entity": "MSE_train3_Context.TRAINING",
+            "prov:activity": "epoch_1"
+        },
+        "MSE_train3_train_2_gen": {
+            "prov:entity": "MSE_train3_Context.TRAINING",
+            "prov:activity": "epoch_2"
+        },
+        "MSE_train3_train_3_gen": {
+            "prov:entity": "MSE_train3_Context.TRAINING",
+            "prov:activity": "epoch_3"
+        },
+        "MSE_train3_train_4_gen": {
+            "prov:entity": "MSE_train3_Context.TRAINING",
+            "prov:activity": "epoch_4"
+        },
+        "MSE_train4_train_0_gen": {
+            "prov:entity": "MSE_train4_Context.TRAINING",
+            "prov:activity": "epoch_0"
+        },
+        "MSE_train4_train_1_gen": {
+            "prov:entity": "MSE_train4_Context.TRAINING",
+            "prov:activity": "epoch_1"
+        },
+        "MSE_train4_train_2_gen": {
+            "prov:entity": "MSE_train4_Context.TRAINING",
+            "prov:activity": "epoch_2"
+        },
+        "MSE_train4_train_3_gen": {
+            "prov:entity": "MSE_train4_Context.TRAINING",
+            "prov:activity": "epoch_3"
+        },
+        "MSE_train4_train_4_gen": {
+            "prov:entity": "MSE_train4_Context.TRAINING",
+            "prov:activity": "epoch_4"
+        },
+        "MSE_train5_train_0_gen": {
+            "prov:entity": "MSE_train5_Context.TRAINING",
+            "prov:activity": "epoch_0"
+        },
+        "MSE_train5_train_1_gen": {
+            "prov:entity": "MSE_train5_Context.TRAINING",
+            "prov:activity": "epoch_1"
+        },
+        "MSE_train5_train_2_gen": {
+            "prov:entity": "MSE_train5_Context.TRAINING",
+            "prov:activity": "epoch_2"
+        },
+        "MSE_train5_train_3_gen": {
+            "prov:entity": "MSE_train5_Context.TRAINING",
+            "prov:activity": "epoch_3"
+        },
+        "MSE_train5_train_4_gen": {
+            "prov:entity": "MSE_train5_Context.TRAINING",
+            "prov:activity": "epoch_4"
+        },
+        "Indices_train_0_gen": {
+            "prov:entity": "Indices_Context.TRAINING",
+            "prov:activity": "epoch_0"
+        },
+        "Indices_train_1_gen": {
+            "prov:entity": "Indices_Context.TRAINING",
+            "prov:activity": "epoch_1"
+        },
+        "Indices_train_2_gen": {
+            "prov:entity": "Indices_Context.TRAINING",
+            "prov:activity": "epoch_2"
+        },
+        "Indices_train_3_gen": {
+            "prov:entity": "Indices_Context.TRAINING",
+            "prov:activity": "epoch_3"
+        },
+        "Indices_train_4_gen": {
+            "prov:entity": "Indices_Context.TRAINING",
+            "prov:activity": "epoch_4"
+        },
+        "test_gen": {
+            "prov:entity": "MSE_test_Context.EVALUATION",
+            "prov:activity": "test"
+        },
+        "_:id17": {
+            "prov:entity": "final_run_statistics",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "_:id20": {
+            "prov:entity": "datasets",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "_:id22": [
+            {
+                "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+                "prov:activity": "prov-ml:ModelRegistration"
+            },
+            {
+                "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+                "prov:activity": "prov-ml:ModelRegistration"
+            }
+        ],
+        "_:id64": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id65": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id66": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id67": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id68": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id69": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "_:id70": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id71": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id72": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id73": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id74": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id75": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_lz4hc_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "_:id76": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id77": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id78": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id79": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id80": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id81": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_blosclz_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "_:id82": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id83": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id84": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id85": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id86": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id87": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zstd_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "_:id88": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id89": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id90": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id91": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id92": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id93": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_blosc_zlib_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "_:id94": {
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id95": {
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id96": {
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id97": {
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id98": {
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id99": {
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/mnist_model_final/mnist_model_final_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_gzip_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "_:id100": {
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_0/mnist_model_version_0_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id101": {
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_1/mnist_model_version_1_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id102": {
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_2/mnist_model_version_2_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id103": {
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_3/mnist_model_version_3_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "_:id104": {
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/mnist_model_version_4/mnist_model_version_4_0.pth",
+            "prov:activity": "prov-ml:ModelRegistration"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train2_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train3_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train4_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_train5_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/Indices_Context.TRAINING_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr_gen": {
+            "prov:entity": "prov/MetricsType.ZARR_True_zstd_0/artifacts/metrics/MSE_test_Context.EVALUATION_GR0.zarr",
+            "prov:activity": "MetricsType.ZARR_True_zstd_execution"
+        }
+    },
+    "wasStartedBy": {
+        "_:id5": {
+            "prov:activity": "epoch_0",
+            "prov:trigger": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "_:id6": {
+            "prov:activity": "epoch_1",
+            "prov:trigger": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "_:id7": {
+            "prov:activity": "epoch_2",
+            "prov:trigger": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "_:id8": {
+            "prov:activity": "epoch_3",
+            "prov:trigger": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "_:id9": {
+            "prov:activity": "epoch_4",
+            "prov:trigger": "MetricsType.ZARR_True_zstd_execution"
+        },
+        "_:id10": {
+            "prov:activity": "test",
+            "prov:trigger": "MetricsType.ZARR_True_zstd_execution"
+        }
+    },
+    "wasInformedBy": {
+        "_:id21": {
+            "prov:informed": "prov-ml:ModelRegistration",
+            "prov:informant": "MetricsType.ZARR_True_zstd_execution"
+        }
+    }
+}

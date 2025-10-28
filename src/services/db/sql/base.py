@@ -1,21 +1,47 @@
+import asyncio
 import logging
 
-from sqlalchemy import create_engine, DateTime, Column, func, Boolean
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import DateTime, Column, func, Boolean
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.pool import NullPool
 
-from application.settings import DB_CONNECTION_STRING, DEBUG
+from application.settings import DB_CONNECTION_STRING
 
 
 Base = declarative_base()
 
-engine = create_engine(DB_CONNECTION_STRING, echo=False)
+# Set up the database engine
+connect_args = {}
+if DB_CONNECTION_STRING.startswith("postgresql"):
+    connect_args = {
+        # set server-level options on each new connection
+        "server_settings": {
+            "application_name": "yprovstore-api",
+            # "statement_timeout": "5000",   # in ms as string
+        }
+    }
+engine = create_async_engine(
+    DB_CONNECTION_STRING,
+    poolclass=NullPool,
+    echo=False,
+    connect_args=connect_args
+)
+
 logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
 
 # Create all tables
-Base.metadata.create_all(engine)
+# Base.metadata.create_all(engine)
+# -> https://stackoverflow.com/a/74000761
+# async def init_models():
+#     """Creates tables if they don't exist"""
+#     async with engine.begin() as conn:
+#         await conn.run_sync(Base.metadata.create_all)
+
+# asyncio.run(init_models())
 
 # Set up session
-Session = sessionmaker(bind=engine)
+AsyncSessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False)
 
 
 class BaseDBModel(Base):

@@ -179,9 +179,13 @@ class LocalPidServiceImpl(PidService):
                 f.write("{}")
             self.pids = {}
         else:
-            with open(self.pids_path, 'r') as f:
-                self.pids = json.load(f)
-                self.pids = {pid: PidRecord(**data) for pid, data in self.pids.items()}
+            try:
+                with open(self.pids_path, 'r') as f:
+                    self.pids = json.load(f)
+                    self.pids = {pid: PidRecord(**data) for pid, data in self.pids.items()}
+            except json.JSONDecodeError:
+                logger.error(f"Failed to decode JSON from {self.pids_path}. Starting with empty PID store.")
+                self.pids = {}
 
     async def new_pid(self, prefix: str | None = None) -> str:
         """

@@ -1,5 +1,12 @@
 FROM python:3.12-slim
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    pkg-config \
+    libzstd-dev \
+    dos2unix \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install uv.
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
@@ -16,6 +23,7 @@ COPY pyproject.toml uv.lock ./
 
 # Install dependencies using uv
 RUN uv sync --frozen --no-cache
+RUN uv pip install --no-cache-dir gunicorn
 
 # Copy alembic configuration files
 COPY alembic.ini /app/alembic.ini
@@ -26,6 +34,7 @@ COPY ./src /app/src
 
 # Copy and set up the entrypoint script
 COPY ./entrypoint.sh /app/entrypoint.sh
+RUN dos2unix /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # Expose the port the app runs on
@@ -35,4 +44,4 @@ EXPOSE 8000
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Command to run the application, pointing to src/run.py
-CMD ["uv", "run", "fastapi", "run", "src/run.py", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+CMD ["uv", "run", "gunicorn", "src.run:app", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120", "--worker-class", "uvicorn.workers.UvicornWorker"]

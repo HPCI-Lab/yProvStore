@@ -26,7 +26,7 @@ class CustomFormatter(DefaultFormatter):
     }
 
     def format(self, record):
-        if ON_WINDOWS:
+        if False and ON_WINDOWS:
             # On Windows, remove color codes
             log_fmt = self.LOG_FORMAT
         else:

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from models.permission import DocumentPermission, PermissionLevel
@@ -55,7 +55,7 @@ class DBDocumentRecord(BaseDBModel):
     __tablename__ = "document_records"
 
     id = Column(String(255), primary_key=True, index=True)
-    version = Column(String(50), nullable=False)
+    version = Column(Integer, nullable=False)
     storage_id = Column(String(255), nullable=False)
     owner_id = Column(String(255), ForeignKey('users.id'), nullable=False)
     parent_doc_pid = Column(String(255), nullable=True)
