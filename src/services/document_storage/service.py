@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from dishka import Provider, provide, Scope
 from sqlalchemy.orm import Session as SessionType
 
@@ -79,8 +80,11 @@ class DocumentRecordStorageServiceImpl(DocumentRecordStorageService, SQLEntityDB
         created_db_document_record = await super()._create(db_document_record)
         return created_db_document_record.to_document_record()
     
-    async def document_is_updated(self, pid: str, updated_after: str) -> None:
+    async def document_is_updated(self, pid: str, updated_after: datetime) -> None:
         db_document_record = await super()._get(pid, raise_not_found=True)
+        # Ensure updated_after is timezone-aware for comparison
+        if updated_after.tzinfo is None:
+            updated_after = updated_after.replace(tzinfo=timezone.utc)
         if db_document_record.updated_at < updated_after:
             db_document_record.updated_at = updated_after
             await super()._update(db_document_record)
