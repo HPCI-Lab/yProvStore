@@ -57,10 +57,9 @@ documentation = {
 }
 
 
-@router.get("/{prefix}/{pid}/download", **documentation)
+@router.get("/{pid:path}", **documentation)
 async def download_document_prefix(
     pid: str,
-    prefix: str,
     file_storage_service: FromDishka[FileStorageService],
     document_storage_service: FromDishka[DocumentRecordStorageService],
     stream: bool = True,
@@ -70,7 +69,6 @@ async def download_document_prefix(
     Download a document file by its PID and prefix.
 
     :param pid: The unique identifier of the document to be downloaded.
-    :param prefix: The prefix to be used for the document PID.
     :param file_storage_service: The service to handle file storage operations.
     :param document_storage_service: The service to handle document record operations.
     :param stream: Whether to return a streaming response (True, default) or complete content (False).
@@ -78,7 +76,6 @@ async def download_document_prefix(
     :return: The requested document file as a streaming response or complete JSON content.
     """
 
-    pid = f"{prefix}/{pid}"
     document_record = await document_storage_service.get_document_by_pid(pid)
 
     try:

@@ -43,7 +43,7 @@ class DocumentMetadataGet(BaseModel):
 
 documentation = {
     "summary": "Get Document Metadata",
-    "description": "This endpoint retrieves metadata for a specific document by its PID and prefix.",
+    "description": "This endpoint retrieves metadata for a specific document by its PID.",
     "status_code": status.HTTP_200_OK,
     "response_description": "Returns the document metadata including title, description, and keywords.",
     "responses": {
@@ -53,19 +53,17 @@ documentation = {
 }
 
 
-@router.get("/{prefix}/{pid}/metadata", **documentation)
-async def get_metadata_prefix(
-    prefix: str,
+@router.get("/{pid:path}/metadata", **documentation)
+async def get_metadata(
     pid: str,
     document_record_storage: FromDishka[DocumentRecordStorageService],
     pid_service: FromDishka[PidService],
     metadata_service: FromDishka[DocumentMetadataService],
 ) -> DocumentMetadataGet:
     """
-    Endpoint to retrieve metadata for a specific document by its PID and prefix.
+    Endpoint to retrieve metadata for a specific document by its PID.
     """
 
-    pid = f"{prefix}/{pid}"
     # Fetch the document record by PID to verify it is handled by this server instance
     document_record = await document_record_storage.get_document_by_pid(pid)
 

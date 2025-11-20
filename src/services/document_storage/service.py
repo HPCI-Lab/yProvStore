@@ -78,7 +78,7 @@ class DocumentRecordStorageServiceImpl(DocumentRecordStorageService, SQLEntityDB
         db_document_record = DBDocumentRecord.from_document_record(document_record)
         created_db_document_record = await super()._create(db_document_record)
         return created_db_document_record.to_document_record()
-    
+
     async def document_is_updated(self, pid: str, updated_after: str) -> None:
         db_document_record = await super()._get(pid, raise_not_found=True)
         if db_document_record.updated_at < updated_after:
