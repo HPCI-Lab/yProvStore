@@ -39,10 +39,9 @@ documentation = {
 }
 
 
-@router.delete("/{prefix}/{pid}/permissions", **documentation)
-async def delete_permission_prefix(
+@router.delete("/{pid:path}/permissions", **documentation)
+async def delete_permission(
     pid: str,
-    prefix: str,
     data: DeletePermissionRequest,
     permission_storage: FromDishka[DocumentPermissionStorageService],
     document_record_storage: FromDishka[DocumentRecordStorageService],
@@ -52,7 +51,6 @@ async def delete_permission_prefix(
     Delete a specific permission for a document identified by its PID and a user email.
     The first document version is used to find and delete the permission.
     """
-    pid = f"{prefix}/{pid}"
     document_record = await document_record_storage.get_document_by_pid(pid)
     first_document_record = await permission_storage.get_first_document_record(document_record)
 

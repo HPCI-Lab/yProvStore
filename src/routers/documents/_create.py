@@ -3,10 +3,10 @@ import logging
 from typing import Optional
 
 from fastapi import APIRouter, status, UploadFile, Form, Request, Header
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
-from application.documentation.openapi_generation import EXAMPLE_DOCUMENT_DATA
+from application.documentation.openapi_generation import EXAMPLE_DOCUMENT_DATA, EXAMPLE_EMAIL, EXAMPLE_UUID, EXAMPLE_DOCUMENT_VERSION, EXAMPLE_DOCUMENT_STORAGE, EXAMPLE_HASH
 from models import DocumentRecord, PermissionLevel
 from application.exceptions.responses import EXCEPTION_SCHEMA
 from application.exceptions.types import UnauthorizedException, ForbiddenException, NotFoundException, ServiceUnavailableException, BadRequestException
@@ -14,7 +14,6 @@ from services.document_storage.service import DocumentRecordStorageService
 from services.permission_storage.service import DocumentPermissionStorageService
 from services.pid.service import PidService
 from services.file_storage.service import FileStorageService
-from routers.documents._get import DocumentRecordGet
 from routers.common.dependencies import LoggedUser
 
 __all__ = ("router",)
@@ -26,6 +25,19 @@ router = APIRouter(
     prefix="/documents",
     route_class=DishkaRoute
 )
+
+
+class DocumentRecordGet(BaseModel):
+    """
+    Response model for listing available documents.
+    """
+    pid: str = Field(..., examples=[EXAMPLE_UUID])
+    version: int = Field(..., examples=[EXAMPLE_DOCUMENT_VERSION])
+    storage_url: str = Field(..., examples=[EXAMPLE_DOCUMENT_STORAGE])
+    owner_email: str = Field(..., examples=[EXAMPLE_EMAIL])
+    hash: str | None = Field(None, examples=[EXAMPLE_HASH], description="SHA-256 hash of the document content, if available.")
+    parent_document_pid: str | None = Field(None, examples=[EXAMPLE_UUID], description="PID of the previous document version.")
+    lineage_id: str | None = Field(None, examples=[EXAMPLE_UUID], description="Lineage identifier, if available.")
 
 
 class DocumentRecordCreate(BaseModel):

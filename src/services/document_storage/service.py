@@ -37,7 +37,7 @@ class DocumentRecordStorageService:
         raise NotImplementedError
 
     async def list_documents(self, page: int, page_size: int, updated_after: str | None = None,
-                             created_after: str | None = None) -> list[DocumentRecord]:
+                             created_after: str | None = None, pid: str | None = None) -> list[DocumentRecord]:
         """
         List all document records available in the storage.
         
@@ -45,6 +45,7 @@ class DocumentRecordStorageService:
         :param page_size: The number of items per page (default is 10).
         :param updated_after: Optional timestamp to filter documents updated after a certain time.
         :param created_after: Optional timestamp to filter documents created after a certain time.
+        :param pid: Optional PID to filter documents by their unique identifier.
         :return: A list of document records.
         """
         raise NotImplementedError
@@ -93,12 +94,14 @@ class DocumentRecordStorageServiceImpl(DocumentRecordStorageService, SQLEntityDB
         return new_record.to_document_record()
 
     async def list_documents(self, page: int, page_size: int, updated_after: str | None = None,
-                             created_after: str | None = None) -> list[DocumentRecord]:
+                             created_after: str | None = None, pid: str | None = None) -> list[DocumentRecord]:
         filters = {}
         if updated_after:
             filters['updated_at__ge'] = updated_after
         if created_after:
             filters['created_at__ge'] = created_after
+        if pid:
+            filters['pid'] = pid
         db_documents = await super()._filter(page=page, page_size=page_size, **filters)
         return [db_document.to_document_record() for db_document in db_documents]
     

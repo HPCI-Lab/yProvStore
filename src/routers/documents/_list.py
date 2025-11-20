@@ -58,6 +58,11 @@ async def list_documents(
         None,
         description="Return documents created after this timestamp (ISO 8601 format).",
         examples=["2024-06-01T00:00:00Z", "2024-06-01"]
+    ),
+    pid: str | None = Query(
+        None,
+        description="When provided, return a list containing only the document with the given PID if found.",
+        examples=[EXAMPLE_UUID]
     )
 ) -> list[DocumentRecordGet]:
     """
@@ -71,7 +76,8 @@ async def list_documents(
         page=page,
         page_size=page_size,
         updated_after=updated_after,
-        created_after=created_after
+        created_after=created_after,
+        pid=pid
     )
 
     user_emails: dict[str, str] = await user_storage_service.get_user_emails(

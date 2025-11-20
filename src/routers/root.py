@@ -33,12 +33,12 @@ root_sub_routers: tuple[APIRouter, ...] = (
     authentication_router,
     documents_router,
     metadata_router,
-    document_router,
     permissions_router,
     pids_router,
     pid_router,
     metadata_schema_router,
-    graph_router
+    graph_router,
+    document_router
 )
 
 for router in root_sub_routers:

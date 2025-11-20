@@ -103,18 +103,6 @@ def list_documents(ctx, page, page_size, updated_after, created_after):
         console.print(f"❌ [bold red]Error[/bold red] {response.status_code if response else ''}: {response.text if response else 'No response.'}")
 
 
-@documents.command(name="get")
-@click.argument('pid')
-@click.pass_context
-def get_document(ctx, pid):
-    """Get detailed info for a specific document by its PID."""
-    api_url = ctx.obj['API_URL']
-    response = make_request("GET", api_url, f"/documents/{pid}")
-
-    if response and response.status_code == 200:
-        console.print_json(data=response.json())
-
-
 @documents.command(name="create")
 @click.option(
     '--json-file',
@@ -259,7 +247,7 @@ def create_document(ctx, json_file, value, parent_pid, trustworthy, compressed):
                 
                 # Construct document URL (assuming the API provides a way to access the document)
                 api_url = ctx.obj['API_URL']
-                document_url = f"{api_url}/documents/{pid}/download"
+                document_url = f"{api_url}/documents/{pid}"
                 
                 # Create blockchain document
                 blockchain_doc = BlockchainDocument(
@@ -354,7 +342,7 @@ def download_document(ctx, pid, output, output_folder, trustworthy, compressed, 
         headers["Accept-Encoding"] = "zstd"
 
     # perform the download (streaming)
-    response = make_request("GET", api_url, f"/documents/{pid}/download", stream=True, headers=headers)
+    response = make_request("GET", api_url, f"/documents/{pid}", stream=True, headers=headers)
     if not response:
         console.print(f"❌ [bold red]Error:[/bold red] No response from server while downloading '{pid}'.")
         return

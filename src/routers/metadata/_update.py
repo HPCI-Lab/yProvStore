@@ -31,7 +31,7 @@ class DocumentMetadataPost(DocumentMetadataGet):
 
 documentation = {
     "summary": "Update Document Metadata",
-    "description": ("This endpoint updates metadata for a specific document by its PID and prefix."
+    "description": ("This endpoint updates metadata for a specific document by its PID."
                     "Only the fields that are provided in the request body will be updated.\n"
                     "To set an empty field, use an empty string or an empty list."),
     "status_code": status.HTTP_200_OK,
@@ -43,9 +43,8 @@ documentation = {
 }
 
 
-@router.patch("/{prefix}/{pid}/metadata", **documentation)
-async def update_metadata_prefix(
-    prefix: str,
+@router.patch("/{pid:path}/metadata", **documentation)
+async def update_metadata(
     pid: str,
     document_metadata: DocumentMetadataPost,
     document_record_storage: FromDishka[DocumentRecordStorageService],
@@ -54,10 +53,9 @@ async def update_metadata_prefix(
     logged_user: LoggedUser
 ) -> DocumentMetadataGet:
     """
-    Endpoint to retrieve metadata for a specific document by its PID and prefix.
+    Endpoint to retrieve metadata for a specific document by its PID.
     """
 
-    pid = f"{prefix}/{pid}"
     # Fetch the document record by PID to verify it is handled by this server instance
     document_record = await document_record_storage.get_document_by_pid(pid)
 

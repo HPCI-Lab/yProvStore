@@ -5,7 +5,7 @@ from ._subgraph import router as subgraph_router
 
 
 router = APIRouter(
-    prefix="/documents/{prefix}/{pid}/graph",
+    prefix="/documents/{pid:path}/graph",
     tags=["Provenance Documents Graph Operations"],
 )
 
