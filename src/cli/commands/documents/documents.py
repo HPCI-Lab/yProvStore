@@ -16,7 +16,7 @@ except ImportError:
     ZSTD_AVAILABLE = False
 
 from .permissions import permissions
-from .metadata import metadata
+from .metadata import metadata, local_metadata_schema
 from .graph import graph
 
 
@@ -103,7 +103,7 @@ def list_documents(ctx, page, page_size, updated_after, created_after):
         console.print(f"❌ [bold red]Error[/bold red] {response.status_code if response else ''}: {response.text if response else 'No response.'}")
 
 
-@documents.command(name="create")
+@documents.command(name="create", context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
 @click.option(
     '--json-file',
     type=click.Path(exists=True, dir_okay=False, readable=True),
@@ -127,9 +127,26 @@ def list_documents(ctx, page, page_size, updated_after, created_after):
     is_flag=True,
     help="Compress the document data using zstd before uploading to reduce transfer size."
 )
+@click.option(
+    '--refresh-schema',
+    is_flag=True,
+    help="Force re-download of metadata schema before processing metadata parameters."
+)
 @click.pass_context
-def create_document(ctx, json_file, value, parent_pid, trustworthy, compressed):
-    """Publish a new document, from a JSON file or a JSON string."""
+def create_document(ctx, json_file, value, parent_pid, trustworthy, compressed, refresh_schema):
+    """Publish a new document, from a JSON file or a JSON string.
+
+    You can also set initial metadata via dynamic options matching metadata schema fields.
+    Any extra --<field> <value> pairs after the declared options will be interpreted as metadata.
+
+    Examples:
+        yprov documents create --value '{"k":"v"}' --title "My Title" --description "Short desc" --keywords "kw1" --keywords "kw2"
+        yprov documents create --json-file doc.json --author "Jane Doe" --keywords "science,analysis"
+
+    For list fields, repeat the option or use comma-separated values. Empty string sets an empty value.
+    These are sent as a JSON object in the `document_metadata` query parameter.
+    Use --refresh-schema to re-fetch metadata schema if server schema changed.
+    """
     # Enforce exactly one input source
     if bool(json_file) == bool(value):
         console.print("❌ [bold red]Error:[/bold red] You must provide exactly one of --json-file or --value.")
@@ -143,6 +160,94 @@ def create_document(ctx, json_file, value, parent_pid, trustworthy, compressed):
 
     api_url = ctx.obj['API_URL']
     params = {'parent_document_pid': parent_pid} if parent_pid else {}
+
+    # Dynamic metadata parsing (similar to metadata update command)
+    raw_metadata = {}
+    if ctx.args:  # Only attempt if extra args present
+        schema = local_metadata_schema(api_url, refresh=refresh_schema)
+        if not schema:
+            console.print("[red]❌ Cannot process metadata without a valid schema.[/red]")
+            return
+        props = schema.get("properties", {})
+        key = ""
+        for arg in ctx.args:
+            if arg.startswith("--"):
+                if key:
+                    console.print(f"[red]❌ Option {key} missing value before starting {arg}.[/red]")
+                    return
+                key = arg[2:]
+            else:
+                if not key:
+                    console.print(f"[red]❌ Unexpected value '{arg}' without preceding option.[/red]")
+                    return
+                value_parsed = arg.split(",") if "," in arg else arg
+                if key in raw_metadata:
+                    existing = raw_metadata[key]
+                    if isinstance(existing, list):
+                        if isinstance(value_parsed, list):
+                            existing.extend(value_parsed)
+                        else:
+                            existing.append(value_parsed)
+                    else:
+                        raw_metadata[key] = [existing] + (value_parsed if isinstance(value_parsed, list) else [value_parsed])
+                else:
+                    raw_metadata[key] = value_parsed
+                key = ""
+        if key:
+            console.print(f"[red]❌ Missing value for option: {key}.[/red]")
+            return
+
+        errors = []
+        metadata_payload = {}
+        for m_key, m_val in raw_metadata.items():
+            if m_key not in props:
+                console.print(f"[yellow]⚠️ Ignoring unknown metadata field: {m_key}[/yellow]")
+                continue
+            schema_def = props[m_key]
+            expected_type = schema_def.get("type")
+            if not expected_type and schema_def.get("anyOf"):
+                for alt in schema_def["anyOf"]:
+                    t = alt.get("type")
+                    if t and t != "null":
+                        expected_type = t
+                        schema_def = alt
+                        break
+            if expected_type == "array" and schema_def.get("items", {}).get("type") == "string":
+                if isinstance(m_val, str):
+                    metadata_payload[m_key] = [] if m_val == "" else [m_val]
+                elif isinstance(m_val, list):
+                    metadata_payload[m_key] = [v for v in m_val if v or v == ""]
+                else:
+                    errors.append(f"{m_key} must be a string or list of strings")
+            elif expected_type == "string":
+                if isinstance(m_val, list):
+                    metadata_payload[m_key] = ",".join(m_val)  # flatten list into csv
+                elif isinstance(m_val, str):
+                    metadata_payload[m_key] = m_val
+                else:
+                    errors.append(f"{m_key} must be a string")
+                mx = schema_def.get("maxLength")
+                if mx and isinstance(metadata_payload[m_key], str) and len(metadata_payload[m_key]) > mx:
+                    errors.append(f"{m_key} too long (max {mx})")
+            else:
+                metadata_payload[m_key] = m_val
+        if errors:
+            for err in errors:
+                click.echo(f"Error: {err}", err=True)
+            return
+        if metadata_payload:
+            # Deduplicate list entries preserving order
+            for k, v in metadata_payload.items():
+                if isinstance(v, list):
+                    seen = set()
+                    dedup = []
+                    for itm in v:
+                        if itm not in seen:
+                            seen.add(itm)
+                            dedup.append(itm)
+                    metadata_payload[k] = dedup
+            params['document_metadata'] = json.dumps(metadata_payload, ensure_ascii=False)
+            console.print(f"[blue]Including initial metadata: {metadata_payload}[/blue]")
 
     # Validate blockchain required variables beforehand if --trustworthy is set
     if trustworthy:

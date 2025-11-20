@@ -317,7 +317,6 @@ yprov auth verify
 yprov auth logout
 yprov documents create --json-file <path/to/document.json> [--parent-pid <parent_pid>] [--compressed] [--trustworthy]
 yprov documents list [--page <page_number>] [--page-size <page_size>] [--updated-after <timestamp>] [--created-after <timestamp>]
-yprov documents get <document_pid>
 yprov documents download <document_pid> [--output-folder <path>] [--output <file_path>] [--compressed] [--debug]
 yprov documents permissions add <document_pid> --user-email <email> --permission-level <level>
 yprov documents permissions list <document_pid>
@@ -401,17 +400,26 @@ First, you need to register and log in to get an access token. The token is stor
 
 Once authenticated, you can create, list, and download provenance documents.
 
-  * **Create a new document** from a JSON file or a JSON string (only one of these options is allowed at a time).
+  * **Create a new document** from a JSON file or a JSON string (only one of these options is allowed at a time). You can also provide **initial metadata** at creation time using the same dynamic metadata field options available in the `documents metadata update` command. Any extra `--<field> <value>` pairs (after the declared options) are validated against the metadata schema and sent as a JSON object in the `document_metadata` query parameter.
 
     ```bash
-    # From a file:
-    yprov documents create --json-file examples/doc.json
+  # From a file:
+  yprov documents create --json-file examples/doc.json
 
-    # Or from an inline JSON string:
-    yprov documents create --value "{\"title\":\"My Doc\",\"owner_email\":\"me@example.com\"}"
+  # Or from an inline JSON string:
+  yprov documents create --value "{\"title\":\"My Doc\",\"owner_email\":\"me@example.com\"}"
+
+  # With initial metadata (title & keywords) from JSON file:
+  yprov documents create --json-file examples/doc.json --title "Initial Title" --keywords kw1 --keywords kw2
+
+  # With initial metadata using comma-separated list and author field:
+  yprov documents create --value '{"some":"data"}' --author "Jane Doe" --keywords "science,analysis"
+
+  # Refresh the metadata schema before applying metadata (if server changed):
+  yprov documents create --json-file examples/doc.json --refresh-schema --title "New Title"
     ```
 
-    You can also specify a parent document in either case:
+  You can also specify a parent document in either case:
 
     ```bash
     yprov documents create \
@@ -419,7 +427,7 @@ Once authenticated, you can create, list, and download provenance documents.
       --parent-pid <parent_pid_here>
     ```
 
-    For enhanced trustworthiness, you can create a blockchain record alongside the document:
+  For enhanced trustworthiness, you can create a blockchain record alongside the document:
 
     ```bash
     # Create document with blockchain record for trustworthiness
@@ -434,7 +442,7 @@ Once authenticated, you can create, list, and download provenance documents.
       --trustworthy
     ```
 
-    For faster uploads of large documents, you can enable compression:
+  For faster uploads of large documents, you can enable compression:
 
     ```bash
     # Upload with zstd compression to reduce transfer time
@@ -443,16 +451,21 @@ Once authenticated, you can create, list, and download provenance documents.
       --compressed
     ```
 
-    **Options:**
+  **Options:**
 
-    - `--json-file`: Path to a JSON file containing the document data
-    - `--value`: A JSON string containing the document data (mutually exclusive with `--json-file`)
-    - `--parent-pid`: PID of the parent document, if any
-    - `--compressed`: Compress the document data using zstd before uploading to reduce transfer size (requires `zstandard` library)
-    - `--trustworthy`: Also create a record of the document on the blockchain for enhanced trustworthiness and immutable provenance tracking
+  - `--json-file`: Path to a JSON file containing the document data.
+  - `--value`: A JSON string containing the document data (mutually exclusive with `--json-file`).
+  - `--parent-pid`: PID of the parent document, if any.
+  - `--compressed`: Compress the document data using zstd before uploading to reduce transfer size (requires `zstandard` library).
+  - `--trustworthy`: Also create a record of the document on the blockchain for enhanced trustworthiness and immutable provenance tracking.
+  - `--refresh-schema`: Force re-download of the metadata schema before validating dynamic metadata options.
+  - `--<metadata_field> <value>`: Any extra options matching fields defined in the metadata schema (e.g. `--title`, `--description`, `--keywords`, `--author`). Repeat list-type fields multiple times or pass comma-separated values (e.g. `--keywords kw1 --keywords kw2` or `--keywords "kw1,kw2"`). Empty string (`""`) sets a field to empty; for list fields an empty string results in an empty list.
 
-    **Notes:** 
-    - To use the `--trustworthy` option, you need to configure the blockchain connection environment variables as described in the [Blockchain Operations](#blockchain-operations) section. If the blockchain configuration is missing or invalid, the document record creation will fail with an appropriate error message.
+  **Notes:** 
+  - Initial metadata is sent via the `document_metadata` query parameter as a JSON object constructed from the dynamic metadata flags.
+  - Unknown metadata fields are ignored with a warning.
+  - To use the `--trustworthy` option, you need to configure the blockchain connection environment variables as described in the [Blockchain Operations](#blockchain-operations) section. If the blockchain configuration is missing or invalid, the document record creation will fail with an appropriate error message.
+  - Use `--refresh-schema` if you recently changed metadata schema server-side and want to ensure the CLI uses the latest.
 
   * **List all available documents** (with pagination).
 
@@ -502,12 +515,6 @@ Once authenticated, you can create, list, and download provenance documents.
       ```bash
       yprov documents list --created-after 2024-06-01T00:00:00Z
       ```
-
-  * **Get detailed information** for a specific document by its PID.
-
-    ```bash
-    yprov documents get <your_document_pid>
-    ```
 
   * **Download a document's file**.
 

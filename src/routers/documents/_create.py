@@ -2,7 +2,7 @@ import json
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, status, UploadFile, Form, Request, Header
+from fastapi import APIRouter, status, UploadFile, Form, Request, Header, Query
 from pydantic import BaseModel, Field
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
@@ -14,6 +14,8 @@ from services.document_storage.service import DocumentRecordStorageService
 from services.permission_storage.service import DocumentPermissionStorageService
 from services.pid.service import PidService
 from services.file_storage.service import FileStorageService
+from services.metadata.service import DocumentMetadataService
+from routers.metadata.utils import DocumentMetadataPost, update_document_metadata
 from routers.common.dependencies import LoggedUser
 
 __all__ = ("router",)
@@ -40,7 +42,7 @@ class DocumentRecordGet(BaseModel):
     lineage_id: str | None = Field(None, examples=[EXAMPLE_UUID], description="Lineage identifier, if available.")
 
 
-class DocumentRecordCreate(BaseModel):
+class DocumentRecordCreate(DocumentMetadataPost):
     """
     Request model for the input data to publish a new document.
     """
@@ -49,10 +51,15 @@ class DocumentRecordCreate(BaseModel):
 
 documentation = {
     "summary": "Publish a Document Record",
-    "description": ("This endpoint allows the user to publish a new document record with its associated data. "
-                    "The document is stored in the system, and a unique identifier (PID) is generated for it."
-                    "\n\nTo upload a document, exactly one of the following fields must be provided: "
-                    "`document_data` in the request body, or `document_file` as a file upload."),
+    "description": (
+        "This endpoint allows the user to publish a new document record with its associated data. "
+        "The document is stored in the system, and a unique identifier (PID) is generated for it."
+        "\n\nTo upload a document, exactly one of the following fields must be provided: "
+        "`document_data` in the JSON request body, or `document_file` as a file upload.<br><br>"
+        "Optional metadata may be provided through the `document_metadata` query parameter to set the initial metadata for the document. "
+        "Each metadata field is optional; omit or set to an empty string/list to leave it unset. Fields available: `title`, `description`, `keywords` (array of strings), `author`."\
+        "<br><br>You can fetch the metadata schema with the `/metadata/schema` endpoint and an example is available in the GET `/documents/{pid}/metadata` endpoint documentation."
+    ),
     "status_code": status.HTTP_200_OK,
     "response_description": "Returns the created document record",
     "responses": {
@@ -73,7 +80,7 @@ documentation = {
                                 "type": "string",
                                 "format": "binary",
                                 "description": "The document file to be uploaded. Must be either JSON or plain text."
-                            },
+                            }
                         }
                     }
                 },
@@ -85,11 +92,27 @@ documentation = {
                                 "type": "object",
                                 "example": EXAMPLE_DOCUMENT_DATA
                             }
-                        },
+                        }
                     }
-                },
+                }
             }
-        }
+        },
+        "parameters": [
+            {
+                "name": "document_metadata",
+                "in": "query",
+                "required": False,
+                "description": (
+                    "Optional initial metadata for the document encoded as a JSON object. "
+                    "Provide fields among: title (string), description (string), keywords (array of strings), author (string). "
+                    "Omitted fields remain unset. Example: {\"title\":\"A Title\",\"keywords\":[\"k1\",\"k2\"],\"author\":\"Jane Doe\"}"
+                ),
+                "schema": {
+                    "type": "string",
+                    "example": '{"title": "A Title", "description": "Desc", "keywords": ["k1", "k2"], "author": "Jane Doe"}'
+                }
+            }
+        ]
     }
 }
 
@@ -101,7 +124,9 @@ async def create_document(
     file_storage_service: FromDishka[FileStorageService],
     permission_service: FromDishka[DocumentPermissionStorageService],
     pid_service: FromDishka[PidService],
+    metadata_service: FromDishka[DocumentMetadataService],
     logged_user: LoggedUser,
+    document_metadata: Optional[str] = None,
     parent_document_pid: str | None = None,
     document_file: UploadFile | None = None,
     content_encoding: Optional[str] = Header(None),  # client may send Content-Encoding header
@@ -131,6 +156,13 @@ async def create_document(
     new_pid = await pid_service.new_pid()
     if not new_pid:
         raise Exception("Failed to generate a new PID.")
+    
+    if document_metadata:
+        try:
+            metadata_dict = json.loads(document_metadata)
+            document_metadata = DocumentMetadataPost.model_validate(metadata_dict)
+        except Exception as e:
+            raise BadRequestException(f"Invalid document metadata provided: {e}")
 
     skip_compression = False
     if content_encoding:
@@ -193,6 +225,20 @@ async def create_document(
 
         # Finalize saving all involved PID records
         await finalize_fn()
+
+        # Update the document metadata
+        if document_metadata:
+            logger.info(f"Updating document metadata for PID '{new_document_record.pid}'")
+            try:
+                await update_document_metadata(
+                    new_document_record.pid,
+                    document_metadata,
+                    metadata_service,
+                    document_record_storage
+                )
+            except Exception as e:
+                logger.warning(f"Failed to update document metadata for PID '{new_document_record.pid}': {e}")
+                pass
     except Exception as e:
         logger.error(f"Error occurred during document creation: {e}")
         logger.info("Deleting stored file due to error during document creation.")
@@ -230,3 +276,4 @@ async def create_document(
         parent_document_pid=new_document_record.parent_doc_pid,
         lineage_id=new_document_record.lineage_id
     )
+ 

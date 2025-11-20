@@ -1,4 +1,5 @@
-from datetime import datetime
+import logging
+from datetime import datetime, timezone
 
 from dishka import Provider, provide, Scope
 from sqlalchemy.ext.asyncio import AsyncSession as SessionType
@@ -7,6 +8,8 @@ from application.exceptions.types import ConflictException, NotFoundException
 from models import DocumentRecord
 from services.db.sql.models import DBDocumentRecord
 from services.db.sql.crud import SQLEntityDB
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentRecordStorageService:
@@ -84,7 +87,8 @@ class DocumentRecordStorageServiceImpl(DocumentRecordStorageService, SQLEntityDB
 
     async def document_is_updated(self, pid: str, updated_after: datetime) -> None:
         db_document_record = await super()._get(pid, raise_not_found=True)
-        if db_document_record.updated_at < updated_after:
+        tz_updated_at = db_document_record.updated_at.replace(tzinfo=timezone.utc)
+        if tz_updated_at < updated_after:
             db_document_record.updated_at = updated_after
             await super()._update(db_document_record)
 

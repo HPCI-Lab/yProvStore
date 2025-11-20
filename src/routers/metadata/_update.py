@@ -11,7 +11,9 @@ from services.metadata.service import DocumentMetadataService
 from services.permission_storage.service import DocumentPermissionStorageService
 from models import PermissionLevel
 from routers.common.dependencies import LoggedUser
+
 from ._get import DocumentMetadataGet
+from .utils import DocumentMetadataPost, update_document_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +22,6 @@ router = APIRouter(
     prefix="",
     route_class=DishkaRoute
 )
-
-
-class DocumentMetadataPost(DocumentMetadataGet):
-    """
-    Request model for updating document metadata.
-    """
-    pass
 
 
 documentation = {
@@ -62,20 +57,12 @@ async def update_metadata(
     # Verify the user has permission to update the document
     await permission_storage.validate_user_permission(logged_user, document_record, permission_level=PermissionLevel.WRITE)
 
-    metadata = await metadata_service.get_document_metadata(pid)
-
-    # Update the metadata with the provided fields
-    for field, value in document_metadata.model_dump().items():
-        if value is not None:
-            setattr(metadata, field, value)
-
-    # Save the updated metadata
-    metadata = await metadata_service.update_document_metadata(pid, metadata)
-
-    # Set `updated_at` to current time for document record
-    try:
-        await document_record_storage.document_is_updated(pid, datetime.now(timezone.utc))
-    except Exception as e:
-        logger.warning(f"Failed to update document record `updated_at` for PID '{pid}': {e}")
+    # Update the document metadata
+    metadata = await update_document_metadata(
+        pid,
+        document_metadata,
+        metadata_service,
+        document_record_storage
+    )
 
     return DocumentMetadataGet.from_metadata(metadata)
