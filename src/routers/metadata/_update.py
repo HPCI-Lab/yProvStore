@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import status, APIRouter
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
@@ -74,7 +74,7 @@ async def update_metadata(
 
     # Set `updated_at` to current time for document record
     try:
-        await document_record_storage.document_is_updated(pid, datetime.now())
+        await document_record_storage.document_is_updated(pid, datetime.now(timezone.utc))
     except Exception as e:
         logger.warning(f"Failed to update document record `updated_at` for PID '{pid}': {e}")
 

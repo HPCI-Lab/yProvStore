@@ -5,7 +5,7 @@ from fastapi import APIRouter, status, Header
 from fastapi.responses import StreamingResponse, Response
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
-from application.exceptions.types import UnauthorizedException, NotFoundException, ServiceUnavailableException
+from application.exceptions.types import UnauthorizedException, NotFoundException, ServiceUnavailableException, BadRequestException
 from application.exceptions.responses import EXCEPTION_SCHEMA
 from services.file_storage.service import FileStorageService, DocumentNotCompressedException
 from services.document_storage.service import DocumentRecordStorageService
@@ -25,10 +25,12 @@ router = APIRouter(
 
 documentation = {
     "summary": "Download a Document file by its PID",
-    "description": ("This endpoint allows the user to download a document by its PID. "
-                    "The document is retrieved from the storage system using the provided PID and prefix. "
+    "description": ("This endpoint allows the user to download a document by its PID. <br><br>"
+                    "The document is retrieved from the storage system using the provided PID and prefix. <br><br>"
                     "By default, the document is returned as a streaming response. "
-                    "Use the `stream` query parameter set to `false` to return the entire JSON content in the response body instead."),
+                    "Use the `stream` query parameter set to `false` to return the entire JSON content in the response body instead. <br><br>"
+                    "You can pass valid `Accept-Encoding` headers to directly download compressed content instead of decompressing it server-side. "
+                    "At the moment the only supported compression is `zstd`."),
     "status_code": status.HTTP_200_OK,
     "response_description": "Returns the requested document file as a streaming response (default) or complete JSON content.",
     "response_model": None,
@@ -110,6 +112,9 @@ async def download_document_prefix(
                 raise ServiceUnavailableException(f"Failed to retrieve document with PID '{pid}'") from e
             
             return first_chunk, stream_gen
+        
+        if accept_encoding and accept_encoding != file_storage_service.get_compression_standard().value:
+            return BadRequestException(f"Unsupported Accept-Encoding '{accept_encoding}'. Supported: '{file_storage_service.get_compression_standard().value}'")
         
         skip_decompression = accept_encoding == file_storage_service.get_compression_standard().value
         if skip_decompression:
