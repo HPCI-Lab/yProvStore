@@ -207,7 +207,7 @@ async def create_document(
     previous_parent_lineage_id = parent_document_record.lineage_id if parent_document_record else None
     try:
         # Create the PID record (but do not save it yet)
-        new_pid_record, finalize_fn = await pid_service.new_pid_record_from_document(
+        new_pid_record, finalize_fn, parent_pid_record = await pid_service.new_pid_record_from_document(
             new_pid, new_document_record.storage_url, parent_doc_pid=parent_document_pid, hash=file_hash
         )
 
@@ -218,7 +218,7 @@ async def create_document(
         new_document_record = await document_record_storage.save_document(new_document_record)
 
         if parent_document_record and parent_document_record.lineage_id != new_document_record.lineage_id:
-            logger.info(f"Updating parent document record lineage_id from '{parent_document_record.lineage_id}' to '{new_document_record.lineage_id}'")
+            logger.debug(f"Updating parent document record lineage_id from '{parent_document_record.lineage_id}' to '{new_document_record.lineage_id}'")
             parent_document_record.lineage_id = new_document_record.lineage_id
             await document_record_storage.update_document(parent_document_record)
         stored_on_db = True
@@ -226,15 +226,34 @@ async def create_document(
         # Finalize saving all involved PID records
         await finalize_fn()
 
+        if not document_metadata:
+            # Retrieve parent document metadata to copy over
+            if parent_document_record:
+                try:
+                    parent_metadata = await metadata_service.get_document_metadata(parent_document_record.pid, parent_pid_record)
+                    # TODO: use directly DocumentMetadata object instead of going through DocumentMetadataPost?
+                    document_metadata = DocumentMetadataPost(
+                        title=parent_metadata.title,
+                        description=parent_metadata.description,
+                        keywords=parent_metadata.keywords,
+                        author=parent_metadata.author
+                    )
+                    logger.debug(f"Copied metadata from parent document PID '{parent_document_record.pid}' for new document PID '{new_document_record.pid}'")
+                except Exception as e:
+                    logger.warning(f"Failed to copy metadata from parent document PID '{parent_document_record.pid}': {e}")
+                    pass
+
         # Update the document metadata
         if document_metadata:
-            logger.info(f"Updating document metadata for PID '{new_document_record.pid}'")
+            logger.debug(f"Updating document metadata for PID '{new_document_record.pid}'")
             try:
                 await update_document_metadata(
                     new_document_record.pid,
                     document_metadata,
                     metadata_service,
-                    document_record_storage
+                    document_record_storage,
+                    file_storage_service,
+                    pid_record=new_pid_record
                 )
             except Exception as e:
                 logger.warning(f"Failed to update document metadata for PID '{new_document_record.pid}': {e}")

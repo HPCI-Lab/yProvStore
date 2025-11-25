@@ -22,7 +22,7 @@ class DocumentNotCompressedException(Exception):
 
 class FileStorageService:
 
-    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False) -> str:
+    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False, ignore_compression: bool = False) -> str:
         """
         Store a file in the storage system.
         Already reads all data into memory, so not suitable for large files.
@@ -32,11 +32,12 @@ class FileStorageService:
         :param skip_compression: If True, store without compressing the file. If enabled, the document
                                  will be still be uncompressed on-the-fly just to compute the hash.
                                  Therefore, the document must be compressed according to the supported compression standard.
+        :param ignore_compression: If True, ignore compression mechanism entirely and store as-is.
         :return: The SHA-256 hash of the stored file as a hex string.
         """
         raise NotImplementedError
 
-    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False) -> str:
+    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False, ignore_compression: bool = False) -> str:
         """
         Stream the UploadFile (async) to a temp file while computing SHA-256, then persist it.
         More memory efficient for large files than reading all into memory first (store_file).
@@ -46,16 +47,18 @@ class FileStorageService:
         :param skip_compression: If True, store without compressing the file. If enabled, the document 
                                  will be still be uncompressed on-the-fly just to compute the hash.
                                  Therefore, the document must be compressed according to the supported compression standard.
+        :param ignore_compression: If True, ignore compression mechanism entirely and store as-is.
         :return: The SHA-256 hash of the stored file as a hex string.
         """
         raise NotImplementedError
 
-    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False) -> AsyncIterator[bytes]:
+    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False) -> AsyncIterator[bytes]:
         """
         Retrieve a file from the storage system as an async iterator of decompressed chunks.
 
         :param storage_id: Unique identifier for the file in the storage system.
         :param skip_decompression: If True, stream without decompressing the file.
+        :param ignore_compression: If True, ignore compression mechanism entirely and retrieve as-is.
         :raise DocumentNotCompressedException: If skip_decompression is True but the document is not compressed.
         :return: Async iterator yielding decompressed bytes chunks.
         """

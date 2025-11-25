@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 from dataclasses import dataclass
 from typing import GenericAlias
@@ -92,3 +93,80 @@ class DocumentMetadata:
                 setattr(self, field, [item.strip() for item in getattr(self, field).split('|')] if getattr(self, field) else [])
             elif field_type not in (str, list):
                 raise TypeError(f"Unsupported type for metadata attribute '{field}': {field_type}. Only str and list types are allowed.")
+            
+
+@dataclass
+class DocumentMetadataHistoryEntry:
+    """
+    Represents a single historical metadata entry for a document.
+    """
+    timestamp: str
+    metadata: DocumentMetadata
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'DocumentMetadataHistoryEntry':
+        """
+        Create a DocumentMetadataHistoryEntry instance from a dictionary.
+        
+        :param data: Dictionary containing timestamp and metadata.
+        :return: DocumentMetadataHistoryEntry instance.
+        """
+        return cls(
+            timestamp=data.get('timestamp', ''),
+            metadata=DocumentMetadata.from_dict(data.get('metadata', {}))
+        )
+    
+    def to_dict(self) -> dict:
+        """
+        Convert the DocumentMetadataHistoryEntry instance to a dictionary for JSON serialization.
+        
+        :return: Dictionary representation of the metadata history entry.
+        """
+        return {
+            'timestamp': self.timestamp.isoformat() if isinstance(self.timestamp, datetime) else self.timestamp,
+            'metadata': self.metadata.to_dict()
+        }
+
+
+@dataclass
+class DocumentMetadataHistory:
+    """
+    Represents a collection of historical metadata entries for a document.
+    """
+    history: dict[str, DocumentMetadataHistoryEntry] = None
+
+    @classmethod
+    def from_dict(cls, data: dict | None) -> 'DocumentMetadataHistory':
+        """
+        Create a DocumentMetadataHistory instance from a dictionary.
+        
+        :param data: Dictionary containing history entries.
+        :return: DocumentMetadataHistory instance.
+        """
+        if not data or 'history' not in data:
+            return cls(history={})
+        
+        history_entries = {}
+        for entry_data_key, entry_data in data.get('history', {}).items():
+            entry = DocumentMetadataHistoryEntry.from_dict(entry_data)
+            history_entries[entry_data_key] = entry
+        return cls(history=history_entries)
+    
+    def to_dict(self) -> dict:
+        """
+        Convert the DocumentMetadataHistory instance to a dictionary for JSON serialization.
+        
+        :return: Dictionary representation of the metadata history.
+        """
+        return {
+            'history': {key: entry.to_dict() for key, entry in self.history.items()}
+        }
+    
+    @staticmethod
+    def get_metadata_history_storage_id(pid: str) -> str:
+        """
+        Generate a storage ID for the metadata history based on the document PID.
+        
+        :return: Storage ID string.
+        """
+        return f"history/{pid}_metadata"

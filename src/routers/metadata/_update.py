@@ -9,6 +9,7 @@ from application.exceptions.types import NotFoundException, ServiceUnavailableEx
 from services.document_storage.service import DocumentRecordStorageService
 from services.metadata.service import DocumentMetadataService
 from services.permission_storage.service import DocumentPermissionStorageService
+from services.file_storage.service import FileStorageService
 from models import PermissionLevel
 from routers.common.dependencies import LoggedUser
 
@@ -45,6 +46,7 @@ async def update_metadata(
     document_record_storage: FromDishka[DocumentRecordStorageService],
     permission_storage: FromDishka[DocumentPermissionStorageService],
     metadata_service: FromDishka[DocumentMetadataService],
+    file_storage_service: FromDishka[FileStorageService],
     logged_user: LoggedUser
 ) -> DocumentMetadataGet:
     """
@@ -62,7 +64,8 @@ async def update_metadata(
         pid,
         document_metadata,
         metadata_service,
-        document_record_storage
+        document_record_storage,
+        file_storage_service
     )
 
     return DocumentMetadataGet.from_metadata(metadata)
