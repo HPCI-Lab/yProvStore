@@ -35,7 +35,23 @@ async def update_document_metadata(
     # Update the metadata with the provided fields
     for field, value in document_metadata.model_dump().items():
         if value is not None:
-            setattr(metadata, field, value)
+            # Handle dict fields specially
+            if isinstance(value, dict):
+                existing_dict = getattr(metadata, field, None)
+                if not existing_dict:
+                    existing_dict = {}
+                    setattr(metadata, field, existing_dict)
+                
+                # Update or remove entries in the existing dict
+                for key, val in value.items():
+                    if val is None or val == "":
+                        # Remove the key if it exists
+                        existing_dict.pop(key, None)
+                    else:
+                        # Add or update the key
+                        existing_dict[key] = val
+            else:
+                setattr(metadata, field, value)
 
     if metadata.to_dict() == original_metadata:
         logger.debug(f"No changes detected in metadata for PID '{pid}'. Skipping update.")

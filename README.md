@@ -315,7 +315,7 @@ yprov auth signup
 yprov auth login
 yprov auth verify
 yprov auth logout
-yprov documents create --json-file <path/to/document.json> [--parent-pid <parent_pid>] [--compressed] [--trustworthy]
+yprov documents create --json-file <path/to/document.json> [--parent-pid <parent_pid>] [--compressed] [--trustworthy] [--<metadata_field> <value> ...]
 yprov documents list [--page <page_number>] [--page-size <page_size>] [--updated-after <timestamp>] [--created-after <timestamp>]
 yprov documents download <document_pid> [--output-folder <path>] [--output <file_path>] [--compressed] [--debug]
 yprov documents permissions add <document_pid> --user-email <email> --permission-level <level>
@@ -415,6 +415,9 @@ Once authenticated, you can create, list, and download provenance documents.
   # With initial metadata using comma-separated list and author field:
   yprov documents create --value '{"some":"data"}' --author "Jane Doe" --keywords "science,analysis"
 
+  # For dict fields, use double underscore to specify nested keys:
+  yprov documents create --json-file examples/doc.json --extra__custom_field "value" --extra__another_key "another value"
+
   # Refresh the metadata schema before applying metadata (if server changed):
   yprov documents create --json-file examples/doc.json --refresh-schema --title "New Title"
     ```
@@ -460,6 +463,7 @@ Once authenticated, you can create, list, and download provenance documents.
   - `--trustworthy`: Also create a record of the document on the blockchain for enhanced trustworthiness and immutable provenance tracking.
   - `--refresh-schema`: Force re-download of the metadata schema before validating dynamic metadata options.
   - `--<metadata_field> <value>`: Any extra options matching fields defined in the metadata schema (e.g. `--title`, `--description`, `--keywords`, `--author`). Repeat list-type fields multiple times or pass comma-separated values (e.g. `--keywords kw1 --keywords kw2` or `--keywords "kw1,kw2"`). Empty string (`""`) sets a field to empty; for list fields an empty string results in an empty list.
+  - `--<dict_field>__<key> <value>`: For dict-type fields (e.g. `extra`), use double underscore syntax to set nested keys (e.g. `--extra__custom_field "value"`). Pass an empty string (`""`) to delete a specific key from the dict.
 
   **Notes:** 
   - Initial metadata is sent via the `document_metadata` query parameter as a JSON object constructed from the dynamic metadata flags.
@@ -708,19 +712,27 @@ You can manage metadata for documents, including retrieving and updating it.
   yprov documents metadata update <document_pid> --title "New Title" --keywords keyword1 --keywords keyword2
   # or
   yprov documents metadata update <document_pid> --title "New Title" --keywords "keyword1,keyword2"
-  ```
-  
+
   # This command will empty both title and keywords:
   yprov documents metadata update <document_pid> --title "" --keywords ""
+
+  # For dict fields (e.g., extra), use double underscore to specify nested keys:
+  yprov documents metadata update <document_pid> --extra__custom_field "value"
+  yprov documents metadata update <document_pid> --extra__key1 "value1" --extra__key2 "value2"
+
+  # To delete a dict key, pass an empty string:
+  yprov documents metadata update <document_pid> --extra__custom_field ""
   ```
   
   - The PID must be fully qualified (prefix/id).
   - Only passed fields will be updated; existing fields not specified will remain unchanged.
   - Before updating, the command will validate the provided fields against the metadata schema fetched from the server.
   - Fields not defined in the schema will be ignored.
-  - To set an empty field, use an empty string
+  - To set an empty field, use an empty string.
   - To set a list field, use multiple invocations of the same option.
   - To update a list field, you need to pass the entire list each time.
+  - For dict fields (e.g., `extra`), use `--<dict_field>__<key> "value"` syntax to set nested keys.
+  - To delete a dict key, pass an empty string as the value (e.g., `--extra__key ""`).
   - If no fields are provided, the command will exit with a warning.
   - To update metadata for a document, you must be the owner of the document or have write permissions on it.
 

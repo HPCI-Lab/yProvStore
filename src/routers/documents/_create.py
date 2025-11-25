@@ -236,7 +236,8 @@ async def create_document(
                         title=parent_metadata.title,
                         description=parent_metadata.description,
                         keywords=parent_metadata.keywords,
-                        author=parent_metadata.author
+                        author=parent_metadata.author,
+                        extra=parent_metadata.extra
                     )
                     logger.debug(f"Copied metadata from parent document PID '{parent_document_record.pid}' for new document PID '{new_document_record.pid}'")
                 except Exception as e:
