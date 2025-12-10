@@ -16,7 +16,7 @@ except ImportError:
     ZSTD_AVAILABLE = False
 
 from .permissions import permissions
-from .metadata import metadata, local_metadata_schema
+from .metadata import metadata, local_metadata_schema, _get_field_type, _get_dict_fields
 from .graph import graph
 
 
@@ -143,7 +143,11 @@ def create_document(ctx, json_file, value, parent_pid, trustworthy, compressed, 
         yprov documents create --value '{"k":"v"}' --title "My Title" --description "Short desc" --keywords "kw1" --keywords "kw2"
         yprov documents create --json-file doc.json --author "Jane Doe" --keywords "science,analysis"
 
+        # For dict fields, use double underscore to specify nested keys:
+        yprov documents create --json-file doc.json --extra__custom_field "value"
+
     For list fields, repeat the option or use comma-separated values. Empty string sets an empty value.
+    For dict fields, use --<dict_field>__<key> "value" syntax to set nested keys.
     These are sent as a JSON object in the `document_metadata` query parameter.
     Use --refresh-schema to re-fetch metadata schema if server schema changed.
     """
@@ -169,6 +173,8 @@ def create_document(ctx, json_file, value, parent_pid, trustworthy, compressed, 
             console.print("[red]❌ Cannot process metadata without a valid schema.[/red]")
             return
         props = schema.get("properties", {})
+        dict_fields = _get_dict_fields(props)
+        
         key = ""
         for arg in ctx.args:
             if arg.startswith("--"):
@@ -180,18 +186,34 @@ def create_document(ctx, json_file, value, parent_pid, trustworthy, compressed, 
                 if not key:
                     console.print(f"[red]❌ Unexpected value '{arg}' without preceding option.[/red]")
                     return
-                value_parsed = arg.split(",") if "," in arg else arg
-                if key in raw_metadata:
-                    existing = raw_metadata[key]
-                    if isinstance(existing, list):
-                        if isinstance(value_parsed, list):
-                            existing.extend(value_parsed)
-                        else:
-                            existing.append(value_parsed)
+                
+                # Check if this is a dict field with __ syntax
+                if "__" in key:
+                    dict_field, dict_key = key.split("__", 1)
+                    if dict_field in dict_fields:
+                        if dict_field not in raw_metadata:
+                            raw_metadata[dict_field] = {}
+                        # Empty string means delete (set to None)
+                        raw_metadata[dict_field][dict_key] = None if arg == "" else arg
                     else:
-                        raw_metadata[key] = [existing] + (value_parsed if isinstance(value_parsed, list) else [value_parsed])
+                        console.print(f"[red]❌ Field '{dict_field}' is not a dict field, cannot use '__' syntax.[/red]")
+                        return
                 else:
-                    raw_metadata[key] = value_parsed
+                    value_parsed = arg.split(",") if "," in arg else arg
+                    if key in raw_metadata:
+                        existing = raw_metadata[key]
+                        if isinstance(existing, list):
+                            if isinstance(value_parsed, list):
+                                existing.extend(value_parsed)
+                            else:
+                                existing.append(value_parsed)
+                        elif isinstance(existing, dict):
+                            console.print(f"[red]❌ Field '{key}' is a dict field, use --{key}__<subkey> syntax.[/red]")
+                            return
+                        else:
+                            raw_metadata[key] = [existing] + (value_parsed if isinstance(value_parsed, list) else [value_parsed])
+                    else:
+                        raw_metadata[key] = value_parsed
                 key = ""
         if key:
             console.print(f"[red]❌ Missing value for option: {key}.[/red]")
@@ -204,7 +226,7 @@ def create_document(ctx, json_file, value, parent_pid, trustworthy, compressed, 
                 console.print(f"[yellow]⚠️ Ignoring unknown metadata field: {m_key}[/yellow]")
                 continue
             schema_def = props[m_key]
-            expected_type = schema_def.get("type")
+            expected_type = _get_field_type(schema_def)
             if not expected_type and schema_def.get("anyOf"):
                 for alt in schema_def["anyOf"]:
                     t = alt.get("type")
@@ -227,8 +249,13 @@ def create_document(ctx, json_file, value, parent_pid, trustworthy, compressed, 
                 else:
                     errors.append(f"{m_key} must be a string")
                 mx = schema_def.get("maxLength")
-                if mx and isinstance(metadata_payload[m_key], str) and len(metadata_payload[m_key]) > mx:
+                if mx and isinstance(metadata_payload.get(m_key), str) and len(metadata_payload[m_key]) > mx:
                     errors.append(f"{m_key} too long (max {mx})")
+            elif expected_type == "object":
+                if isinstance(m_val, dict):
+                    metadata_payload[m_key] = m_val
+                else:
+                    errors.append(f"{m_key} must be a dict (use --{m_key}__<subkey> syntax)")
             else:
                 metadata_payload[m_key] = m_val
         if errors:

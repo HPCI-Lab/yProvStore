@@ -35,7 +35,9 @@ class LocalFileStorageServiceImpl(FileStorageService):
         self.compression_service = compression_service
         self.COMPRESSION_STANDARD = super().get_compression_standard()
 
-    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False) -> None:
+    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False, ignore_compression: bool = False) -> None:
+        if ignore_compression and skip_compression:
+            raise ValueError("Cannot set both ignore_compression and skip_compression to True.")
         file_path = self.documents_path / storage_id
         if file_path.exists():
             raise ConflictException(f"File with ID '{storage_id}' already exists.")
@@ -48,15 +50,30 @@ class LocalFileStorageServiceImpl(FileStorageService):
                 if not prefix_dir.exists():
                     prefix_dir.mkdir(parents=True, exist_ok=True)
             elif len(split) > 2:
-                raise Exception("Invalid file path structure.")
+                # recursively create directories if needed
+                dir_path = self.documents_path
+                for part in split[:-1]:
+                    dir_path = dir_path / part
+                    if not dir_path.exists():
+                        dir_path.mkdir(parents=True, exist_ok=True)
 
+            if ignore_compression:
+                logger.debug(f"Ignoring compression for file {storage_id}")
+                with open(file_path, 'wb') as f:
+                    f.write(file_data)
+                # Return SHA-256 computed on original (uncompressed) bytes
+                return hashlib.sha256(file_data).hexdigest()
+            
             # Compress the provided bytes before persisting
             if skip_compression:
                 logger.debug(f"Skipping compression for file {storage_id}")
                 uncompressed_data = self.compression_service.get_decompressor(self.COMPRESSION_STANDARD).decompress(file_data)
+                uncompressed_data += self.compression_service.get_decompressor(self.COMPRESSION_STANDARD).flush_decompression()
                 data_to_store = file_data
             else:
                 data_to_store = self.compression_service.get_compressor(self.COMPRESSION_STANDARD).compress(file_data)
+                data_to_store += self.compression_service.get_compressor(self.COMPRESSION_STANDARD).flush_compression()
+                logger.info(f"File {storage_id} compressed from {len(file_data)} to {len(data_to_store)} bytes.")
                 uncompressed_data = file_data
 
             with open(file_path, 'wb') as f:
@@ -68,7 +85,9 @@ class LocalFileStorageServiceImpl(FileStorageService):
             logger.error(f"Error storing file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to store file.")
 
-    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False) -> str:
+    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False, ignore_compression: bool = False) -> str:
+        if ignore_compression and skip_compression:
+            raise ValueError("Cannot set both ignore_compression and skip_compression to True.")
         file_path = self.documents_path / storage_id
         if file_path.exists():
             raise ConflictException(f"File with ID '{storage_id}' already exists.")
@@ -82,9 +101,9 @@ class LocalFileStorageServiceImpl(FileStorageService):
             with tempfile.NamedTemporaryFile(delete=False) as tmp:
                 tmp_path = tmp.name
                 decompressor = None
+                compressor = None
                 if skip_compression:
                     logger.debug(f"Skipping compression for file {storage_id}")
-                    compressor = None
                     # prepare stream decompressor to compute hash on original bytes
                     decompressor = self.compression_service.get_decompressor(self.COMPRESSION_STANDARD)
                 else:
@@ -97,7 +116,7 @@ class LocalFileStorageServiceImpl(FileStorageService):
                     if not chunk:
                         break
                     original_chunk = chunk
-                    if skip_compression:
+                    if skip_compression or ignore_compression:
                         # decompress to get original bytes for hashing
                         original_chunk = decompressor.decompress(chunk)
                     hasher.update(original_chunk)           # update hash on original bytes
@@ -151,24 +170,28 @@ class LocalFileStorageServiceImpl(FileStorageService):
                 except Exception:
                     pass
 
-    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False) -> AsyncIterator[bytes]:
+    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False) -> AsyncIterator[bytes]:
+        if ignore_compression and skip_decompression:
+            raise ValueError("Cannot set both ignore_compression and skip_decompression to True.")
         file_path = self.documents_path / storage_id
         if not file_path.exists():
             raise NotFoundException(f"File with ID '{storage_id}' not found.")
 
         try:
-            # Peek at the start of the file to check for compression
-            async with aiofiles.open(file_path, 'rb') as fpeek:
-                head = await fpeek.read(4)
-            compression_standard = self.compression_service.detect_compression(None, head)
-            
-            if skip_decompression:
-                if not compression_standard:
-                    raise DocumentNotCompressedException("Document is not compressed.")
-                logger.debug(f"Skipping decompression for file {storage_id}.")
-                compression_standard = None
+            decompressor = None
+            if not ignore_compression:
+                # Peek at the start of the file to check for compression
+                async with aiofiles.open(file_path, 'rb') as fpeek:
+                    head = await fpeek.read(4)
+                compression_standard = self.compression_service.detect_compression(None, head)
+                
+                if skip_decompression:
+                    if not compression_standard:
+                        raise DocumentNotCompressedException("Document is not compressed.")
+                    logger.debug(f"Skipping decompression for file {storage_id}.")
+                    compression_standard = None
 
-            decompressor = self.compression_service.get_decompressor(compression_standard) if compression_standard else None
+                decompressor = self.compression_service.get_decompressor(compression_standard) if compression_standard else None
 
             if decompressor:
                 logger.debug(f"File {storage_id} is {compression_standard.value}-compressed; decompressing on-the-fly.")
@@ -187,7 +210,7 @@ class LocalFileStorageServiceImpl(FileStorageService):
                     if tail:
                         yield tail
             else:
-                if not skip_decompression:
+                if not skip_decompression and not ignore_compression:
                     logger.warning(f"File {storage_id} does not indicate compression; streaming raw bytes.")
                 # file is not compressed: stream raw bytes
                 async with aiofiles.open(file_path, 'rb') as f:
@@ -259,7 +282,9 @@ class MinioFileStorageServiceImpl(FileStorageService):
             logger.error(f"Error ensuring bucket '{self.bucket}': {e}")
             raise ServiceUnavailableException("Failed to ensure storage bucket.")
 
-    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False) -> None:
+    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False, ignore_compression: bool = False) -> None:
+        if ignore_compression and skip_compression:
+            raise ValueError("Cannot set both ignore_compression and skip_compression to True.")
         # Check for conflict
         try:
             self.client.stat_object(self.bucket, storage_id)
@@ -278,9 +303,13 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 logger.debug(f"Skipping compression for file {storage_id}")
                 data_to_store = file_data
                 original_data = self.compression_service.get_decompressor(self.COMPRESSION_STANDARD).decompress(file_data)
-            else:
+            elif not ignore_compression:
                 # Compress the provided bytes to reduce upload size
                 data_to_store = self.compression_service.get_compressor(self.COMPRESSION_STANDARD).compress(file_data)
+                original_data = file_data
+            else:
+                logger.debug(f"Ignoring compression for file {storage_id}")
+                data_to_store = file_data
                 original_data = file_data
 
             # Compute hash over original bytes (keeps behaviour consistent with other methods)
@@ -288,7 +317,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
 
             # Upload compressed payload, include metadata about original hash and compression
             compressed_stream = io.BytesIO(data_to_store)
-            compression_meta = {"compression": self.COMPRESSION_STANDARD.value} if not skip_compression else {}
+            compression_meta = {"compression": self.COMPRESSION_STANDARD.value} if not skip_compression and not ignore_compression else {}
             self.client.put_object(
                 self.bucket,
                 storage_id,
@@ -305,7 +334,9 @@ class MinioFileStorageServiceImpl(FileStorageService):
             logger.error(f"Unexpected error storing file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to store file.")
 
-    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False) -> str:
+    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False, ignore_compression: bool = False) -> str:
+        if ignore_compression and skip_compression:
+            raise ValueError("Cannot set both ignore_compression and skip_compression to True.")
         # Check for conflict
         try:
             self.client.stat_object(self.bucket, storage_id)
@@ -329,13 +360,13 @@ class MinioFileStorageServiceImpl(FileStorageService):
             with tempfile.NamedTemporaryFile(delete=False) as tmp:
                 tmp_path = tmp.name
 
+            compressor = None
             decompressor = None
             if skip_compression:
                 logger.debug(f"Skipping compression for file {storage_id}")
-                compressor = None
                 # prepare stream decompressor to compute hash on original bytes
                 decompressor = self.compression_service.get_decompressor(self.COMPRESSION_STANDARD)
-            else:
+            elif not ignore_compression:
                 # streaming read (async) -> compress -> async write (aiofiles)
                 compressor = self.compression_service.get_compressor(self.COMPRESSION_STANDARD)
 
@@ -401,25 +432,30 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 except Exception:
                     pass
 
-    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False) -> AsyncIterator[bytes]:
+    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False) -> AsyncIterator[bytes]:
         """
         Retrieve a file from MinIO as an async iterator of (decompressed) chunks.
         """
+        if ignore_compression and skip_decompression:
+            raise ValueError("Cannot set both ignore_compression and skip_decompression to True.")
         # check metadata first to decide whether to decompress
         try:
-            try:
-                stat = self.client.stat_object(self.bucket, storage_id)
-                # metadata keys can be present as provided or prefixed; check both
-                meta = getattr(stat, "metadata", {}) or {}
-                compression_str = meta.get("compression") or meta.get("x-amz-meta-compression")
-                compression_meta = {"compression": compression_str} if compression_str else None
-            except Exception as e:
-                # map not found
-                if isinstance(e, getattr(self, "_S3Error", tuple())) and getattr(e, "code", "") in ("NoSuchKey", "NoSuchObject", "NotFound"):
-                    raise NotFoundException(f"File with ID '{storage_id}' not found.")
-                # if stat_object failed for other reasons, log and proceed to attempt get_object (best-effort)
-                logger.warning(f"Unexpected error during stat_object for {storage_id}: {e}. Proceeding to get_object.")
+            if ignore_compression:
                 compression_meta = None
+            else:
+                try:
+                    stat = self.client.stat_object(self.bucket, storage_id)
+                    # metadata keys can be present as provided or prefixed; check both
+                    meta = getattr(stat, "metadata", {}) or {}
+                    compression_str = meta.get("compression") or meta.get("x-amz-meta-compression")
+                    compression_meta = {"compression": compression_str} if compression_str else None
+                except Exception as e:
+                    # map not found
+                    if isinstance(e, getattr(self, "_S3Error", tuple())) and getattr(e, "code", "") in ("NoSuchKey", "NoSuchObject", "NotFound"):
+                        raise NotFoundException(f"File with ID '{storage_id}' not found.")
+                    # if stat_object failed for other reasons, log and proceed to attempt get_object (best-effort)
+                    logger.warning(f"Unexpected error during stat_object for {storage_id}: {e}. Proceeding to get_object.")
+                    compression_meta = None
 
             response = self.client.get_object(self.bucket, storage_id)
         except Exception as e:
@@ -434,15 +470,17 @@ class MinioFileStorageServiceImpl(FileStorageService):
         # stream read in executor to avoid blocking loop
         loop = asyncio.get_running_loop()
         try:
-            compression_standard = self.compression_service.detect_compression(compression_meta, None)
-            decompressor = self.compression_service.get_decompressor(compression_standard) if compression_standard else None
-            if skip_decompression:
-                if not decompressor:
-                    raise DocumentNotCompressedException("Document is not compressed.")
-                logger.debug(f"Skipping decompression for file {storage_id}.")
-                decompressor = None
-            elif not decompressor:
-                logger.warning(f"File {storage_id} does not indicate compression meta; not decompressing.")
+            decompressor = None
+            if not ignore_compression:
+                compression_standard = self.compression_service.detect_compression(compression_meta, None)
+                decompressor = self.compression_service.get_decompressor(compression_standard) if compression_standard else None
+                if skip_decompression:
+                    if not decompressor:
+                        raise DocumentNotCompressedException("Document is not compressed.")
+                    logger.debug(f"Skipping decompression for file {storage_id}.")
+                    decompressor = None
+                elif not decompressor:
+                    logger.warning(f"File {storage_id} does not indicate compression meta; not decompressing.")
 
             while True:
                 # perform blocking read in executor

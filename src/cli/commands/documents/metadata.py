@@ -100,6 +100,26 @@ def get_metadata_schema(ctx, refresh_schema):
         console.print(table)
 
 
+def _get_field_type(props_key: dict) -> str:
+    """Extract the expected type from a schema property definition."""
+    expected = props_key.get("type")
+    if not expected and props_key.get("anyOf"):
+        for item in props_key["anyOf"]:
+            if item.get("type") and item.get("type") != "null":
+                return item.get("type")
+    return expected
+
+
+def _get_dict_fields(props: dict) -> set:
+    """Identify which fields in the schema are dict/object types."""
+    dict_fields = set()
+    for field, info in props.items():
+        field_type = _get_field_type(info)
+        if field_type == "object":
+            dict_fields.add(field)
+    return dict_fields
+
+
 @metadata.command(name="update", context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
 @click.option("--refresh-schema", is_flag=True, help="Force re-download of metadata schema")
 @click.argument('pid')
@@ -119,12 +139,20 @@ def update_metadata(ctx, pid, refresh_schema, **kwargs):
 
         # This command will empty both title and keywords:\n
         yprov documents metadata update <prefix/id> --title "" --keywords ""
+
+        # For dict fields, use double underscore to specify nested keys:\n
+        yprov documents metadata update <prefix/id> --extra__custom_field "value"
+        
+        # To delete a dict key, pass an empty string:\n
+        yprov documents metadata update <prefix/id> --extra__custom_field ""
     
     - The PID must be fully qualified (prefix/id).
     - Fields not defined in the schema will be ignored.
     - To set an empty field, use an empty string
     - To set a list field, use multiple invocations of the same option, or pass a list as a comma-separated string.
     - To update a list field, you need to pass the entire list each time.
+    - For dict fields, use --<dict_field>__<key> "value" syntax to set nested keys.
+    - To delete a dict key, pass an empty string as the value.
     - If no fields are provided, the command will exit with a warning.
     """
     api_url = ctx.obj['API_URL']
@@ -138,6 +166,9 @@ def update_metadata(ctx, pid, refresh_schema, **kwargs):
         console.print(f"[red]❌ Invalid PID: {pid} (pass the PID before the metadata options)[/red]")
         return
 
+    props = metadata.get("properties", {})
+    dict_fields = _get_dict_fields(props)
+
     # 1) Gather only the dynamic fields:
     key = ""
     raw = {}
@@ -149,7 +180,18 @@ def update_metadata(ctx, pid, refresh_schema, **kwargs):
             key = arg[2:]
         else:
             if key:
-                if key in raw:
+                # Check if this is a dict field with __ syntax
+                if "__" in key:
+                    dict_field, dict_key = key.split("__", 1)
+                    if dict_field in dict_fields:
+                        if dict_field not in raw:
+                            raw[dict_field] = {}
+                        # Empty string means delete (set to None)
+                        raw[dict_field][dict_key] = None if arg == "" else arg
+                    else:
+                        console.print(f"[red]❌ Field '{dict_field}' is not a dict field, cannot use '__' syntax.[/red]")
+                        ctx.exit(1)
+                elif key in raw:
                     if arg:
                         if isinstance(raw[key], list):
                             if arg not in raw[key]:
@@ -168,7 +210,6 @@ def update_metadata(ctx, pid, refresh_schema, **kwargs):
         ctx.exit(1)
 
     # 2) Load + validate
-    props = metadata.get("properties", {})
     errors = []
     for key, val in raw.items():
         if key not in props:
@@ -176,11 +217,10 @@ def update_metadata(ctx, pid, refresh_schema, **kwargs):
             continue
         # basic type‐check
         props_key = props[key]
-        expected = props_key.get("type")
-        if not expected:
-            if props_key.get("anyOf"):
-                expected = props_key["anyOf"][0].get("type")
-                props_key = props_key["anyOf"][0]
+        expected = _get_field_type(props_key)
+        if not expected and props_key.get("anyOf"):
+            props_key = props_key["anyOf"][0]
+        
         if expected == "string" and not isinstance(val, str):
             errors.append(f"{key} must be a string")
         # e.g. maxLength
@@ -195,6 +235,10 @@ def update_metadata(ctx, pid, refresh_schema, **kwargs):
                     raw[key] = []
                 else:
                     raw[key] = [val]
+        # dict/object type validation
+        if expected == "object":
+            if not isinstance(val, dict):
+                errors.append(f"{key} must be a dict (use --{key}__<subkey> syntax)")
     if errors:
         for err in errors:
             click.echo(f"Error: {err}", err=True)

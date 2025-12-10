@@ -4,7 +4,8 @@ from fastapi import status, APIRouter
 from pydantic import BaseModel, Field
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
-from application.documentation.openapi_generation import EXAMPLE_METADATA_TITLE, EXAMPLE_METADATA_DESCRIPTION, EXAMPLE_METADATA_KEYWORDS, EXAMPLE_METADATA_AUTHOR
+from application.documentation.openapi_generation import EXAMPLE_METADATA_TITLE, EXAMPLE_METADATA_DESCRIPTION, \
+    EXAMPLE_METADATA_KEYWORDS, EXAMPLE_METADATA_AUTHOR, EXAMPLE_METADATA_EXTRA
 from application.exceptions.responses import EXCEPTION_SCHEMA
 from application.exceptions.types import NotFoundException, ServiceUnavailableException
 from services.document_storage.service import DocumentRecordStorageService
@@ -29,6 +30,7 @@ class DocumentMetadataGet(BaseModel):
     description: str | None = Field(default=None, examples=[EXAMPLE_METADATA_DESCRIPTION])
     keywords: list[str] | None = Field(default=None, examples=[EXAMPLE_METADATA_KEYWORDS])
     author: str | None = Field(default=None, examples=[EXAMPLE_METADATA_AUTHOR])
+    extra: dict | None = Field(default=None, examples=[EXAMPLE_METADATA_EXTRA])
 
     @classmethod
     def from_metadata(cls, metadata: DocumentMetadata) -> 'DocumentMetadataGet':
