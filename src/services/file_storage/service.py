@@ -6,6 +6,7 @@ from fastapi import UploadFile
 from dishka import Provider, provide, Scope
 
 from application import settings
+from models.artifact import PresignedURL, PresignedURLOperationType
 
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ class DocumentNotCompressedException(Exception):
 
 class FileStorageService:
 
-    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False, ignore_compression: bool = False) -> str:
+    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> str:
         """
         Store a file in the storage system.
         Already reads all data into memory, so not suitable for large files.
@@ -33,11 +34,12 @@ class FileStorageService:
                                  will be still be uncompressed on-the-fly just to compute the hash.
                                  Therefore, the document must be compressed according to the supported compression standard.
         :param ignore_compression: If True, ignore compression mechanism entirely and store as-is.
+        :param bucket: Optional bucket name for storage backends that support multiple buckets.
         :return: The SHA-256 hash of the stored file as a hex string.
         """
         raise NotImplementedError
 
-    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False, ignore_compression: bool = False) -> str:
+    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> str:
         """
         Stream the UploadFile (async) to a temp file while computing SHA-256, then persist it.
         More memory efficient for large files than reading all into memory first (store_file).
@@ -48,11 +50,12 @@ class FileStorageService:
                                  will be still be uncompressed on-the-fly just to compute the hash.
                                  Therefore, the document must be compressed according to the supported compression standard.
         :param ignore_compression: If True, ignore compression mechanism entirely and store as-is.
+        :param bucket: Optional bucket name for storage backends that support multiple buckets.
         :return: The SHA-256 hash of the stored file as a hex string.
         """
         raise NotImplementedError
 
-    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False) -> AsyncIterator[bytes]:
+    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> AsyncIterator[bytes]:
         """
         Retrieve a file from the storage system as an async iterator of decompressed chunks.
 
@@ -60,18 +63,46 @@ class FileStorageService:
         :param skip_decompression: If True, stream without decompressing the file.
         :param ignore_compression: If True, ignore compression mechanism entirely and retrieve as-is.
         :raise DocumentNotCompressedException: If skip_decompression is True but the document is not compressed.
+        :param bucket: Optional bucket name for storage backends that support multiple buckets.
         :return: Async iterator yielding decompressed bytes chunks.
         """
         raise NotImplementedError
     
-    async def delete_file(self, storage_id: str) -> None:
+    async def delete_file(self, storage_id: str, bucket: str | None = None) -> None:
         """
         Delete a file from the storage system.
 
         :param storage_id: Unique identifier for the file in the storage system.
+        :param bucket: Optional bucket name for storage backends that support multiple buckets.
         """
         raise NotImplementedError
-    
+
+    async def get_upload_presigned_url(self, storage_id: str, expiration_seconds: int = 3600, bucket: str | None = None) -> str:
+        """
+        Generate a presigned URL for uploading a file directly to the storage system.
+        This method will raise NotImplementedError if the storage backend does not support presigned URLs.
+        As such, manage proxy artifact storage accordingly before calling this method.
+
+        :param storage_id: Unique identifier for the file in the storage system.
+        :param expiration_seconds: Time in seconds for which the presigned URL is valid.
+        :param bucket: Optional bucket name for storage backends that support multiple buckets.
+        :return: Presigned URL as a string.
+        """
+        raise NotImplementedError
+
+    async def get_download_presigned_url(self, storage_id: str, expiration_seconds: int = 3600, bucket: str | None = None) -> str:
+        """
+        Generate a presigned URL for downloading a file directly from the storage system.
+        This method will raise NotImplementedError if the storage backend does not support presigned URLs.
+        As such, manage proxy artifact storage accordingly before calling this method.
+
+        :param storage_id: Unique identifier for the file in the storage system.
+        :param expiration_seconds: Time in seconds for which the presigned URL is valid.
+        :param bucket: Optional bucket name for storage backends that support multiple buckets.
+        :return: Presigned URL as a string.
+        """
+        raise NotImplementedError
+
     @staticmethod
     def get_compression_standard() -> CompressionStandard:
         """
@@ -80,7 +111,7 @@ class FileStorageService:
         :return: CompressionStandard enum value.
         """
         return CompressionStandard.ZSTD
-    
+
 
 class Compressor:
     """
@@ -153,6 +184,43 @@ class CompressionService:
         raise NotImplementedError
 
 
+class PresignedURLService:
+    """
+    Service for generating and storing presigned URLs on for proxy artifact storage.
+    """
+    
+    async def generate_presigned_url(self, user_id: str, storage_id: str, operation_type: PresignedURLOperationType, filename: str, expires_in: int = 3600) -> PresignedURL:
+        """
+        Generate and store a presigned URL for the given storage ID and operation.
+
+        :param storage_id: Unique identifier for the file in the storage system.
+        :param user_id: ID of the user requesting the presigned URL.
+        :param operation_type: Type of operation (upload/download) for the presigned URL.
+        :param filename: Name of the file associated with the presigned URL.
+        :param expires_in: Time in seconds for which the presigned URL is valid.
+        :return: Generated presigned URL as a string.
+        """
+        raise NotImplementedError
+    
+    async def get_presigned_url_from_token(self, token: str, raise_not_found: bool = True) -> PresignedURL | None:
+        """
+        Retrieve a presigned URL record from the database using its token.
+
+        :param token: The unique token associated with the presigned URL.
+        :param raise_not_found: Whether to raise NotFoundException if the token does not exist.
+        :return: PresignedURL instance.
+        """
+        raise NotImplementedError
+    
+    async def delete_presigned_url(self, token: str) -> None:
+        """
+        Delete a presigned URL record from the database using its token.
+
+        :param token: The unique token associated with the presigned URL.
+        """
+        raise NotImplementedError
+
+
 class FileStorageServiceProvider(Provider):
     """
     Provider for the FileStorageService. Selects Local or MinIO backend
@@ -187,3 +255,17 @@ class CompressionServiceProvider(Provider):
     def compression_service(self) -> CompressionService:
         from ._compression import CompressionServiceImpl
         return CompressionServiceImpl()
+    
+
+class PresignedURLServiceProvider(Provider):
+    """
+    Provider for presigned URL services.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(scope=Scope.APP, *args, **kwargs)
+
+    @provide
+    def presigned_url_service(self) -> PresignedURLService:
+        from ._presigned_urls import PresignedURLServiceImpl
+        return PresignedURLServiceImpl()

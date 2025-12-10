@@ -35,10 +35,13 @@ class LocalFileStorageServiceImpl(FileStorageService):
         self.compression_service = compression_service
         self.COMPRESSION_STANDARD = super().get_compression_standard()
 
-    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False, ignore_compression: bool = False) -> None:
+    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> None:
         if ignore_compression and skip_compression:
             raise ValueError("Cannot set both ignore_compression and skip_compression to True.")
-        file_path = self.documents_path / storage_id
+        bucket_path = TMP_PATH / bucket if bucket else self.documents_path
+        if not bucket_path.exists():
+            bucket_path.mkdir(parents=True, exist_ok=True)
+        file_path = bucket_path / storage_id
         if file_path.exists():
             raise ConflictException(f"File with ID '{storage_id}' already exists.")
 
@@ -85,10 +88,13 @@ class LocalFileStorageServiceImpl(FileStorageService):
             logger.error(f"Error storing file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to store file.")
 
-    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False, ignore_compression: bool = False) -> str:
+    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> str:
         if ignore_compression and skip_compression:
             raise ValueError("Cannot set both ignore_compression and skip_compression to True.")
-        file_path = self.documents_path / storage_id
+        bucket_path = TMP_PATH / bucket if bucket else self.documents_path
+        if not bucket_path.exists():
+            bucket_path.mkdir(parents=True, exist_ok=True)
+        file_path = bucket_path / storage_id
         if file_path.exists():
             raise ConflictException(f"File with ID '{storage_id}' already exists.")
 
@@ -170,10 +176,11 @@ class LocalFileStorageServiceImpl(FileStorageService):
                 except Exception:
                     pass
 
-    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False) -> AsyncIterator[bytes]:
+    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> AsyncIterator[bytes]:
         if ignore_compression and skip_decompression:
             raise ValueError("Cannot set both ignore_compression and skip_decompression to True.")
-        file_path = self.documents_path / storage_id
+        bucket_path = TMP_PATH / bucket if bucket else self.documents_path
+        file_path = bucket_path / storage_id
         if not file_path.exists():
             raise NotFoundException(f"File with ID '{storage_id}' not found.")
 
@@ -240,6 +247,12 @@ class LocalFileStorageServiceImpl(FileStorageService):
         except Exception as e:
             logger.error(f"Error deleting file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to delete file.")
+        
+    async def get_upload_presigned_url(self, **kwargs) -> str:
+        raise NotImplementedError("Presigned URLs are not supported in local storage mode.")
+    
+    async def get_download_presigned_url(self, **kwargs) -> str:
+        raise NotImplementedError("Presigned URLs are not supported in local storage mode.")
 
 
 class MinioFileStorageServiceImpl(FileStorageService):
@@ -282,12 +295,12 @@ class MinioFileStorageServiceImpl(FileStorageService):
             logger.error(f"Error ensuring bucket '{self.bucket}': {e}")
             raise ServiceUnavailableException("Failed to ensure storage bucket.")
 
-    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False, ignore_compression: bool = False) -> None:
+    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> None:
         if ignore_compression and skip_compression:
             raise ValueError("Cannot set both ignore_compression and skip_compression to True.")
         # Check for conflict
         try:
-            self.client.stat_object(self.bucket, storage_id)
+            self.client.stat_object(bucket or self.bucket, storage_id)
             # If stat succeeds, object exists
             raise ConflictException(f"File with ID '{storage_id}' already exists.")
         except Exception as e:
@@ -319,7 +332,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
             compressed_stream = io.BytesIO(data_to_store)
             compression_meta = {"compression": self.COMPRESSION_STANDARD.value} if not skip_compression and not ignore_compression else {}
             self.client.put_object(
-                self.bucket,
+                bucket or self.bucket,
                 storage_id,
                 data=compressed_stream,
                 length=len(data_to_store),
@@ -334,12 +347,12 @@ class MinioFileStorageServiceImpl(FileStorageService):
             logger.error(f"Unexpected error storing file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to store file.")
 
-    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False, ignore_compression: bool = False) -> str:
+    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> str:
         if ignore_compression and skip_compression:
             raise ValueError("Cannot set both ignore_compression and skip_compression to True.")
         # Check for conflict
         try:
-            self.client.stat_object(self.bucket, storage_id)
+            self.client.stat_object(bucket or self.bucket, storage_id)
             # If stat succeeds, object exists
             raise ConflictException(f"File with ID '{storage_id}' already exists.")
         except Exception as e:
@@ -409,7 +422,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 with open(tmp_path, "rb") as data_stream:
                     metadata = {"sha256": hash_hex, **compression_meta}
                     self.client.put_object(
-                        self.bucket,
+                        bucket or self.bucket,
                         storage_id,
                         data=data_stream,
                         length=compressed_size,
@@ -432,7 +445,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 except Exception:
                     pass
 
-    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False) -> AsyncIterator[bytes]:
+    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> AsyncIterator[bytes]:
         """
         Retrieve a file from MinIO as an async iterator of (decompressed) chunks.
         """
@@ -444,7 +457,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 compression_meta = None
             else:
                 try:
-                    stat = self.client.stat_object(self.bucket, storage_id)
+                    stat = self.client.stat_object(bucket or self.bucket, storage_id)
                     # metadata keys can be present as provided or prefixed; check both
                     meta = getattr(stat, "metadata", {}) or {}
                     compression_str = meta.get("compression") or meta.get("x-amz-meta-compression")
@@ -457,7 +470,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                     logger.warning(f"Unexpected error during stat_object for {storage_id}: {e}. Proceeding to get_object.")
                     compression_meta = None
 
-            response = self.client.get_object(self.bucket, storage_id)
+            response = self.client.get_object(bucket or self.bucket, storage_id)
         except Exception as e:
             if isinstance(e, getattr(self, "_S3Error", tuple())):
                 if getattr(e, "code", "") in ("NoSuchKey", "NoSuchObject", "NotFound"):
@@ -507,10 +520,9 @@ class MinioFileStorageServiceImpl(FileStorageService):
             except Exception:
                 pass
         
-
-    async def delete_file(self, storage_id: str) -> None:
+    async def delete_file(self, storage_id: str, bucket: str | None = None) -> None:
         try:
-            self.client.remove_object(self.bucket, storage_id)
+            self.client.remove_object(bucket or self.bucket, storage_id)
         except Exception as e:
             if isinstance(e, getattr(self, "_S3Error", tuple())):
                 # If not found, consider it already deleted
@@ -520,3 +532,27 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 raise ServiceUnavailableException("Failed to delete stored file.")
             logger.error(f"Unexpected error deleting file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to delete stored file.")
+
+    async def get_upload_presigned_url(self, storage_id: str, expiration_seconds: int = 3600, bucket: str | None = None) -> str:
+        try:
+            url = self.client.presigned_put_object(
+                bucket or self.bucket,
+                storage_id,
+                expires=expiration_seconds
+            )
+            return url
+        except Exception as e:
+            logger.error(f"Error generating upload presigned URL for {storage_id}: {e}")
+            raise ServiceUnavailableException("Failed to generate upload presigned URL.")
+        
+    async def get_download_presigned_url(self, storage_id: str, expiration_seconds: int = 3600, bucket: str | None = None) -> str:
+        try:
+            url = self.client.presigned_get_object(
+                bucket or self.bucket,
+                storage_id,
+                expires=expiration_seconds
+            )
+            return url
+        except Exception as e:
+            logger.error(f"Error generating download presigned URL for {storage_id}: {e}")
+            raise ServiceUnavailableException("Failed to generate download presigned URL.")

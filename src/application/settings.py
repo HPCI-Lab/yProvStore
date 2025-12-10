@@ -47,6 +47,16 @@ MINIO_BUCKET = os.getenv("MINIO_BUCKET", "yprov-documents")
 MINIO_SECURE = os.getenv("MINIO_SECURE", "True").lower() in ("true", "1", "yes")
 MINIO_REGION = os.getenv("MINIO_REGION", None)
 
+# If False, yProvStore will proxy artifact storage requests and use the storage (local or MinIO) directly
+PROXY_ARTIFACT_STORAGE = os.getenv("PROXY_ARTIFACT_STORAGE", "True").lower() in ("true", "1", "yes")
+# URL of MinIO endpoint exposed to clients (used only if PROXY_ARTIFACT_STORAGE is False to generate presigned URLs for artifact upload/download)
+PUBLIC_MINIO_ENDPOINT = os.getenv("PUBLIC_MINIO_ENDPOINT")
+MINIO_ARTIFACT_BUCKET = os.getenv("MINIO_ARTIFACT_BUCKET", "yprov-artifacts")
+if USE_LOCAL_FILE_STORAGE_SERVICE and not PROXY_ARTIFACT_STORAGE:
+    raise ValueError("Cannot use local file storage service when PROXY_ARTIFACT_STORAGE is False.")
+if not PROXY_ARTIFACT_STORAGE and not PUBLIC_MINIO_ENDPOINT:
+    raise ValueError("PUBLIC_MINIO_ENDPOINT must be set if PROXY_ARTIFACT_STORAGE is False.")
+
 # Validate minio endpoint name does not contain underscores
 if MINIO_ENDPOINT and '_' in MINIO_ENDPOINT.split(':')[0]:
     raise ValueError("MINIO_ENDPOINT cannot contain underscores in the hostname part.")

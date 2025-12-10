@@ -1,9 +1,10 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 
 from models.permission import DocumentPermission, PermissionLevel
 from models.user import User
 from models.document import DocumentRecord
+from models.artifact import ArtifactRecord, PresignedURL
 from services.db.sql.base import BaseDBModel
 
 
@@ -158,4 +159,116 @@ class DBDocumentPermission(BaseDBModel):
             pid=self.pid,
             user_id=self.user_id,
             permission_level=PermissionLevel(self.permission_level)
+        )
+
+
+class DBArtifactRecord(BaseDBModel):
+    """
+    Database model for ArtifactRecord.
+    """
+    __tablename__ = "artifact_records"
+
+    id = Column(String(255), primary_key=True, index=True)
+    filename = Column(String(255), nullable=False)
+    storage_id = Column(String(255), nullable=False)
+    owner_id = Column(String(255), ForeignKey('users.id'), nullable=False)
+    hash = Column(String(64), nullable=True)  # SHA-256 hash
+    valid = Column('valid', Boolean, default=False, nullable=False)
+
+    owner = relationship("DBUser", back_populates="artifacts")
+
+    @classmethod
+    def model_name(cls) -> str:
+        """
+        Return the name of the model.
+        This is used for logging and response formatting.
+        """
+        return "Artifact record"
+
+    def to_artifact_record(self) -> ArtifactRecord:
+        """
+        Convert this DBArtifactRecord instance to a ArtifactRecord instance.
+        """
+        return ArtifactRecord(
+            pid=self.id,
+            filename=self.filename,
+            storage_id=self.storage_id,
+            owner_id=self.owner_id,
+            hash=self.hash,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+            valid=self.valid
+        )
+
+    def update_from_artifact_record(self, artifact_record: ArtifactRecord) -> None:
+        """
+        Update this DBArtifactRecord instance from a ArtifactRecord instance.
+        """
+        self.id = artifact_record.pid
+        self.filename = artifact_record.filename
+        self.storage_id = artifact_record.storage_id
+        self.owner_id = artifact_record.owner_id
+        self.hash = artifact_record.hash
+        self.valid = artifact_record.valid
+
+    @classmethod
+    def from_artifact_record(cls, artifact_record: ArtifactRecord) -> 'DBArtifactRecord':
+        """
+        Convert a ArtifactRecord instance to a DBArtifactRecord instance.
+        """
+        return cls(
+            id=artifact_record.pid,
+            filename=artifact_record.filename,
+            storage_id=artifact_record.storage_id,
+            owner_id=artifact_record.owner_id,
+            hash=artifact_record.hash,
+            valid=artifact_record.valid
+        )
+
+
+class DBPresignedURL(BaseDBModel):
+    """
+    Database model for PresignedURL.
+    """
+    __tablename__ = "presigned_urls"
+
+    id = Column(String(255), primary_key=True, index=True)
+    user_id = Column(String(255), ForeignKey('users.id'), nullable=False)
+    storage_id = Column(String(255), nullable=False)
+    filename = Column(String(255), nullable=False)
+    expires_at = Column(Integer, nullable=False)  # Unix timestamp
+
+    user = relationship("DBUser", back_populates="presigned_urls")
+
+    @classmethod
+    def model_name(cls) -> str:
+        """
+        Return the name of the model.
+        This is used for logging and response formatting.
+        """
+        return "Presigned URL"
+    
+    @classmethod
+    def from_presigned_url(cls, presigned_url: PresignedURL, user_id: str) -> 'DBPresignedURL':
+        """
+        Convert a PresignedURL instance to a DBPresignedURL instance.
+        """
+        return cls(
+            id=presigned_url.token,
+            user_id=user_id,
+            storage_id=presigned_url.storage_id,
+            filename=presigned_url.storage_url,
+            expires_at=int(presigned_url.expires_at.timestamp())
+        )
+    
+    def to_presigned_url(self) -> PresignedURL:
+        """
+        Convert this DBPresignedURL instance to a PresignedURL instance.
+        """
+        return PresignedURL(
+            token=self.id,
+            user_id=self.user_id,
+            storage_id=self.storage_id,
+            filename=self.filename,
+            expires_at=self.expires_at
         )

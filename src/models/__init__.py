@@ -5,3 +5,4 @@ from models.pid import PidRecord, PidType, PID_DATE_FORMAT, PID_TIMEZONE  # noqa
 from models.permission import DocumentPermission, PermissionLevel  # noqa: F401
 from models.metadata import DocumentMetadata, DocumentMetadataHistory, DocumentMetadataHistoryEntry  # noqa: F401
 from models.graph import DocumentGraphEntity, DocumentSubgraphDirection  # noqa: F401
+from models.artifact import ArtifactRecord, PresignedURL, PresignedURLOperationType  # noqa: F401
