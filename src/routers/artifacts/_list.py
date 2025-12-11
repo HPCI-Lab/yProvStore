@@ -26,6 +26,7 @@ class ArtifactRecordGet(BaseModel):
     Response model for listing available artifacts.
     """
     pid: str = Field(..., examples=[EXAMPLE_UUID])
+    filename: str = Field(..., examples=[EXAMPLE_ARTIFACT_STORAGE], description="Filename of the artifact.")
     storage_url: str = Field(..., examples=[EXAMPLE_ARTIFACT_STORAGE], description="URL of the endpoint to request the artifact download (presigned URL)")
     owner_email: str | None = Field(..., examples=[EXAMPLE_EMAIL], description="Email of the artifact owner.")
     hash: str | None = Field(None, examples=[EXAMPLE_HASH], description="SHA-256 hash of the artifact content, if available.")
@@ -87,6 +88,7 @@ async def list_artifacts(
     return [
         ArtifactRecordGet(
             pid=record.pid,
+            filename=record.filename,
             storage_url=f"{APP_URL.rstrip('/')}/artifacts/{record.pid}/download/url",
             hash=record.hash,
             owner_email=user_emails.get(record.owner_id, "Unknown"),

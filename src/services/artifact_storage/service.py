@@ -94,7 +94,7 @@ class ArtifactRecordStorageServiceImpl(ArtifactRecordStorageService, SQLEntityDB
         if created_after:
             filters['created_at__ge'] = created_after
         if pid:
-            filters['pid'] = pid
+            filters['id'] = pid
         if valid is not None:
             filters['valid'] = valid
         db_artifacts = await super()._filter(page=page, page_size=page_size, **filters)
