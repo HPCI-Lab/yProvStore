@@ -1,16 +1,16 @@
 import logging
 
-from fastapi import APIRouter, status, Query, UploadFile
+from fastapi import APIRouter, status, Path, UploadFile, Query
 from pydantic import BaseModel, Field
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
 from models import PresignedURLOperationType, PresignedURL, PidRecord, PidType
 from application.exceptions.types import BadRequestException, UnauthorizedException, NotFoundException, ServiceUnavailableException, ForbiddenException, InternalServerErrorException
-from application.settings import APP_URL, MINIO_ARTIFACT_BUCKET
+from application.settings import APP_URL
 from application.documentation.openapi_generation import EXAMPLE_UUID, EXAMPLE_HASH
 from application.exceptions.responses import EXCEPTION_SCHEMA
 from services.artifact_storage.service import ArtifactRecordStorageService
-from services.file_storage.service import FileStorageService, PresignedURLService
+from services.file_storage.service import ArtifactFileStorageService, PresignedURLService
 from services.pid.service import PidService
 
 __all__ = ("router",)
@@ -34,7 +34,7 @@ class ArtifactUploadResponse(BaseModel):
 
 documentation = {
     "summary": "Proxy Artifact Upload",
-    "description": "This endpoint proxies the upload of an artifact using a presigned URL token.",
+    "description": "This endpoint proxies the upload of an artifact using a presigned URL token. After the upload, the token will be invalidated.",
     "status_code": status.HTTP_200_OK,
     "response_description": "Upload the artifact content, either streamed or as a full response.",
     "response_model": None,
@@ -65,14 +65,15 @@ documentation = {
 }
 
 
-@router.post("/proxy/upload/{token}", **documentation)
+@router.put("/proxy/upload/{token}", **documentation)
 async def proxy_artifact_upload(
     artifact_record_storage: FromDishka[ArtifactRecordStorageService],
     presigned_url_service: FromDishka[PresignedURLService],
-    file_storage_service: FromDishka[FileStorageService],
+    file_storage_service: FromDishka[ArtifactFileStorageService],
     pid_service: FromDishka[PidService],
     document_file: UploadFile,
-    token: str = Query(..., description="Token for the presigned upload URL.", examples=["example-token-1234"])
+    token: str = Path(..., description="Token for the presigned upload URL.", examples=["example-token-1234"]),
+    pid: str = Query(..., description="PID of the artifact being uploaded.", examples=[EXAMPLE_UUID])
 ) -> ArtifactUploadResponse:
     """
     Endpoint to proxy the upload of an artifact using a presigned URL token.
@@ -87,10 +88,13 @@ async def proxy_artifact_upload(
     
     if artifact_record.owner_id != presigned_url.user_id:
         raise ForbiddenException("You do not have permission to access this artifact.")
+
+    if artifact_record.pid != pid:
+        raise UnauthorizedException("The provided PID does not match the artifact associated with the token.")
     
     file_hash = None
     try:
-        file_hash = await file_storage_service.store_file_from_uploadfile(artifact_record.storage_id, document_file, ignore_compression=True, bucket=MINIO_ARTIFACT_BUCKET)
+        file_hash = await file_storage_service.store_file_from_uploadfile(artifact_record.storage_id, document_file, ignore_compression=True)
     except Exception as e:
         raise BadRequestException(f"Failed to read document file: {e}")
     
@@ -102,11 +106,15 @@ async def proxy_artifact_upload(
         artifact_record = await artifact_record_storage.update_artifact(artifact_record)
         updated_db = True
 
+        await presigned_url_service.delete_presigned_url(token=token)
+
         # create PID record now that upload is complete
         pid_record = PidRecord(
             pid=artifact_record.pid,
             type=PidType.ARTIFACT,
             url=f"{APP_URL.rstrip('/')}/artifacts/{artifact_record.pid}/download/url",
+            hash=file_hash,
+            hash_algorithm="sha256"
         )
 
         pid_record = await pid_service.save_pid_record(pid_record)

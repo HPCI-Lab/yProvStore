@@ -6,6 +6,7 @@ import logging
 import tempfile
 import importlib
 from typing import AsyncIterator
+from urllib.parse import urlparse, urlunparse
 
 import aiofiles
 from fastapi import UploadFile
@@ -28,8 +29,8 @@ class LocalFileStorageServiceImpl(FileStorageService):
     Local file storage implementation for testing purposes.
     """
 
-    def __init__(self, compression_service: CompressionService):
-        self.documents_path = TMP_PATH / "documents"
+    def __init__(self, compression_service: CompressionService | None = None, bucket: str | None = None):
+        self.documents_path = TMP_PATH / (bucket or "documents")
         if not self.documents_path.exists():
             self.documents_path.mkdir(parents=True, exist_ok=True)
         self.compression_service = compression_service
@@ -108,11 +109,11 @@ class LocalFileStorageServiceImpl(FileStorageService):
                 tmp_path = tmp.name
                 decompressor = None
                 compressor = None
-                if skip_compression:
+                if not ignore_compression and skip_compression:
                     logger.debug(f"Skipping compression for file {storage_id}")
                     # prepare stream decompressor to compute hash on original bytes
                     decompressor = self.compression_service.get_decompressor(self.COMPRESSION_STANDARD)
-                else:
+                elif not ignore_compression:
                     # prepare stream compressor
                     compressor = self.compression_service.get_compressor(self.COMPRESSION_STANDARD)
 
@@ -122,7 +123,7 @@ class LocalFileStorageServiceImpl(FileStorageService):
                     if not chunk:
                         break
                     original_chunk = chunk
-                    if skip_compression or ignore_compression:
+                    if not ignore_compression and skip_compression:
                         # decompress to get original bytes for hashing
                         original_chunk = decompressor.decompress(chunk)
                     hasher.update(original_chunk)           # update hash on original bytes
@@ -267,7 +268,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
       - MINIO_REGION (optional)
     """
 
-    def __init__(self, compression_service: CompressionService):
+    def __init__(self, compression_service: CompressionService | None = None, bucket: str | None = None):
         self.compression_service = compression_service
         # Lazy import of MinIO client to avoid hard dependency when using local storage
         try:
@@ -280,7 +281,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 "MinIO client not installed. Please add 'minio' to dependencies to use MinIO storage.")
         self.COMPRESSION_STANDARD = super().get_compression_standard()
 
-        self.bucket = settings.MINIO_BUCKET
+        self.bucket = bucket or settings.MINIO_BUCKET
         self.client = MinioClient(
             settings.MINIO_ENDPOINT, access_key=settings.MINIO_ACCESS_KEY, secret_key=settings.MINIO_SECRET_KEY,
             secure=settings.MINIO_SECURE, region=settings.MINIO_REGION
@@ -312,7 +313,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 logger.warning(f"Unexpected error during stat_object for {storage_id}: {e}. Proceeding to upload.")
 
         try:
-            if skip_compression:
+            if not ignore_compression and skip_compression:
                 logger.debug(f"Skipping compression for file {storage_id}")
                 data_to_store = file_data
                 original_data = self.compression_service.get_decompressor(self.COMPRESSION_STANDARD).decompress(file_data)
@@ -375,7 +376,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
 
             compressor = None
             decompressor = None
-            if skip_compression:
+            if not ignore_compression and skip_compression:
                 logger.debug(f"Skipping compression for file {storage_id}")
                 # prepare stream decompressor to compute hash on original bytes
                 decompressor = self.compression_service.get_decompressor(self.COMPRESSION_STANDARD)
@@ -390,7 +391,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                         break
                     # update hash on original bytes
                     original_chunk = chunk
-                    if skip_compression:
+                    if not ignore_compression and skip_compression:
                         original_chunk = decompressor.decompress(chunk)
                     hasher.update(original_chunk)
                     # compress incrementally
@@ -533,25 +534,49 @@ class MinioFileStorageServiceImpl(FileStorageService):
             logger.error(f"Unexpected error deleting file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to delete stored file.")
 
-    async def get_upload_presigned_url(self, storage_id: str, expiration_seconds: int = 3600, bucket: str | None = None) -> str:
+    async def get_upload_presigned_url(self, storage_id: str, expiration_seconds: int = 3600, bucket: str | None = None, public_endpoint: str | None = None) -> str:
         try:
             url = self.client.presigned_put_object(
                 bucket or self.bucket,
                 storage_id,
                 expires=expiration_seconds
             )
+            if public_endpoint:
+                # replace the endpoint with the public one
+                parsed_url = urlparse(url)
+                
+                # Ensure public_endpoint has a scheme
+                if not public_endpoint.startswith(('http://', 'https://')):
+                    # Use the same scheme as the original URL
+                    public_endpoint = f"{parsed_url.scheme}://{public_endpoint}"
+                
+                public_parsed = urlparse(public_endpoint)
+                new_url = parsed_url._replace(scheme=public_parsed.scheme, netloc=public_parsed.netloc)
+                return urlunparse(new_url)
             return url
         except Exception as e:
             logger.error(f"Error generating upload presigned URL for {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to generate upload presigned URL.")
         
-    async def get_download_presigned_url(self, storage_id: str, expiration_seconds: int = 3600, bucket: str | None = None) -> str:
+    async def get_download_presigned_url(self, storage_id: str, expiration_seconds: int = 3600, bucket: str | None = None, public_endpoint: str | None = None) -> str:
         try:
             url = self.client.presigned_get_object(
                 bucket or self.bucket,
                 storage_id,
                 expires=expiration_seconds
             )
+            if public_endpoint:
+                # replace the endpoint with the public one
+                parsed_url = urlparse(url)
+                
+                # Ensure public_endpoint has a scheme
+                if not public_endpoint.startswith(('http://', 'https://')):
+                    # Use the same scheme as the original URL
+                    public_endpoint = f"{parsed_url.scheme}://{public_endpoint}"
+                
+                public_parsed = urlparse(public_endpoint)
+                new_url = parsed_url._replace(scheme=public_parsed.scheme, netloc=public_parsed.netloc)
+                return urlunparse(new_url)
             return url
         except Exception as e:
             logger.error(f"Error generating download presigned URL for {storage_id}: {e}")

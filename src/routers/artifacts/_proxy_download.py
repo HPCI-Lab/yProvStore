@@ -1,17 +1,15 @@
 import logging
 
-from fastapi import APIRouter, status, Query
+from fastapi import APIRouter, status, Query, Path
 from fastapi.responses import StreamingResponse, Response
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
 from models import PresignedURLOperationType, PresignedURL
 from application.exceptions.types import UnauthorizedException, NotFoundException, ServiceUnavailableException, ForbiddenException, InternalServerErrorException
-from application.settings import MINIO_ARTIFACT_BUCKET
 from application.exceptions.responses import EXCEPTION_SCHEMA
+from application.documentation.openapi_generation import EXAMPLE_UUID
 from services.artifact_storage.service import ArtifactRecordStorageService
-from services.file_storage.service import FileStorageService, PresignedURLService
-from services.pid.service import PidService
-from routers.common.dependencies import LoggedUser
+from services.file_storage.service import ArtifactFileStorageService, PresignedURLService
 
 __all__ = ("router",)
 
@@ -26,7 +24,7 @@ router = APIRouter(
 
 documentation = {
     "summary": "Proxy Artifact Download",
-    "description": "This endpoint proxies the download of an artifact using a presigned URL token.",
+    "description": "This endpoint proxies the download of an artifact using a presigned URL token. After the download, the token will be invalidated.",
     "status_code": status.HTTP_200_OK,
     "response_description": "Download the artifact content, either streamed or as a full response.",
     "response_model": None,
@@ -60,9 +58,10 @@ documentation = {
 async def proxy_artifact_download(
     artifact_record_storage: FromDishka[ArtifactRecordStorageService],
     presigned_url_service: FromDishka[PresignedURLService],
-    file_storage_service: FromDishka[FileStorageService],
-    stream: bool = Query(False, description="Whether to stream the download or return the entire content.", examples=[True, False]),
-    token: str = Query(..., description="Token for the presigned upload URL.", examples=["example-token-1234"])
+    file_storage_service: FromDishka[ArtifactFileStorageService],
+    stream: bool = Query(True, description="Whether to stream the download or return the entire content.", examples=[True, False]),
+    pid: str = Query(..., description="When provided, validate that the artifact PID matches the one associated with the token.", examples=[EXAMPLE_UUID]),
+    token: str = Path(..., description="Token for the presigned upload URL.", examples=["example-token-1234"])
 ) -> StreamingResponse | Response:
     """
     Endpoint to proxy the download of an artifact using a presigned URL token.
@@ -77,14 +76,16 @@ async def proxy_artifact_download(
     
     if artifact_record.owner_id != presigned_url.user_id:
         raise ForbiddenException("You do not have permission to access this artifact.")
-    
+
+    if artifact_record.pid != pid:
+        raise UnauthorizedException("The provided PID does not match the artifact associated with the token.")
+
     try:
         async def _read_first_chunk():
             # obtain async generator (do NOT await it)
             stream_gen = file_storage_service.retrieve_file(
                 storage_id=artifact_record.storage_id,
-                ignore_compression=True,
-                bucket=MINIO_ARTIFACT_BUCKET
+                ignore_compression=True
             )
             # try to get first chunk to surface storage errors (NotFound/ServiceUnavailable/DocumentNotCompressedException) early
             try:
@@ -119,6 +120,8 @@ async def proxy_artifact_download(
             async for chunk in stream_gen:
                 yield chunk
                 yielded += len(chunk)
+
+        await presigned_url_service.delete_presigned_url(token=token)
 
         if not stream:
             # read all content into memory (not ideal for large files)

@@ -1,12 +1,12 @@
 from fastapi import APIRouter
 
 from ._list import router as list_router
-from ._download_url import router as download_router
+from ._proxy_download import router as download_router
 from ._proxy_upload import router as upload_router
 from ._upload_url import router as upload_url_router
 from ._download_url import router as download_url_router
 
-__all__ = ("artifacts_router", "artifact_router")
+__all__ = ("artifacts_router",)
 
 
 artifacts_router = APIRouter(

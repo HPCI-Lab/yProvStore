@@ -1,10 +1,10 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Enum as SAEnum
 from sqlalchemy.orm import relationship
 
 from models.permission import DocumentPermission, PermissionLevel
 from models.user import User
 from models.document import DocumentRecord
-from models.artifact import ArtifactRecord, PresignedURL
+from models.artifact import ArtifactRecord, PresignedURL, PresignedURLOperationType
 from services.db.sql.base import BaseDBModel
 
 
@@ -19,6 +19,8 @@ class DBUser(BaseDBModel):
     password_hash = Column(String(255), nullable=False)
 
     documents = relationship("DBDocumentRecord", back_populates="owner")
+    artifacts = relationship("DBArtifactRecord", back_populates="owner")
+    presigned_urls = relationship("DBPresignedURL", back_populates="user")
     permissions = relationship("DBDocumentPermission", back_populates="user")
 
     @classmethod
@@ -236,6 +238,7 @@ class DBPresignedURL(BaseDBModel):
     user_id = Column(String(255), ForeignKey('users.id'), nullable=False)
     storage_id = Column(String(255), nullable=False)
     filename = Column(String(255), nullable=False)
+    operation_type = Column(SAEnum(PresignedURLOperationType), nullable=False)
     expires_at = Column(Integer, nullable=False)  # Unix timestamp
 
     user = relationship("DBUser", back_populates="presigned_urls")
@@ -257,7 +260,8 @@ class DBPresignedURL(BaseDBModel):
             id=presigned_url.token,
             user_id=user_id,
             storage_id=presigned_url.storage_id,
-            filename=presigned_url.storage_url,
+            filename=presigned_url.filename,
+            operation_type=presigned_url.operation_type,
             expires_at=int(presigned_url.expires_at.timestamp())
         )
     
@@ -270,5 +274,6 @@ class DBPresignedURL(BaseDBModel):
             user_id=self.user_id,
             storage_id=self.storage_id,
             filename=self.filename,
-            expires_at=self.expires_at
+            expires_at=self.expires_at,
+            operation_type=self.operation_type
         )

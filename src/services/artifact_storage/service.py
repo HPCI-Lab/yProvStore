@@ -36,7 +36,7 @@ class ArtifactRecordStorageService:
         raise NotImplementedError
 
     async def list_artifacts(self, page: int, page_size: int, updated_after: datetime | None = None,
-                             created_after: datetime | None = None, pid: str | None = None) -> list[ArtifactRecord]:
+                             created_after: datetime | None = None, pid: str | None = None, valid: bool | None = None) -> list[ArtifactRecord]:
         """
         List all artifact records available in the storage.
         
@@ -45,6 +45,7 @@ class ArtifactRecordStorageService:
         :param updated_after: Optional timestamp to filter artifacts updated after a certain time.
         :param created_after: Optional timestamp to filter artifacts created after a certain time.
         :param pid: Optional PID to filter artifacts by their unique identifier.
+        :param valid: Optional boolean to filter artifacts by their validity status.
         :return: A list of artifact records.
         """
         raise NotImplementedError
@@ -86,7 +87,7 @@ class ArtifactRecordStorageServiceImpl(ArtifactRecordStorageService, SQLEntityDB
         return updated_db_artifact_record.to_artifact_record()
 
     async def list_artifacts(self, page: int, page_size: int, updated_after: datetime | None = None,
-                             created_after: datetime | None = None, pid: str | None = None) -> list[ArtifactRecord]:
+                             created_after: datetime | None = None, pid: str | None = None, valid: bool | None = None) -> list[ArtifactRecord]:
         filters = {}
         if updated_after:
             filters['updated_at__ge'] = updated_after
@@ -94,6 +95,8 @@ class ArtifactRecordStorageServiceImpl(ArtifactRecordStorageService, SQLEntityDB
             filters['created_at__ge'] = created_after
         if pid:
             filters['pid'] = pid
+        if valid is not None:
+            filters['valid'] = valid
         db_artifacts = await super()._filter(page=page, page_size=page_size, **filters)
         return [db_artifact.to_artifact_record() for db_artifact in db_artifacts]
 

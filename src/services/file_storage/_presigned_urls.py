@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 
+from sqlalchemy.ext.asyncio import AsyncSession as SessionType
+
 from application.exceptions.types import NotFoundException
 from models import PresignedURL, PresignedURLOperationType
 from services.db.sql.models import DBPresignedURL
@@ -8,6 +10,9 @@ from services.file_storage.service import PresignedURLService
 
 
 class PresignedURLServiceImpl(PresignedURLService, SQLEntityDB[DBPresignedURL]):
+
+    def __init__(self, session: SessionType):
+        super().__init__(session, model_type=DBPresignedURL)
     
     async def generate_presigned_url(self, user_id: str, storage_id: str, operation_type: PresignedURLOperationType, filename: str, expires_in: int = 3600) -> PresignedURL:
         """
@@ -17,12 +22,13 @@ class PresignedURLServiceImpl(PresignedURLService, SQLEntityDB[DBPresignedURL]):
 
         expires_at = current_unix_timestamp + expires_in
 
-        presigned_url: DBPresignedURL = await super()._create(
+        presigned_url: DBPresignedURL = await super()._create(DBPresignedURL(
             user_id=user_id,
             storage_id=storage_id,
             filename=filename,
-            expires_at=expires_at
-        )
+            expires_at=expires_at,
+            operation_type=operation_type
+        ))
 
         return presigned_url.to_presigned_url()
     

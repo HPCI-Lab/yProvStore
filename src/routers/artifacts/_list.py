@@ -5,6 +5,7 @@ from fastapi import APIRouter, status, Query
 from pydantic import BaseModel, Field
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
+from application.settings import APP_URL
 from application.documentation.openapi_generation import EXAMPLE_EMAIL, EXAMPLE_UUID, EXAMPLE_ARTIFACT_STORAGE, EXAMPLE_HASH
 from services.artifact_storage.service import ArtifactRecordStorageService
 from services.user_storage.service import UserStorageService
@@ -33,7 +34,8 @@ class ArtifactRecordGet(BaseModel):
 documentation = {
     "summary": "List Artifact Records",
     "description": ("This endpoint retrieves a list of paginated artifact records available in this server instance."
-                    " Default page size is 10, and pagination starts from page 0."),
+                    "Only valid artifacts are returned by default. Default page size is 10, and pagination starts from page 0.\n\n"
+                    "The artifact URLs returned can be used to retrieve the presigned download URLs to download the artifact (two-step retrieval)."),
     "status_code": status.HTTP_200_OK,
     "response_description": "Returns a list of artifact records, each containing a unique identifier (pid), storage URL and owner email." + \
                             " The hash field contains the SHA-256 hash of the artifact content, if available."
@@ -74,7 +76,8 @@ async def list_artifacts(
         page_size=page_size,
         updated_after=updated_after,
         created_after=created_after,
-        pid=pid
+        pid=pid,
+        valid=True
     )
 
     user_emails: dict[str, str] = await user_storage_service.get_user_emails(
@@ -84,7 +87,7 @@ async def list_artifacts(
     return [
         ArtifactRecordGet(
             pid=record.pid,
-            storage_url=record.storage_url,
+            storage_url=f"{APP_URL.rstrip('/')}/artifacts/{record.pid}/download/url",
             hash=record.hash,
             owner_email=user_emails.get(record.owner_id, "Unknown"),
         )

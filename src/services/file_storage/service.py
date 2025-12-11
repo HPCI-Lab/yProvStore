@@ -4,6 +4,7 @@ from typing import AsyncIterator
 
 from fastapi import UploadFile
 from dishka import Provider, provide, Scope
+from sqlalchemy.ext.asyncio import AsyncSession as SessionType
 
 from application import settings
 from models.artifact import PresignedURL, PresignedURLOperationType
@@ -77,7 +78,7 @@ class FileStorageService:
         """
         raise NotImplementedError
 
-    async def get_upload_presigned_url(self, storage_id: str, expiration_seconds: int = 3600, bucket: str | None = None) -> str:
+    async def get_upload_presigned_url(self, storage_id: str, expiration_seconds: int = 3600, bucket: str | None = None, public_endpoint: str | None = None) -> str:
         """
         Generate a presigned URL for uploading a file directly to the storage system.
         This method will raise NotImplementedError if the storage backend does not support presigned URLs.
@@ -86,11 +87,12 @@ class FileStorageService:
         :param storage_id: Unique identifier for the file in the storage system.
         :param expiration_seconds: Time in seconds for which the presigned URL is valid.
         :param bucket: Optional bucket name for storage backends that support multiple buckets.
+        :param public_endpoint: Optional public endpoint to use in the presigned URL instead of the default storage endpoint.
         :return: Presigned URL as a string.
         """
         raise NotImplementedError
 
-    async def get_download_presigned_url(self, storage_id: str, expiration_seconds: int = 3600, bucket: str | None = None) -> str:
+    async def get_download_presigned_url(self, storage_id: str, expiration_seconds: int = 3600, bucket: str | None = None, public_endpoint: str | None = None) -> str:
         """
         Generate a presigned URL for downloading a file directly from the storage system.
         This method will raise NotImplementedError if the storage backend does not support presigned URLs.
@@ -99,6 +101,7 @@ class FileStorageService:
         :param storage_id: Unique identifier for the file in the storage system.
         :param expiration_seconds: Time in seconds for which the presigned URL is valid.
         :param bucket: Optional bucket name for storage backends that support multiple buckets.
+        :param public_endpoint: Optional public endpoint to use in the presigned URL instead of the default storage endpoint.
         :return: Presigned URL as a string.
         """
         raise NotImplementedError
@@ -111,6 +114,14 @@ class FileStorageService:
         :return: CompressionStandard enum value.
         """
         return CompressionStandard.ZSTD
+    
+
+class ArtifactFileStorageService(FileStorageService):
+    """
+    Specialized FileStorageService for artifact files.
+    Allows to define a different bucket name for artifact storage.
+    """
+    pass
 
 
 class Compressor:
@@ -239,8 +250,15 @@ class FileStorageServiceProvider(Provider):
     def file_storage_service(self, compression_service: CompressionService) -> FileStorageService:
         from ._storage import LocalFileStorageServiceImpl, MinioFileStorageServiceImpl
         if self.use_local:
-            return LocalFileStorageServiceImpl(compression_service=compression_service)
-        return MinioFileStorageServiceImpl(compression_service=compression_service)
+            return LocalFileStorageServiceImpl(compression_service=compression_service, bucket="documents")
+        return MinioFileStorageServiceImpl(compression_service=compression_service, bucket=settings.MINIO_BUCKET)
+
+    @provide
+    def artifact_file_storage_service(self) -> ArtifactFileStorageService:
+        from ._storage import LocalFileStorageServiceImpl, MinioFileStorageServiceImpl
+        if self.use_local:
+            return LocalFileStorageServiceImpl(compression_service=None, bucket="artifacts")
+        return MinioFileStorageServiceImpl(compression_service=None, bucket=settings.ARTIFACTS_MINIO_BUCKET)
 
 
 class CompressionServiceProvider(Provider):
@@ -263,9 +281,9 @@ class PresignedURLServiceProvider(Provider):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(scope=Scope.APP, *args, **kwargs)
+        super().__init__(scope=Scope.REQUEST, *args, **kwargs)
 
     @provide
-    def presigned_url_service(self) -> PresignedURLService:
+    def presigned_url_service(self, session: SessionType) -> PresignedURLService:
         from ._presigned_urls import PresignedURLServiceImpl
-        return PresignedURLServiceImpl()
+        return PresignedURLServiceImpl(session)
