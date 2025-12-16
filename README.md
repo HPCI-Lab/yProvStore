@@ -229,44 +229,7 @@ Alternatively, you may be missing `MINIO_SECURE=False` in your `.env` file if yo
 
 ## Application Deployment with Docker
 
-The application can also be deployed using Docker and Docker Compose. This allows you to run the application in a containerized environment, making it easier to manage dependencies and configurations.
-
-The `docker-compose.yml` file in the root directory of the project defines the services required to run the application, which include:
-- `api`: The main FastAPI application.
-- `minio`: The MinIO server for file storage.
-- `postgres`: The PostgreSQL database for storing data useful for managing users and documents.
-- `pgbouncer`: A lightweight connection pooler for PostgreSQL. This helps to manage database connections efficiently, especially under high load.
-- `pgbouncer-init`: An initialization service that sets up the necessary pgbouncer configuration before starting the pgbouncer service.
-
-To deploy the application using Docker, follow these steps:
-
-1. Make sure you have Docker and Docker Compose installed on your machine.
-2. Create a `.env` file in the root directory of the project and define the necessary environment variables.
-   
-    ```
-    JWT_SECRET_KEY=your_secret_key  # Change this to a secure random value
-    PID_PRIVATE_KEY_PATH=/path/to/private/key.pem  # Path to the private key for PID service (will throw an error if not set and USE_LOCAL_PID_SERVICE is False)
-    MINIO_ROOT_USER=<your_minio_root_user>
-    MINIO_ROOT_PASSWORD=<your_minio_root_password>
-    MINIO_BUCKET=<your_minio_bucket>  # default: yprov-documents
-    MINIO_SECURE=False  # !! IMPORTANT: if testing locally you need to disable HTTPS
-    
-    POSTGRES_USER=<your_db_user>  # Set your desired Postgres user
-    POSTGRES_PASSWORD=<your_db_password>  # Set your desired Postgres password
-    POSTGRES_DB=yprovstore
-    ```
-
-    > Additional environment variables can be set as needed. See the file `src/application/settings.py` for more details.
-
-3. Run the following command to start the application:
-
-    ```bash
-    docker-compose up --build  # Add -d to run in detached mode
-    ```
-
-4. The application will automatically create the documents bucket on the first storage request if it does not already exist. If instead you want to manually create the MinIO bucket defined in the `MINIO_BUCKET` environment variable, you can do this by accessing the MinIO web interface at `http://localhost:9001` and logging in with the root user and password you defined in the `.env` file. Once logged in, create a new bucket with the name specified in `MINIO_BUCKET`.
-5. Now you can access the API documentation at `http://localhost:8000/docs` and the documents will be uploaded to the MinIO bucket.
-
+The application can also be deployed using Docker and Docker Compose. Check the [DEPLOYMENT.md](DEPLOYMENT.md) file for detailed instructions on how to set up and run the application using Docker.
 
 ## yProv-CLI
 

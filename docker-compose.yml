@@ -6,7 +6,7 @@ services:
     secrets:
       - pid_user_key
     ports:
-      - "8000:8000"
+      - "${APP_PORT}:8000"
     environment:
       - MINIO_ENDPOINT=yprovstore-minio:9000
       - PID_PRIVATE_KEY_PATH=/run/secrets/pid_user_key
@@ -31,9 +31,10 @@ services:
   minio:
     image: minio/minio:latest
     container_name: yprovstore-minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
+    # Expose MinIO ports only if you need to connect directly
+    # ports:
+      # - "9000:9000"  (Edit also in api.environment MINIO_ENDPOINT if changed)
+      # - "9001:9001"
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
@@ -45,8 +46,9 @@ services:
   postgres:
     image: postgres:17
     container_name: yprovstore-postgres
-    ports:
-      - "5432:5432"
+    # Expose Postgres port only if you need to connect directly
+    # ports:
+    #   - "5432:5432" (Edit also in pgbouncer/pgbouncer.ini.template if changed)
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./postgres/init:/docker-entrypoint-initdb.d
@@ -77,8 +79,9 @@ services:
     image: edoburu/pgbouncer:latest
     container_name: yprovstore-pgbouncer
     restart: unless-stopped
-    ports:
-      - "6432:6432"
+    # Expose PgBouncer port only if you need to connect directly
+    # ports:
+    #   - "6432:6432"  (Edit also in api.environment DB_CONNECTION_STRING if changed and pgbouncer/pgbouncer.ini.template)
     volumes:
       - ./pgbouncer/configuration:/etc/pgbouncer:ro
     depends_on:
@@ -102,4 +105,4 @@ volumes:
 
 secrets:
   pid_user_key:
-    file: ./keys/user_private.pem
+    file: ${PID_PRIVATE_KEY_PATH}
