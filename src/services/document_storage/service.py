@@ -107,7 +107,7 @@ class DocumentRecordStorageServiceImpl(DocumentRecordStorageService, SQLEntityDB
         if created_after:
             filters['created_at__ge'] = created_after
         if pid:
-            filters['pid'] = pid
+            filters['id'] = pid
         db_documents = await super()._filter(page=page, page_size=page_size, **filters)
         return [db_document.to_document_record() for db_document in db_documents]
     
