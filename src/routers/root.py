@@ -32,13 +32,13 @@ async def status() -> dict[str, str]:
 
 root_sub_routers: tuple[APIRouter, ...] = (
     authentication_router,
-    documents_router,
     artifacts_router,
     metadata_router,
-    pids_router,
-    metadata_schema_router,
     permissions_router,
     graph_router,
+    documents_router,
+    pids_router,
+    metadata_schema_router,
 )
 
 for router in root_sub_routers:
