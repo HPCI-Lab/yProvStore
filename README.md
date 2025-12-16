@@ -35,6 +35,7 @@ yProv is a joint project between [University of Trento](https://www.unitn.it) an
     - [Graph Operations on Documents](#graph-operations-on-documents)
     - [Blockchain Operations](#blockchain-operations)
     - [Managing PIDs](#managing-pids)
+    - [Managing Artifacts](#managing-artifacts)
     - [Troubleshooting CLI](#troubleshooting-cli)
 
 ## Local Development
@@ -1082,6 +1083,105 @@ The `pids` group lets you list and retrieve PID records from your PID service.
 
     ```bash
     yprov pids get myprefix/1234
+    ```
+
+
+### Managing Artifacts
+
+`yProvStore` allows you to upload, download, and manage artifact files (e.g., data files, scripts, binaries) alongside your provenance documents. Each artifact is assigned a unique PID and can be referenced in your provenance records.
+
+The `artifacts` group provides commands to interact with artifact storage.
+
+* **List artifacts** (with optional pagination and filtering)
+
+  ```bash
+  yprov artifacts list [OPTIONS]
+  ```
+
+  Options:
+
+  * `--page INTEGER`          Page number (zero-indexed). Default: `0`
+  * `--page-size INTEGER`     Number of artifacts per page. Default: `10`
+  * `--updated-after TEXT`    List only artifacts updated after this ISO 8601 datetime
+  * `--created-after TEXT`    List only artifacts created after this ISO 8601 datetime
+  * `--pid TEXT`              Filter by a specific artifact PID
+
+  Examples:
+
+  * List the first page of artifacts:
+
+    ```bash
+    yprov artifacts list
+    ```
+
+* **Upload an artifact**
+
+  ```bash
+  yprov artifacts upload <FILE_PATH> [OPTIONS]
+  ```
+
+  Options:
+
+  * `--filename TEXT`   Custom filename to use for the artifact (defaults to original filename)
+
+  Examples:
+
+  * Upload a file with the original filename:
+
+    ```bash
+    yprov artifacts upload ./my_artifact.tar.gz
+    ```
+
+  * Upload a file with a custom filename:
+
+    ```bash
+    yprov artifacts upload ./data.csv --filename "experiment_data.csv"
+    ```
+
+* **Download an artifact**
+
+  ```bash
+  yprov artifacts download <PID> [OPTIONS]
+  ```
+
+  Options:
+
+  * `-o, --output PATH`         Full path to save the file (overrides --output-folder)
+  * `--output-folder PATH`      Folder to save the file in (filename determined from server)
+  * `--verify / --no-verify`    Verify SHA-256 hash after download. Default: `False`
+
+  Examples:
+
+  * Download an artifact to the current directory:
+
+    ```bash
+    yprov artifacts download 21.T11961/abc123
+    ```
+
+  * Download to a specific location:
+
+    ```bash
+    yprov artifacts download abc123 -o ./downloads/artifact.tar.gz
+    ```
+
+  * Download with hash verification:
+
+    ```bash
+    yprov artifacts download abc123 --output-folder ./downloads --verify
+    ```
+
+* **Get artifact information**
+
+  ```bash
+  yprov artifacts get <PID>
+  ```
+
+  Examples:
+
+  * Get detailed information about an artifact:
+
+    ```bash
+    yprov artifacts get 21.T11961/abc123
     ```
 
 

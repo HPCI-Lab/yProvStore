@@ -110,9 +110,9 @@ async def download_document_prefix(
             except Exception as e:
                 # any other exception from the storage read should be surfaced as service unavailable
                 raise ServiceUnavailableException(f"Failed to retrieve document with PID '{pid}'") from e
-            
+
             return first_chunk, stream_gen
-        
+
         if accept_encoding and accept_encoding != file_storage_service.get_compression_standard().value:
             return BadRequestException(f"Unsupported Accept-Encoding '{accept_encoding}'. Supported: '{file_storage_service.get_compression_standard().value}'")
         
@@ -131,11 +131,9 @@ async def download_document_prefix(
         async def delegating_gen():
             yield first_chunk
             yielded = len(first_chunk)
-            logger.debug(yielded)
             async for chunk in stream_gen:
                 yield chunk
                 yielded += len(chunk)
-                logger.debug(yielded)
 
         encoding_headers = {}
         if skip_decompression:

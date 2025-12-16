@@ -47,6 +47,25 @@ MINIO_BUCKET = os.getenv("MINIO_BUCKET", "yprov-documents")
 MINIO_SECURE = os.getenv("MINIO_SECURE", "True").lower() in ("true", "1", "yes")
 MINIO_REGION = os.getenv("MINIO_REGION", None)
 
+ARTIFACTS_MINIO_ENDPOINT = os.getenv("ARTIFACTS_MINIO_ENDPOINT", MINIO_ENDPOINT)
+ARTIFACTS_MINIO_ACCESS_KEY = os.getenv("ARTIFACTS_MINIO_ROOT_USER", MINIO_ACCESS_KEY)  # TODO: is it okay to use root user?
+ARTIFACTS_MINIO_SECRET_KEY = os.getenv("ARTIFACTS_MINIO_ROOT_PASSWORD", MINIO_SECRET_KEY)
+ARTIFACTS_MINIO_BUCKET = os.getenv("ARTIFACTS_MINIO_BUCKET", "yprov-artifacts")
+ARTIFACTS_MINIO_SECURE = os.getenv("ARTIFACTS_MINIO_SECURE", "True").lower() in ("true", "1", "yes")
+ARTIFACTS_MINIO_REGION = os.getenv("ARTIFACTS_MINIO_REGION", None)
+# URL of MinIO endpoint exposed to clients (used only if PROXY_ARTIFACT_STORAGE is False to generate presigned URLs for artifact upload/download)
+ARTIFACTS_PUBLIC_MINIO_ENDPOINT = os.getenv("ARTIFACTS_PUBLIC_MINIO_ENDPOINT", None)  # Set it if different from ARTIFACTS_MINIO_ENDPOINT (which may only be internal)
+
+# If False, yProvStore will proxy artifact storage requests and use the storage (local or MinIO) directly
+PROXY_ARTIFACT_STORAGE = os.getenv("PROXY_ARTIFACT_STORAGE", "True").lower() in ("true", "1", "yes")
+if USE_LOCAL_FILE_STORAGE_SERVICE and not PROXY_ARTIFACT_STORAGE:
+    raise ValueError("Cannot use local file storage service when PROXY_ARTIFACT_STORAGE is False.")
+if not PROXY_ARTIFACT_STORAGE and not ARTIFACTS_MINIO_ENDPOINT:
+    raise ValueError("ARTIFACTS_MINIO_ENDPOINT must be set if PROXY_ARTIFACT_STORAGE is False.")
+if PROXY_ARTIFACT_STORAGE and ARTIFACTS_PUBLIC_MINIO_ENDPOINT:
+    # When proxying storage, clients should not access MinIO directly
+    raise ValueError("ARTIFACTS_PUBLIC_MINIO_ENDPOINT should not be set if PROXY_ARTIFACT_STORAGE is True.")
+
 # Validate minio endpoint name does not contain underscores
 if MINIO_ENDPOINT and '_' in MINIO_ENDPOINT.split(':')[0]:
     raise ValueError("MINIO_ENDPOINT cannot contain underscores in the hostname part.")

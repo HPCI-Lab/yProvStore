@@ -6,6 +6,7 @@ import logging
 import tempfile
 import importlib
 from typing import AsyncIterator
+from urllib.parse import urlparse, urlunparse
 
 import aiofiles
 from fastapi import UploadFile
@@ -28,17 +29,20 @@ class LocalFileStorageServiceImpl(FileStorageService):
     Local file storage implementation for testing purposes.
     """
 
-    def __init__(self, compression_service: CompressionService):
-        self.documents_path = TMP_PATH / "documents"
+    def __init__(self, compression_service: CompressionService | None = None, bucket: str | None = None):
+        self.documents_path = TMP_PATH / (bucket or "documents")
         if not self.documents_path.exists():
             self.documents_path.mkdir(parents=True, exist_ok=True)
         self.compression_service = compression_service
         self.COMPRESSION_STANDARD = super().get_compression_standard()
 
-    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False, ignore_compression: bool = False) -> None:
+    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> None:
         if ignore_compression and skip_compression:
             raise ValueError("Cannot set both ignore_compression and skip_compression to True.")
-        file_path = self.documents_path / storage_id
+        bucket_path = TMP_PATH / bucket if bucket else self.documents_path
+        if not bucket_path.exists():
+            bucket_path.mkdir(parents=True, exist_ok=True)
+        file_path = bucket_path / storage_id
         if file_path.exists():
             raise ConflictException(f"File with ID '{storage_id}' already exists.")
 
@@ -85,10 +89,13 @@ class LocalFileStorageServiceImpl(FileStorageService):
             logger.error(f"Error storing file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to store file.")
 
-    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False, ignore_compression: bool = False) -> str:
+    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> str:
         if ignore_compression and skip_compression:
             raise ValueError("Cannot set both ignore_compression and skip_compression to True.")
-        file_path = self.documents_path / storage_id
+        bucket_path = TMP_PATH / bucket if bucket else self.documents_path
+        if not bucket_path.exists():
+            bucket_path.mkdir(parents=True, exist_ok=True)
+        file_path = bucket_path / storage_id
         if file_path.exists():
             raise ConflictException(f"File with ID '{storage_id}' already exists.")
 
@@ -102,11 +109,11 @@ class LocalFileStorageServiceImpl(FileStorageService):
                 tmp_path = tmp.name
                 decompressor = None
                 compressor = None
-                if skip_compression:
+                if not ignore_compression and skip_compression:
                     logger.debug(f"Skipping compression for file {storage_id}")
                     # prepare stream decompressor to compute hash on original bytes
                     decompressor = self.compression_service.get_decompressor(self.COMPRESSION_STANDARD)
-                else:
+                elif not ignore_compression:
                     # prepare stream compressor
                     compressor = self.compression_service.get_compressor(self.COMPRESSION_STANDARD)
 
@@ -116,7 +123,7 @@ class LocalFileStorageServiceImpl(FileStorageService):
                     if not chunk:
                         break
                     original_chunk = chunk
-                    if skip_compression or ignore_compression:
+                    if not ignore_compression and skip_compression:
                         # decompress to get original bytes for hashing
                         original_chunk = decompressor.decompress(chunk)
                     hasher.update(original_chunk)           # update hash on original bytes
@@ -170,10 +177,11 @@ class LocalFileStorageServiceImpl(FileStorageService):
                 except Exception:
                     pass
 
-    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False) -> AsyncIterator[bytes]:
+    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> AsyncIterator[bytes]:
         if ignore_compression and skip_decompression:
             raise ValueError("Cannot set both ignore_compression and skip_decompression to True.")
-        file_path = self.documents_path / storage_id
+        bucket_path = TMP_PATH / bucket if bucket else self.documents_path
+        file_path = bucket_path / storage_id
         if not file_path.exists():
             raise NotFoundException(f"File with ID '{storage_id}' not found.")
 
@@ -240,6 +248,12 @@ class LocalFileStorageServiceImpl(FileStorageService):
         except Exception as e:
             logger.error(f"Error deleting file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to delete file.")
+        
+    async def get_upload_presigned_url(self, **kwargs) -> str:
+        raise NotImplementedError("Presigned URLs are not supported in local storage mode.")
+    
+    async def get_download_presigned_url(self, **kwargs) -> str:
+        raise NotImplementedError("Presigned URLs are not supported in local storage mode.")
 
 
 class MinioFileStorageServiceImpl(FileStorageService):
@@ -254,7 +268,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
       - MINIO_REGION (optional)
     """
 
-    def __init__(self, compression_service: CompressionService):
+    def __init__(self, compression_service: CompressionService | None = None, bucket: str | None = None):
         self.compression_service = compression_service
         # Lazy import of MinIO client to avoid hard dependency when using local storage
         try:
@@ -267,7 +281,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 "MinIO client not installed. Please add 'minio' to dependencies to use MinIO storage.")
         self.COMPRESSION_STANDARD = super().get_compression_standard()
 
-        self.bucket = settings.MINIO_BUCKET
+        self.bucket = bucket or settings.MINIO_BUCKET
         self.client = MinioClient(
             settings.MINIO_ENDPOINT, access_key=settings.MINIO_ACCESS_KEY, secret_key=settings.MINIO_SECRET_KEY,
             secure=settings.MINIO_SECURE, region=settings.MINIO_REGION
@@ -282,12 +296,12 @@ class MinioFileStorageServiceImpl(FileStorageService):
             logger.error(f"Error ensuring bucket '{self.bucket}': {e}")
             raise ServiceUnavailableException("Failed to ensure storage bucket.")
 
-    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False, ignore_compression: bool = False) -> None:
+    async def store_file(self, storage_id: str, file_data: bytes, skip_compression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> None:
         if ignore_compression and skip_compression:
             raise ValueError("Cannot set both ignore_compression and skip_compression to True.")
         # Check for conflict
         try:
-            self.client.stat_object(self.bucket, storage_id)
+            self.client.stat_object(bucket or self.bucket, storage_id)
             # If stat succeeds, object exists
             raise ConflictException(f"File with ID '{storage_id}' already exists.")
         except Exception as e:
@@ -299,7 +313,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 logger.warning(f"Unexpected error during stat_object for {storage_id}: {e}. Proceeding to upload.")
 
         try:
-            if skip_compression:
+            if not ignore_compression and skip_compression:
                 logger.debug(f"Skipping compression for file {storage_id}")
                 data_to_store = file_data
                 original_data = self.compression_service.get_decompressor(self.COMPRESSION_STANDARD).decompress(file_data)
@@ -319,7 +333,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
             compressed_stream = io.BytesIO(data_to_store)
             compression_meta = {"compression": self.COMPRESSION_STANDARD.value} if not skip_compression and not ignore_compression else {}
             self.client.put_object(
-                self.bucket,
+                bucket or self.bucket,
                 storage_id,
                 data=compressed_stream,
                 length=len(data_to_store),
@@ -334,12 +348,12 @@ class MinioFileStorageServiceImpl(FileStorageService):
             logger.error(f"Unexpected error storing file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to store file.")
 
-    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False, ignore_compression: bool = False) -> str:
+    async def store_file_from_uploadfile(self, storage_id: str, upload_file: UploadFile, skip_compression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> str:
         if ignore_compression and skip_compression:
             raise ValueError("Cannot set both ignore_compression and skip_compression to True.")
         # Check for conflict
         try:
-            self.client.stat_object(self.bucket, storage_id)
+            self.client.stat_object(bucket or self.bucket, storage_id)
             # If stat succeeds, object exists
             raise ConflictException(f"File with ID '{storage_id}' already exists.")
         except Exception as e:
@@ -362,7 +376,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
 
             compressor = None
             decompressor = None
-            if skip_compression:
+            if not ignore_compression and skip_compression:
                 logger.debug(f"Skipping compression for file {storage_id}")
                 # prepare stream decompressor to compute hash on original bytes
                 decompressor = self.compression_service.get_decompressor(self.COMPRESSION_STANDARD)
@@ -377,7 +391,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                         break
                     # update hash on original bytes
                     original_chunk = chunk
-                    if skip_compression:
+                    if not ignore_compression and skip_compression:
                         original_chunk = decompressor.decompress(chunk)
                     hasher.update(original_chunk)
                     # compress incrementally
@@ -409,7 +423,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 with open(tmp_path, "rb") as data_stream:
                     metadata = {"sha256": hash_hex, **compression_meta}
                     self.client.put_object(
-                        self.bucket,
+                        bucket or self.bucket,
                         storage_id,
                         data=data_stream,
                         length=compressed_size,
@@ -432,7 +446,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 except Exception:
                     pass
 
-    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False) -> AsyncIterator[bytes]:
+    async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> AsyncIterator[bytes]:
         """
         Retrieve a file from MinIO as an async iterator of (decompressed) chunks.
         """
@@ -444,7 +458,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 compression_meta = None
             else:
                 try:
-                    stat = self.client.stat_object(self.bucket, storage_id)
+                    stat = self.client.stat_object(bucket or self.bucket, storage_id)
                     # metadata keys can be present as provided or prefixed; check both
                     meta = getattr(stat, "metadata", {}) or {}
                     compression_str = meta.get("compression") or meta.get("x-amz-meta-compression")
@@ -457,7 +471,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                     logger.warning(f"Unexpected error during stat_object for {storage_id}: {e}. Proceeding to get_object.")
                     compression_meta = None
 
-            response = self.client.get_object(self.bucket, storage_id)
+            response = self.client.get_object(bucket or self.bucket, storage_id)
         except Exception as e:
             if isinstance(e, getattr(self, "_S3Error", tuple())):
                 if getattr(e, "code", "") in ("NoSuchKey", "NoSuchObject", "NotFound"):
@@ -507,10 +521,9 @@ class MinioFileStorageServiceImpl(FileStorageService):
             except Exception:
                 pass
         
-
-    async def delete_file(self, storage_id: str) -> None:
+    async def delete_file(self, storage_id: str, bucket: str | None = None) -> None:
         try:
-            self.client.remove_object(self.bucket, storage_id)
+            self.client.remove_object(bucket or self.bucket, storage_id)
         except Exception as e:
             if isinstance(e, getattr(self, "_S3Error", tuple())):
                 # If not found, consider it already deleted
@@ -520,3 +533,51 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 raise ServiceUnavailableException("Failed to delete stored file.")
             logger.error(f"Unexpected error deleting file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to delete stored file.")
+
+    async def get_upload_presigned_url(self, storage_id: str, expiration_seconds: int = 3600, bucket: str | None = None, public_endpoint: str | None = None) -> str:
+        try:
+            url = self.client.presigned_put_object(
+                bucket or self.bucket,
+                storage_id,
+                expires=expiration_seconds
+            )
+            if public_endpoint:
+                # replace the endpoint with the public one
+                parsed_url = urlparse(url)
+                
+                # Ensure public_endpoint has a scheme
+                if not public_endpoint.startswith(('http://', 'https://')):
+                    # Use the same scheme as the original URL
+                    public_endpoint = f"{parsed_url.scheme}://{public_endpoint}"
+                
+                public_parsed = urlparse(public_endpoint)
+                new_url = parsed_url._replace(scheme=public_parsed.scheme, netloc=public_parsed.netloc)
+                return urlunparse(new_url)
+            return url
+        except Exception as e:
+            logger.error(f"Error generating upload presigned URL for {storage_id}: {e}")
+            raise ServiceUnavailableException("Failed to generate upload presigned URL.")
+        
+    async def get_download_presigned_url(self, storage_id: str, expiration_seconds: int = 3600, bucket: str | None = None, public_endpoint: str | None = None) -> str:
+        try:
+            url = self.client.presigned_get_object(
+                bucket or self.bucket,
+                storage_id,
+                expires=expiration_seconds
+            )
+            if public_endpoint:
+                # replace the endpoint with the public one
+                parsed_url = urlparse(url)
+                
+                # Ensure public_endpoint has a scheme
+                if not public_endpoint.startswith(('http://', 'https://')):
+                    # Use the same scheme as the original URL
+                    public_endpoint = f"{parsed_url.scheme}://{public_endpoint}"
+                
+                public_parsed = urlparse(public_endpoint)
+                new_url = parsed_url._replace(scheme=public_parsed.scheme, netloc=public_parsed.netloc)
+                return urlunparse(new_url)
+            return url
+        except Exception as e:
+            logger.error(f"Error generating download presigned URL for {storage_id}: {e}")
+            raise ServiceUnavailableException("Failed to generate download presigned URL.")

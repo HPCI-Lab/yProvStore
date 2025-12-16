@@ -183,7 +183,7 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
             await self.session.commit()
             await self.session.refresh(entity)
         else:
-            self.session.delete(entity)
+            await self.session.delete(entity)
         await self.session.commit()
 
     def _validate_entity(self, entity: T) -> None:
