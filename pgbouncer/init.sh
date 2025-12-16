@@ -10,7 +10,7 @@ fi
 echo "=== Initializing pgbouncer configuration ==="
 
 # Create pgbouncer directory if it doesn't exist
-mkdir -p /pgbouncer
+mkdir -p /pgbouncer/configuration
 
 echo "1. Generating pgbouncer userlist for user: $POSTGRES_USER"
 
@@ -20,6 +20,7 @@ password_user_hash=$(echo -n "${POSTGRES_PASSWORD}${POSTGRES_USER}" | md5sum | c
 hashed_password="md5${password_user_hash}"
 
 # Create userlist.txt with the user and hashed password
+touch /pgbouncer/configuration/userlist.txt
 echo "\"$POSTGRES_USER\" \"$hashed_password\"" > /pgbouncer/configuration/userlist.txt
 
 echo "   ✓ Generated userlist.txt successfully"

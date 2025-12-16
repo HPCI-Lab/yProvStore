@@ -238,11 +238,12 @@ def download_artifact(ctx, pid, output, output_folder, verify):
         base_folder = output_folder or os.getcwd()
         # Handle PID with prefix
         split = pid.split('/')
-        if len(split) == 2:
-            prefix, artifact_id = split
-            prefix_path = os.path.join(base_folder, prefix)
-            os.makedirs(prefix_path, exist_ok=True)
-            output_path = os.path.join(prefix_path, filename)
+        if len(split) >= 2:
+            # multi-part PID
+            prefix = "/".join(split[:-1])
+            output_path = os.path.join(base_folder, prefix)
+            os.makedirs(output_path, exist_ok=True)
+            output_path = os.path.join(output_path, filename)
         else:
             output_path = os.path.join(base_folder, filename)
     

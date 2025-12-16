@@ -113,9 +113,9 @@ async def download_document_prefix(
 
             return first_chunk, stream_gen
 
-        if accept_encoding and accept_encoding != file_storage_service.get_compression_standard().value:
-            return BadRequestException(f"Unsupported Accept-Encoding '{accept_encoding}'. Supported: '{file_storage_service.get_compression_standard().value}'")
-        
+        # if accept_encoding and accept_encoding != file_storage_service.get_compression_standard().value:
+        #     raise BadRequestException(f"Unsupported Accept-Encoding '{accept_encoding}'. Supported: '{file_storage_service.get_compression_standard().value}'")
+
         skip_decompression = accept_encoding == file_storage_service.get_compression_standard().value
         if skip_decompression:
             logger.info(f"Client requested to skip decompression for document {pid} and directly return {file_storage_service.get_compression_standard().value}-compressed.")

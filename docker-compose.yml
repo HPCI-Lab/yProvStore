@@ -90,7 +90,7 @@ services:
       pgbouncer-init:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -p 6432"]
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 6432 -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5

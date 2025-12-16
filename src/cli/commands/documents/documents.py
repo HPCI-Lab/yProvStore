@@ -451,14 +451,13 @@ def download_document(ctx, pid, output, output_folder, trustworthy, compressed, 
     else:
         base_folder = output_folder or os.getcwd()
         split = pid.split('/')
-        if len(split) == 2:
-            prefix, doc_id = split
-            prefix_path = os.path.join(base_folder, prefix)
-            os.makedirs(prefix_path, exist_ok=True)
-            output_path = os.path.join(prefix_path, f"{doc_id}.json")
-        elif len(split) > 2:
-            console.print(f"❌ [bold red]Error:[/bold red] Invalid PID format '{pid}'. Expected format is 'prefix/pid' or 'pid'.")
-            return
+        if len(split) >= 2:
+            # multi-part PID
+            prefix = "/".join(split[:-1])
+            doc_id = split[-1]
+            output_path = os.path.join(base_folder, prefix)
+            os.makedirs(output_path, exist_ok=True)
+            output_path = os.path.join(output_path, f"{doc_id}.json")
         else:
             # single-part PID
             output_path = os.path.join(base_folder, f"{pid}.json")
@@ -591,11 +590,12 @@ def download_document(ctx, pid, output, output_folder, trustworthy, compressed, 
 
         # 1) Get DB hash from API /documents/{pid}
         db_hash = None
-        response_meta = make_request("GET", api_url, f"/documents/{pid}")
+        response_meta = make_request("GET", api_url, f"/documents?pid={pid}")
         if response_meta and response_meta.status_code == 200:
             try:
                 meta = response_meta.json()
                 # look for common hash keys
+                meta = meta[0] if isinstance(meta, list) and len(meta) > 0 else meta
                 db_hash = meta.get('sha256') or meta.get('hash') or meta.get('documentHash') or meta.get('document_hash')
             except Exception as e:
                 console.print(f"[bold yellow]Warning:[/bold yellow] Could not parse JSON from metadata response: {e}")
