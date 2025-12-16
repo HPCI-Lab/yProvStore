@@ -1,6 +1,7 @@
 import click
 import json
 import requests
+import dotenv
 from rich.console import Console
 
 from commands.auth import auth
@@ -9,6 +10,8 @@ from commands.pids import pids
 from commands.blockchain import blockchain
 from commands.artifacts import artifacts
 from utils.api_client import make_request
+
+dotenv.load_dotenv()
 
 console = Console()
 
