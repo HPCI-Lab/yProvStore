@@ -8,6 +8,7 @@
 * Added storage of artifacts through MinIO presigned URLs.
 * Implemented proxying of artifacts downloads/uploads through the API using presigned URLs.
 * Moved CLI to a dedicated repository: [yProvStore-cli](https://github.com/HPCI-Lab/yProvStore-cli).
+* Added `pgbouncer` service in Docker deployment for efficient database connection pooling.
 
 ## Version 1.0.0
 
