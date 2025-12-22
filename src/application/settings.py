@@ -14,7 +14,7 @@ APP_PORT = int(os.getenv("APP_PORT", 8000))
 APP_PROTOCOL = os.getenv("APP_PROTOCOL", "http")
 APP_URL = os.getenv("APP_URL", f"{APP_PROTOCOL}://{APP_HOST}:{APP_PORT}")
 
-DOCUMENT_DOWNLOAD_SIZE_LIMIT_MB = int(os.getenv("DOCUMENT_DOWNLOAD_SIZE_LIMIT_MB", 100))  # Max size for non-streamed document download
+DOCUMENT_DOWNLOAD_SIZE_LIMIT_MB = int(os.getenv("DOCUMENT_DOWNLOAD_SIZE_LIMIT_MB", 10))  # Max size for non-streamed document download
 ON_WINDOWS = os.name == "nt"
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO" if not DEBUG else "DEBUG")

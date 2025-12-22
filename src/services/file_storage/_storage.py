@@ -12,7 +12,7 @@ import aiofiles
 from fastapi import UploadFile
 
 from application import settings
-from application.settings import TMP_PATH
+from application.settings import DOCUMENT_DOWNLOAD_SIZE_LIMIT_MB, TMP_PATH
 from application.exceptions.types import ConflictException, NotFoundException, ServiceUnavailableException
 
 from .service import FileStorageService, CompressionService, DocumentNotCompressedException
@@ -177,13 +177,45 @@ class LocalFileStorageServiceImpl(FileStorageService):
                 except Exception:
                     pass
 
-    async def get_file_size(self, storage_id: str, bucket: str | None = None) -> int:
+    async def get_file_size(self, storage_id: str, compressed: bool = False, bucket: str | None = None) -> int:
         bucket_path = TMP_PATH / bucket if bucket else self.documents_path
         file_path = bucket_path / storage_id
         if not file_path.exists():
             raise NotFoundException(f"File with ID '{storage_id}' not found.")
         try:
-            return file_path.stat().st_size
+            stored_size = file_path.stat().st_size
+            
+            if compressed:
+                return stored_size
+            
+            # For local storage, we need to decompress to get the uncompressed size
+            # Check if the file is compressed first
+            async with aiofiles.open(file_path, 'rb') as fpeek:
+                head = await fpeek.read(4)
+            compression_standard = self.compression_service.detect_compression(None, head) if self.compression_service else None
+            
+            if not compression_standard:
+                # File is not compressed, stored size is the uncompressed size
+                return stored_size
+            
+            # Decompress to calculate uncompressed size
+            uncompressed_size = 0
+            decompressor = self.compression_service.get_decompressor(compression_standard)
+            async with aiofiles.open(file_path, 'rb') as f:
+                while True:
+                    chunk = await f.read(READ_CHUNK)
+                    if not chunk:
+                        break
+                    decompressed = decompressor.decompress(chunk)
+                    uncompressed_size += len(decompressed)
+                    if uncompressed_size > DOCUMENT_DOWNLOAD_SIZE_LIMIT_MB * 1024 * 1024:
+                        # Early exit if size limit exceeded
+                        return uncompressed_size
+                tail = decompressor.flush_decompression()
+                if tail:
+                    uncompressed_size += len(tail)
+            
+            return uncompressed_size
         except Exception as e:
             logger.error(f"Error getting size for file {storage_id}: {e}")
             raise ServiceUnavailableException("Failed to get file size.")
@@ -340,9 +372,9 @@ class MinioFileStorageServiceImpl(FileStorageService):
             # Compute hash over original bytes (keeps behaviour consistent with other methods)
             file_hash = hashlib.sha256(original_data).hexdigest()
 
-            # Upload compressed payload, include metadata about original hash and compression
+            # Upload compressed payload, include metadata about original hash, compression, and uncompressed size
             compressed_stream = io.BytesIO(data_to_store)
-            compression_meta = {"compression": self.COMPRESSION_STANDARD.value} if not skip_compression and not ignore_compression else {}
+            compression_meta = {"compression": self.COMPRESSION_STANDARD.value, "uncompressed_size": str(len(original_data))} if not skip_compression and not ignore_compression else {}
             self.client.put_object(
                 bucket or self.bucket,
                 storage_id,
@@ -377,6 +409,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
 
         # stream and hash into a temp file
         hasher = hashlib.sha256()
+        hasher_byte_count = 0  # Track uncompressed size
         tmp_path = None
 
         # NOTE: writing compressed bytes to disk; aiofiles performs non-blocking writes
@@ -405,6 +438,7 @@ class MinioFileStorageServiceImpl(FileStorageService):
                     if not ignore_compression and skip_compression:
                         original_chunk = decompressor.decompress(chunk)
                     hasher.update(original_chunk)
+                    hasher_byte_count += len(original_chunk)
                     # compress incrementally
                     data_to_store = compressor.compress(chunk) if compressor else chunk
                     if data_to_store:
@@ -420,15 +454,17 @@ class MinioFileStorageServiceImpl(FileStorageService):
                     tail = decompressor.flush_decompression()
                     if tail:
                         hasher.update(tail)
+                        hasher_byte_count += len(tail)
 
             # compute meta and compressed size
             hash_hex = hasher.hexdigest()
             compressed_size = os.path.getsize(tmp_path)
+            uncompressed_size = hasher_byte_count
 
             # The blocking put_object call in a thread pool to avoid blocking loop
             loop = asyncio.get_running_loop()
 
-            compression_meta = {"compression": self.COMPRESSION_STANDARD.value} if not skip_compression else {}
+            compression_meta = {"compression": self.COMPRESSION_STANDARD.value, "uncompressed_size": str(uncompressed_size)} if not skip_compression and not ignore_compression else {}
             def upload_sync():
                 # open file and call blocking minio put_object inside the executor thread
                 with open(tmp_path, "rb") as data_stream:
@@ -457,12 +493,38 @@ class MinioFileStorageServiceImpl(FileStorageService):
                 except Exception:
                     pass
 
-    async def get_file_size(self, storage_id: str, bucket: str | None = None) -> int:
+    async def get_file_size(self, storage_id: str, compressed: bool = False, bucket: str | None = None) -> int:
         """
         Get the size of a stored file in bytes.
+        
+        Args:
+            storage_id: The ID of the file to get the size for.
+            compressed: If False (default), returns the uncompressed (original) size if available.
+                       If True, returns the compressed (stored) size.
+            bucket: Optional bucket name override.
+        
+        Returns:
+            The file size in bytes.
+        
+        Note:
+            If compressed=False but uncompressed_size metadata is not available
+            (e.g., for files stored without compression tracking), returns the stored size.
         """
         try:
             stat = self.client.stat_object(bucket or self.bucket, storage_id)
+            
+            if not compressed:
+                # Try to get uncompressed size from metadata
+                meta = getattr(stat, "metadata", {}) or {}
+                uncompressed_size_str = meta.get("uncompressed_size") or meta.get("x-amz-meta-uncompressed_size")
+                if uncompressed_size_str:
+                    try:
+                        return int(uncompressed_size_str)
+                    except (ValueError, TypeError):
+                        logger.warning(f"Invalid uncompressed_size metadata for {storage_id}: {uncompressed_size_str}")
+                # Fall back to stored size if uncompressed size not available
+                logger.debug(f"Uncompressed size metadata not available for {storage_id}, returning stored size.")
+            
             return stat.size
         except Exception as e:
             if isinstance(e, getattr(self, "_S3Error", tuple())):

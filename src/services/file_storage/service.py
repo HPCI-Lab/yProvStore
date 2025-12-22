@@ -56,13 +56,19 @@ class FileStorageService:
         """
         raise NotImplementedError
     
-    async def get_file_size(self, storage_id: str, bucket: str | None = None) -> int:
+    async def get_file_size(self, storage_id: str, compressed: bool = False, bucket: str | None = None) -> int:
         """
         Get the size of a file in the storage system.
 
         :param storage_id: Unique identifier for the file in the storage system.
+        :param compressed: If False (default), returns the uncompressed (original) size if available.
+                          If True, returns the compressed (stored) size.
         :param bucket: Optional bucket name for storage backends that support multiple buckets.
         :return: Size of the file in bytes.
+        
+        Note:
+            For implementations that don't track uncompressed size, this may return
+            the stored size regardless of the compressed parameter.
         """
         raise NotImplementedError
 
