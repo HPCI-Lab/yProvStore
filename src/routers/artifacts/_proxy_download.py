@@ -4,8 +4,10 @@ from fastapi import APIRouter, status, Query, Path
 from fastapi.responses import StreamingResponse, Response
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
+from application.settings import DOCUMENT_DOWNLOAD_SIZE_LIMIT_MB
 from models import PresignedURLOperationType, PresignedURL
-from application.exceptions.types import UnauthorizedException, NotFoundException, ServiceUnavailableException, ForbiddenException, InternalServerErrorException
+from application.exceptions.types import UnauthorizedException, NotFoundException, ServiceUnavailableException, ForbiddenException, \
+    InternalServerErrorException, PayloadTooLargeException
 from application.exceptions.responses import EXCEPTION_SCHEMA
 from application.documentation.openapi_generation import EXAMPLE_UUID
 from services.artifact_storage.service import ArtifactRecordStorageService
@@ -107,7 +109,7 @@ async def proxy_artifact_download(
                 raise NotFoundException(f"The specified artifact PID does not exist.")
             except Exception as e:
                 # any other exception from the storage read should be surfaced as service unavailable
-                raise ServiceUnavailableException(f"Failed to retrieve document with PID '{artifact_record.pid}'") from e
+                raise ServiceUnavailableException(f"Failed to retrieve artifact with PID '{artifact_record.pid}'") from e
 
             return first_chunk, stream_gen
         
@@ -125,6 +127,14 @@ async def proxy_artifact_download(
 
         if not stream:
             # read all content into memory (not ideal for large files)
+
+            # Check size limit before proceeding
+            file_size = await file_storage_service.get_file_size(artifact_record.storage_id)
+            if file_size > DOCUMENT_DOWNLOAD_SIZE_LIMIT_MB * 1024 * 1024:
+                raise PayloadTooLargeException(
+                    f"Requested artifact is too large to be downloaded without streaming ({DOCUMENT_DOWNLOAD_SIZE_LIMIT_MB} MB limit)."
+                    " Please use stream=true to download artifact in stream mode."
+                )
             content_bytes = b""
             async for chunk in delegating_gen():
                 content_bytes += chunk
