@@ -23,20 +23,7 @@ yProv is a joint project between [University of Trento](https://www.unitn.it) an
       - [2. Missing PID private key error](#2-missing-pid-private-key-error)
       - [3. MinIO bucket error](#3-minio-bucket-error)
   - [Application Deployment with Docker](#application-deployment-with-docker)
-  - [yProv-CLI](#yprov-cli)
-    - [Installation](#installation)
-    - [Basic Command Structure](#basic-command-structure)
-    - [Available Commands](#available-commands)
-    - [Configuration](#configuration)
-    - [Authentication](#authentication)
-    - [Managing Documents](#managing-documents)
-    - [Managing Document Permissions](#managing-document-permissions)
-    - [Managing Document Metadata](#managing-document-metadata)
-    - [Graph Operations on Documents](#graph-operations-on-documents)
-    - [Blockchain Operations](#blockchain-operations)
-    - [Managing PIDs](#managing-pids)
-    - [Managing Artifacts](#managing-artifacts)
-    - [Troubleshooting CLI](#troubleshooting-cli)
+  - [yProvStore CLI](#yprovstore-cli)
 
 ## Local Development
 
@@ -240,4 +227,4 @@ The application can also be deployed using Docker and Docker Compose. Check the 
 
 This command-line interface (CLI) allows you to interact with the yProv API directly from your terminal.
 
-You can install it and see the available commands in its dedicated repository: [yProvStore-cli](https://github.com/HPCI-Lav/yProvStore-cli)
+You can install it and see the available commands in its dedicated repository: [yProvStore-cli](https://github.com/HPCI-Lab/yProvStore-cli)
