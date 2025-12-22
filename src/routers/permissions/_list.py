@@ -38,19 +38,17 @@ documentation = {
 }
 
 
-@router.get("/{prefix}/{pid}/permissions", **documentation)
-async def list_permissions_prefix(
+@router.get("/{pid:path}/permissions", **documentation)
+async def list_permissions(
     pid: str,
-    prefix: str,
     permission_storage: FromDishka[DocumentPermissionStorageService],
     document_record_storage: FromDishka[DocumentRecordStorageService],
     user_storage: FromDishka[UserStorageService],
     logged_user: LoggedUser
 ) -> list[DocumentPermissionGet]:
     """
-    List all permissions for a specific document identified by its PID and prefix.
+    List all permissions for a specific document identified by its PID.
     """
-    pid = f"{prefix}/{pid}"
     document_record = await document_record_storage.get_document_by_pid(pid)
 
     first_document_record = await permission_storage.get_first_document_record(document_record)

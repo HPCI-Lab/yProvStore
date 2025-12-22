@@ -1,11 +1,15 @@
+import logging
 from datetime import datetime, timezone
+
 from dishka import Provider, provide, Scope
-from sqlalchemy.orm import Session as SessionType
+from sqlalchemy.ext.asyncio import AsyncSession as SessionType
 
 from application.exceptions.types import ConflictException, NotFoundException
 from models import DocumentRecord
 from services.db.sql.models import DBDocumentRecord
 from services.db.sql.crud import SQLEntityDB
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentRecordStorageService:
@@ -31,14 +35,14 @@ class DocumentRecordStorageService:
         """
         raise NotImplementedError
     
-    async def document_is_updated(self, pid: str, updated_after: str) -> None:
+    async def document_is_updated(self, pid: str, updated_after: datetime) -> None:
         """
         Updates `updated_at` field of the document record.
         """
         raise NotImplementedError
 
-    async def list_documents(self, page: int, page_size: int, updated_after: str | None = None,
-                             created_after: str | None = None) -> list[DocumentRecord]:
+    async def list_documents(self, page: int, page_size: int, updated_after: datetime | None = None,
+                             created_after: datetime | None = None, pid: str | None = None) -> list[DocumentRecord]:
         """
         List all document records available in the storage.
         
@@ -46,6 +50,7 @@ class DocumentRecordStorageService:
         :param page_size: The number of items per page (default is 10).
         :param updated_after: Optional timestamp to filter documents updated after a certain time.
         :param created_after: Optional timestamp to filter documents created after a certain time.
+        :param pid: Optional PID to filter documents by their unique identifier.
         :return: A list of document records.
         """
         raise NotImplementedError
@@ -96,13 +101,15 @@ class DocumentRecordStorageServiceImpl(DocumentRecordStorageService, SQLEntityDB
         new_record = await self._update(db_document_record)
         return new_record.to_document_record()
 
-    async def list_documents(self, page: int, page_size: int, updated_after: str | None = None,
-                             created_after: str | None = None) -> list[DocumentRecord]:
+    async def list_documents(self, page: int, page_size: int, updated_after: datetime | None = None,
+                             created_after: datetime | None = None, pid: str | None = None) -> list[DocumentRecord]:
         filters = {}
         if updated_after:
             filters['updated_at__ge'] = updated_after
         if created_after:
             filters['created_at__ge'] = created_after
+        if pid:
+            filters['id'] = pid
         db_documents = await super()._filter(page=page, page_size=page_size, **filters)
         return [db_document.to_document_record() for db_document in db_documents]
     

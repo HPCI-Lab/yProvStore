@@ -20,3 +20,5 @@ pid_router = APIRouter(
 
 # Include the sub-routers for listing all PIDs
 pid_router.include_router(get_router)
+
+pids_router.include_router(pid_router)

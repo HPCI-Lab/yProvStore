@@ -64,10 +64,9 @@ documentation = {
 }
 
 
-@router.get("/{prefix}/{pid}", **documentation)
-async def get_pid_prefix(
+@router.get("/{pid:path}", **documentation)
+async def get_pid(
     pid: str,
-    prefix: str,
     pid_service: FromDishka[PidService]
 ) -> dict:
     """
@@ -75,7 +74,6 @@ async def get_pid_prefix(
     This endpoint retrieves the PID record for the specified PID.
     """
 
-    pid = f"{prefix}/{pid}"
     record_pid = await pid_service.get_document_pid(pid)
 
     return record_pid

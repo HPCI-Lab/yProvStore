@@ -21,4 +21,4 @@ class DocumentRecord:
 
     @property
     def storage_url(self) -> str:
-        return f"{APP_URL}/documents/{self.pid}/download"
+        return f"{APP_URL}/documents/{self.pid}"

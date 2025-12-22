@@ -31,6 +31,7 @@ class HandleValueType(Enum):
     DESCRIPTION = "DESCRIPTION"
     KEYWORDS = "KEYWORDS"
     AUTHOR = "AUTHOR"
+    EXTRA = "EXTRA"
     # ...
 
     @classmethod

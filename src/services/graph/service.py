@@ -1,7 +1,9 @@
 from dishka import Provider, Scope, provide
 
+from application.settings import DOCUMENT_DOWNLOAD_SIZE_LIMIT_MB
 from models import DocumentRecord, DocumentGraphEntity, DocumentSubgraphDirection
 from services.file_storage.service import FileStorageService
+from application.exceptions.types import PayloadTooLargeException
 from ._prov_utils import ProvUtils
 
 
@@ -54,6 +56,17 @@ class ProvDocumentGraphService(GraphService):
         self.file_storage_service = file_storage_service
         self.prov_utils = ProvUtils()
 
+    async def _check_file_size_limit(
+        self,
+        document_record: DocumentRecord,
+        size_limit_bytes: int
+    ) -> None:
+        file_size = await self.file_storage_service.get_file_size(document_record.storage_id)
+        if file_size > size_limit_bytes:
+            raise PayloadTooLargeException(
+                f"Requested document exceeds the size limit of {size_limit_bytes / (1024 * 1024)} MB."
+            )
+
     async def list_elements(
         self,
         document_record: DocumentRecord,
@@ -62,8 +75,14 @@ class ProvDocumentGraphService(GraphService):
         is_element: bool | None = None,
         is_relation: bool | None = None
     ) -> tuple[list[str], list[DocumentGraphEntity]]:
-
-        file_bytes = await self.file_storage_service.retrieve_file(document_record.storage_id)
+        from routers.common.utils import get_file_bytes
+        await self._check_file_size_limit(document_record, DOCUMENT_DOWNLOAD_SIZE_LIMIT_MB * 1024 * 1024)
+        file_bytes = await get_file_bytes(
+            document_record.pid,
+            document_record,
+            self.file_storage_service,
+            skip_decompression=False
+        )
         return await self.prov_utils.graph_list_elements(
             file_bytes=file_bytes,
             entity_ids=entity_ids,
@@ -78,8 +97,14 @@ class ProvDocumentGraphService(GraphService):
         entity_ids: list[str],
         direction: DocumentSubgraphDirection = DocumentSubgraphDirection.BOTH
     ) -> tuple[list[str], dict]:
-        
-        file_bytes = await self.file_storage_service.retrieve_file(document_record.storage_id)
+        from routers.common.utils import get_file_bytes
+        await self._check_file_size_limit(document_record, DOCUMENT_DOWNLOAD_SIZE_LIMIT_MB * 1024 * 1024)
+        file_bytes = await get_file_bytes(
+            document_record.pid,
+            document_record,
+            self.file_storage_service,
+            skip_decompression=False
+        )
         return await self.prov_utils.graph_subgraph(
             file_bytes=file_bytes,
             entity_ids=entity_ids,

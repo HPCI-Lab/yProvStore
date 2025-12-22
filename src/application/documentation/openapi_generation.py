@@ -33,6 +33,9 @@ EXAMPLE_HASH = "3a7bd3e2360a3d4858f6f2d4b3b5c6e0f1a2b3c4d5e6f708192a3b4c5d6e7f80
 EXAMPLE_EMAIL = "user@example.com"
 EXAMPLE_DOCUMENT_VERSION = 1
 EXAMPLE_DOCUMENT_STORAGE = f"{APP_URL}/docs/{EXAMPLE_UUID}"
+EXAMPLE_ARTIFACT_STORAGE = f"{APP_URL}/artifacts/{EXAMPLE_UUID}"
+EXAMPLE_ARTIFACT_FILENAME = "example_artifact.txt"
+EXAMPLE_ISO_TIMESTAMP = "2024-12-31T23:59:59Z"
 # TODO: make this a valid PROV JSON graph
 EXAMPLE_DOCUMENT_DATA = {
     "activity": {
@@ -72,6 +75,7 @@ EXAMPLE_METADATA_TITLE = "Sample Document Title"
 EXAMPLE_METADATA_DESCRIPTION = "This is a sample document description."
 EXAMPLE_METADATA_KEYWORDS = ["keyword1", "keyword2"]
 EXAMPLE_METADATA_AUTHOR = "Sample Author"
+EXAMPLE_METADATA_EXTRA = {"custom_field": "custom_value"}
 EXAMPLE_METADATA_SCHEMA = {
   "properties": {
     "title": {

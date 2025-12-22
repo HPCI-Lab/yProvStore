@@ -2,11 +2,11 @@ import json
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, status, UploadFile, Form, Request, Header
-from pydantic import BaseModel
+from fastapi import APIRouter, status, UploadFile, Form, Request, Header, Query
+from pydantic import BaseModel, Field
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 
-from application.documentation.openapi_generation import EXAMPLE_DOCUMENT_DATA
+from application.documentation.openapi_generation import EXAMPLE_DOCUMENT_DATA, EXAMPLE_EMAIL, EXAMPLE_UUID, EXAMPLE_DOCUMENT_VERSION, EXAMPLE_DOCUMENT_STORAGE, EXAMPLE_HASH
 from models import DocumentRecord, PermissionLevel
 from application.exceptions.responses import EXCEPTION_SCHEMA
 from application.exceptions.types import UnauthorizedException, ForbiddenException, NotFoundException, ServiceUnavailableException, BadRequestException
@@ -14,7 +14,8 @@ from services.document_storage.service import DocumentRecordStorageService
 from services.permission_storage.service import DocumentPermissionStorageService
 from services.pid.service import PidService
 from services.file_storage.service import FileStorageService
-from routers.documents._get import DocumentRecordGet
+from services.metadata.service import DocumentMetadataService
+from routers.metadata.utils import DocumentMetadataPost, update_document_metadata
 from routers.common.dependencies import LoggedUser
 
 __all__ = ("router",)
@@ -28,7 +29,20 @@ router = APIRouter(
 )
 
 
-class DocumentRecordCreate(BaseModel):
+class DocumentRecordGet(BaseModel):
+    """
+    Response model for listing available documents.
+    """
+    pid: str = Field(..., examples=[EXAMPLE_UUID])
+    version: int = Field(..., examples=[EXAMPLE_DOCUMENT_VERSION])
+    storage_url: str = Field(..., examples=[EXAMPLE_DOCUMENT_STORAGE])
+    owner_email: str = Field(..., examples=[EXAMPLE_EMAIL])
+    hash: str | None = Field(None, examples=[EXAMPLE_HASH], description="SHA-256 hash of the document content, if available.")
+    parent_document_pid: str | None = Field(None, examples=[EXAMPLE_UUID], description="PID of the previous document version.")
+    lineage_id: str | None = Field(None, examples=[EXAMPLE_UUID], description="Lineage identifier, if available.")
+
+
+class DocumentRecordCreate(DocumentMetadataPost):
     """
     Request model for the input data to publish a new document.
     """
@@ -37,10 +51,15 @@ class DocumentRecordCreate(BaseModel):
 
 documentation = {
     "summary": "Publish a Document Record",
-    "description": ("This endpoint allows the user to publish a new document record with its associated data. "
-                    "The document is stored in the system, and a unique identifier (PID) is generated for it."
-                    "\n\nTo upload a document, exactly one of the following fields must be provided: "
-                    "`document_data` in the request body, or `document_file` as a file upload."),
+    "description": (
+        "This endpoint allows the user to publish a new document record with its associated data. "
+        "The document is stored in the system, and a unique identifier (PID) is generated for it."
+        "\n\nTo upload a document, exactly one of the following fields must be provided: "
+        "`document_data` in the JSON request body, or `document_file` as a file upload.<br><br>"
+        "Optional metadata may be provided through the `document_metadata` query parameter to set the initial metadata for the document. "
+        "Each metadata field is optional; omit or set to an empty string/list to leave it unset. Fields available: `title`, `description`, `keywords` (array of strings), `author`."\
+        "<br><br>You can fetch the metadata schema with the `/metadata/schema` endpoint and an example is available in the GET `/documents/{pid}/metadata` endpoint documentation."
+    ),
     "status_code": status.HTTP_200_OK,
     "response_description": "Returns the created document record",
     "responses": {
@@ -61,7 +80,7 @@ documentation = {
                                 "type": "string",
                                 "format": "binary",
                                 "description": "The document file to be uploaded. Must be either JSON or plain text."
-                            },
+                            }
                         }
                     }
                 },
@@ -73,11 +92,27 @@ documentation = {
                                 "type": "object",
                                 "example": EXAMPLE_DOCUMENT_DATA
                             }
-                        },
+                        }
                     }
-                },
+                }
             }
-        }
+        },
+        "parameters": [
+            {
+                "name": "document_metadata",
+                "in": "query",
+                "required": False,
+                "description": (
+                    "Optional initial metadata for the document encoded as a JSON object. "
+                    "Provide fields among: title (string), description (string), keywords (array of strings), author (string). "
+                    "Omitted fields remain unset. Example: {\"title\":\"A Title\",\"keywords\":[\"k1\",\"k2\"],\"author\":\"Jane Doe\"}"
+                ),
+                "schema": {
+                    "type": "string",
+                    "example": '{"title": "A Title", "description": "Desc", "keywords": ["k1", "k2"], "author": "Jane Doe"}'
+                }
+            }
+        ]
     }
 }
 
@@ -89,7 +124,9 @@ async def create_document(
     file_storage_service: FromDishka[FileStorageService],
     permission_service: FromDishka[DocumentPermissionStorageService],
     pid_service: FromDishka[PidService],
+    metadata_service: FromDishka[DocumentMetadataService],
     logged_user: LoggedUser,
+    document_metadata: Optional[str] = None,
     parent_document_pid: str | None = None,
     document_file: UploadFile | None = None,
     content_encoding: Optional[str] = Header(None),  # client may send Content-Encoding header
@@ -119,6 +156,13 @@ async def create_document(
     new_pid = await pid_service.new_pid()
     if not new_pid:
         raise Exception("Failed to generate a new PID.")
+    
+    if document_metadata:
+        try:
+            metadata_dict = json.loads(document_metadata)
+            document_metadata = DocumentMetadataPost.model_validate(metadata_dict)
+        except Exception as e:
+            raise BadRequestException(f"Invalid document metadata provided: {e}")
 
     skip_compression = False
     if content_encoding:
@@ -163,7 +207,7 @@ async def create_document(
     previous_parent_lineage_id = parent_document_record.lineage_id if parent_document_record else None
     try:
         # Create the PID record (but do not save it yet)
-        new_pid_record, finalize_fn = await pid_service.new_pid_record_from_document(
+        new_pid_record, finalize_fn, parent_pid_record = await pid_service.new_pid_record_from_document(
             new_pid, new_document_record.storage_url, parent_doc_pid=parent_document_pid, hash=file_hash
         )
 
@@ -174,13 +218,47 @@ async def create_document(
         new_document_record = await document_record_storage.save_document(new_document_record)
 
         if parent_document_record and parent_document_record.lineage_id != new_document_record.lineage_id:
-            logger.info(f"Updating parent document record lineage_id from '{parent_document_record.lineage_id}' to '{new_document_record.lineage_id}'")
+            logger.debug(f"Updating parent document record lineage_id from '{parent_document_record.lineage_id}' to '{new_document_record.lineage_id}'")
             parent_document_record.lineage_id = new_document_record.lineage_id
             await document_record_storage.update_document(parent_document_record)
         stored_on_db = True
 
         # Finalize saving all involved PID records
         await finalize_fn()
+
+        if not document_metadata:
+            # Retrieve parent document metadata to copy over
+            if parent_document_record:
+                try:
+                    parent_metadata = await metadata_service.get_document_metadata(parent_document_record.pid, parent_pid_record)
+                    # TODO: use directly DocumentMetadata object instead of going through DocumentMetadataPost?
+                    document_metadata = DocumentMetadataPost(
+                        title=parent_metadata.title,
+                        description=parent_metadata.description,
+                        keywords=parent_metadata.keywords,
+                        author=parent_metadata.author,
+                        extra=parent_metadata.extra
+                    )
+                    logger.debug(f"Copied metadata from parent document PID '{parent_document_record.pid}' for new document PID '{new_document_record.pid}'")
+                except Exception as e:
+                    logger.warning(f"Failed to copy metadata from parent document PID '{parent_document_record.pid}': {e}")
+                    pass
+
+        # Update the document metadata
+        if document_metadata:
+            logger.debug(f"Updating document metadata for PID '{new_document_record.pid}'")
+            try:
+                await update_document_metadata(
+                    new_document_record.pid,
+                    document_metadata,
+                    metadata_service,
+                    document_record_storage,
+                    file_storage_service,
+                    pid_record=new_pid_record
+                )
+            except Exception as e:
+                logger.warning(f"Failed to update document metadata for PID '{new_document_record.pid}': {e}")
+                pass
     except Exception as e:
         logger.error(f"Error occurred during document creation: {e}")
         logger.info("Deleting stored file due to error during document creation.")
@@ -218,3 +296,4 @@ async def create_document(
         parent_document_pid=new_document_record.parent_doc_pid,
         lineage_id=new_document_record.lineage_id
     )
+ 

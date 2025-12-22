@@ -1,30 +1,40 @@
 services:
-  # FastAPI Application Service
+
   api:
     build: .
     container_name: yprovstore-api
     secrets:
-      - pid_admin_key
+      - pid_user_key
     ports:
-      - "8000:8000"
-    volumes:
-      # Mounts local code for live-reloading in development
-      - ./src:/app/src
+      - "${APP_PORT}:8000"
     environment:
-      - PID_PRIVATE_KEY_PATH=/run/secrets/pid_admin_key
-      - DB_CONNECTION_STRING=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - MINIO_ENDPOINT=yprovstore-minio:9000
+      - PID_PRIVATE_KEY_PATH=/run/secrets/pid_user_key
+      - DB_CONNECTION_STRING=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pgbouncer:6432/${POSTGRES_DB}
     env_file:
       - .env
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/status || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
       # NOTE: be sure to define JWT_SECRET_KEY in the environment .env file
 
   minio:
     image: minio/minio:latest
     container_name: yprovstore-minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
+    # Expose MinIO ports only if you need to connect directly
+    # ports:
+      # - "9000:9000"  (Edit also in api.environment MINIO_ENDPOINT if changed)
+      # - "9001:9001"
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
@@ -36,23 +46,63 @@ services:
   postgres:
     image: postgres:17
     container_name: yprovstore-postgres
-    ports:
-      - "5432:5432"
+    # Expose Postgres port only if you need to connect directly
+    # ports:
+    #   - "5432:5432" (Edit also in pgbouncer/pgbouncer.ini.template if changed)
     volumes:
       - pgdata:/var/lib/postgresql/data
-    env_file:
-      - .env
+      - ./postgres/init:/docker-entrypoint-initdb.d
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    env_file:
+      - .env
+      # NOTE: be sure to define these env vars in the environment .env file:
+      #       POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+
+  pgbouncer-init:
+    image: postgres:17-alpine
+    container_name: yprovstore-pgbouncer-init
+    volumes:
+      - ./pgbouncer:/pgbouncer
+    env_file:
+      - .env
+    command: bash /pgbouncer/init.sh
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: yprovstore-pgbouncer
+    restart: unless-stopped
+    # Expose PgBouncer port only if you need to connect directly
+    # ports:
+    #   - "6432:6432"  (Edit also in api.environment DB_CONNECTION_STRING if changed and pgbouncer/pgbouncer.ini.template)
+    volumes:
+      - ./pgbouncer/configuration:/etc/pgbouncer:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      pgbouncer-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 6432 -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    env_file:
+      - .env
+      # NOTE: be sure to define these env vars in the environment .env file:
+      #       POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
 
 volumes:
   minio_data:
   pgdata:
 
 secrets:
-  pid_admin_key:
-    file: ./keys/admpriv.pem
+  pid_user_key:
+    file: ${PID_PRIVATE_KEY_PATH}

@@ -38,6 +38,11 @@ class ExceptionSchema:
         "description": "Conflict. The request could not be completed due to a conflict with the current state of the resource.",
         "status_code": 409,
     }
+    PayloadTooLargeException = {
+        "model": ExceptionResponse,
+        "description": "Payload too large. The request or response payload exceeds the server's limit.",
+        "status_code": 413,
+    }
     InternalServerErrorException = {
         "model": ExceptionResponse,
         "description": "Internal server error. The server encountered an unexpected condition that prevented it from fulfilling the request.",

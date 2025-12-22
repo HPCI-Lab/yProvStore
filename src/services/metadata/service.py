@@ -42,6 +42,9 @@ class PIDRecordDocumentMetadataService(DocumentMetadataService):
         if pid_record is None:
             pid_record = await self.pid_service.get_pid_record(pid)
 
+        if pid != pid_record.pid:
+            raise ValueError(f"Provided PID record PID '{pid_record.pid}' does not match requested PID '{pid}'.")
+
         return DocumentMetadata.from_dict(pid_record.other)
     
     async def update_document_metadata(self, pid: str, metadata: DocumentMetadata) -> DocumentMetadata:

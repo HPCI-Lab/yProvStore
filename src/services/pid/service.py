@@ -73,7 +73,7 @@ class PidService:
     async def new_pid_record_from_document(
         self, pid: str, url: str, parent_doc_pid: str | None = None, hash: str | None = None, 
         allow_lineage_branching: bool = False,
-    ) -> tuple[PidRecord, callable]:
+    ) -> tuple[PidRecord, callable, PidRecord | None]:
         """
         Create a new PID record from a document.
         This method manages the creation of a PID lineage if the parent document PID is provided.
@@ -85,7 +85,10 @@ class PidService:
         :param parent_doc_pid: The PID of the parent document, if any.
         :param hash: Optional hash 256 of the document content.
         :param allow_lineage_branching: If True, allows creating a new lineage even if the latest version of the parent document is higher than the current document version.
-        :return: A PidRecord object of the new created document and a coroutine to finalize the saving of all involved PID records.
+        :return: A tuple containing:
+                 - The new PidRecord instance for the document.
+                 - A coroutine to finalize the saving of all involved PID records.
+                 - The parent document PidRecord, if any.
         """
         save_fns: list[tuple[callable, list, dict]] = []
         parent_doc_record = None
@@ -161,7 +164,7 @@ class PidService:
                 logger.debug(f"Finalizing PID record save: {fn.__name__} with args={args} kwargs={kwargs}")
                 await fn(*args, **kwargs)
 
-        return new_pid_record, finalize_pid_records
+        return new_pid_record, finalize_pid_records, parent_doc_record
 
 
 class LocalPidServiceImpl(PidService):

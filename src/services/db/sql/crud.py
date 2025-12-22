@@ -4,6 +4,7 @@ import logging
 from typing import Any
 
 from sqlalchemy import asc, desc, select
+from sqlalchemy.ext.asyncio import AsyncSession as SessionType
 
 from application.exceptions.types import NotFoundException, ConflictException
 from services.db.sql.base import BaseDBModel
@@ -65,7 +66,7 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
         # cls._model_type = item
         return cls
 
-    def __init__(self, session, model_type: type[T]):
+    def __init__(self, session: SessionType, model_type: type[T]):
         """
         Initialize the SQL database with a session.
         :param session: SQLAlchemy session object
@@ -79,21 +80,23 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
         """
         self._validate_entity(entity)
         if hasattr(entity, 'id') and entity.id is not None:
-            existing_entity = self.session.query(self._model_type).filter_by(id=entity.id).first()
+            result = await self.session.execute(select(self._model_type).filter_by(id=entity.id))
+            existing_entity = result.scalar_one_or_none()
             if existing_entity:
                 raise ConflictException(f"{self._model_type.model_name()} with ID '{entity.id}' already exists.")
         if not hasattr(entity, 'id') or entity.id is None:
             entity.id = str(uuid.uuid4())
         self.session.add(entity)
-        self.session.commit()
-        self.session.refresh(entity)
+        await self.session.commit()
+        await self.session.refresh(entity)
         return entity
 
     async def _get(self, entity_id: str, raise_not_found: bool = True) -> T | None:
         """
         Get an entity from the SQL database by its ID.
         """
-        entity = self.session.query(self._model_type).filter_by(id=entity_id).first()
+        result = await self.session.execute(select(self._model_type).filter_by(id=entity_id))
+        entity = result.scalar_one_or_none()
         if not entity or (hasattr(entity, 'deleted') and entity.deleted):
             if raise_not_found:
                 raise NotFoundException(f"{self._model_type.model_name()} with ID '{entity_id}' not found.")
@@ -156,7 +159,7 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
                 raise AttributeError(f"Attribute [{order[0]}] not found in model [{self._model_type.__name__}].")
             statement = statement.order_by(order_function(getattr(self._model_type, order[0])))
 
-        return self.session.scalars(statement).all()
+        return (await self.session.scalars(statement)).all()
 
     async def _update(self, entity: T) -> T:
         """
@@ -166,8 +169,8 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
         existing_entity = await self._get(entity.id)
         for key, value in entity.__dict__.items():
             setattr(existing_entity, key, value)
-        self.session.commit()
-        self.session.refresh(existing_entity)
+        await self.session.commit()
+        await self.session.refresh(existing_entity)
         return existing_entity
 
     async def delete(self, entity_id: str, soft_delete: bool = True) -> None:
@@ -177,11 +180,11 @@ class SQLEntityDB[T: BaseDBModel](AbstractEntityDB[T]):
         entity = await self._get(entity_id)
         if hasattr(entity, 'deleted') and soft_delete:
             entity.deleted = True
-            self.session.commit()
-            self.session.refresh(entity)
+            await self.session.commit()
+            await self.session.refresh(entity)
         else:
-            self.session.delete(entity)
-        self.session.commit()
+            await self.session.delete(entity)
+        await self.session.commit()
 
     def _validate_entity(self, entity: T) -> None:
         """

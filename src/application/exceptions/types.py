@@ -23,6 +23,11 @@ class BadRequestException(Exception):
     pass
 
 
+class PayloadTooLargeException(Exception):
+    """Exception raised when the payload is too large."""
+    pass
+
+
 class InternalServerErrorException(Exception):
     """Exception raised for internal server errors."""
     pass

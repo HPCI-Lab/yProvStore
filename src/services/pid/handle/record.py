@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 
 from models import PidRecord, DocumentMetadata
@@ -107,7 +108,7 @@ class HandleRecord:
                 values.append(MetadataHandleValue(
                     index=30 + metadata_index,
                     type=handle_value_type,
-                    data_value=str(attribute_value)
+                    data_value=json.dumps(attribute_value) if isinstance(attribute_value, dict) else str(attribute_value)
                 ))
 
         return cls(pid=pid_record.pid, values=values, admin_value=AdminHandleValue())
