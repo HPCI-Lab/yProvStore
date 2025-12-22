@@ -1,6 +1,6 @@
 # yProvStore
 
-## Version <next>
+## Version 2.0.0
 
 * Improved pid parameter management in query paths, supporting PID subdomains.
 * Added storage of history of metadata changes for provenance documents.
@@ -9,6 +9,7 @@
 * Implemented proxying of artifacts downloads/uploads through the API using presigned URLs.
 * Moved CLI to a dedicated repository: [yProvStore-cli](https://github.com/HPCI-Lab/yProvStore-cli).
 * Added `pgbouncer` service in Docker deployment for efficient database connection pooling.
+* Added file size limit check for non-streamed document downloads and graph operations to prevent memory issues.
 
 ## Version 1.0.0
 

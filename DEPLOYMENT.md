@@ -42,7 +42,7 @@ To deploy the application using Docker, follow these steps:
 3. Run the following command to start the application:
 
     ```bash
-    docker-compose up --build  # Add -d to run in detached mode
+    docker compose up --build  # Add -d to run in detached mode
     ```
 
 4. Now you can access the API documentation at `/docs` on the host and port you specified in the `.env` file.
