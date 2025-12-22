@@ -55,6 +55,16 @@ class FileStorageService:
         :return: The SHA-256 hash of the stored file as a hex string.
         """
         raise NotImplementedError
+    
+    async def get_file_size(self, storage_id: str, bucket: str | None = None) -> int:
+        """
+        Get the size of a file in the storage system.
+
+        :param storage_id: Unique identifier for the file in the storage system.
+        :param bucket: Optional bucket name for storage backends that support multiple buckets.
+        :return: Size of the file in bytes.
+        """
+        raise NotImplementedError
 
     async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> AsyncIterator[bytes]:
         """

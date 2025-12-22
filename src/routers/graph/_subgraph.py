@@ -46,7 +46,6 @@ documentation = {
 @router.get("/subgraph", **documentation)
 async def subgraph(
     pid: str,
-    prefix: str,
     graph_service: FromDishka[GraphService],
     document_storage_service: FromDishka[DocumentRecordStorageService],
     entity_ids: list[str] = Query(None, description="List of entity IDs to subgraph from."),
@@ -60,8 +59,6 @@ async def subgraph(
     """
     if entity_ids is None:
         entity_ids = []
-
-    pid = f"{prefix}/{pid}"
 
     document_record = await document_storage_service.get_document_by_pid(pid)
 

@@ -10,7 +10,8 @@ from sqlalchemy.exc import OperationalError, InterfaceError
 
 from application.exceptions.responses import ExceptionResponse, ValidationExceptionResponse
 from application.exceptions.types import UnauthorizedException, ForbiddenException, NotFoundException, ConflictException, \
-    InternalServerErrorException, BadRequestException, ServiceUnavailableException, IntegrityException, InternalException
+    InternalServerErrorException, BadRequestException, ServiceUnavailableException, IntegrityException, InternalException, \
+    PayloadTooLargeException
 
 
 logger = logging.getLogger(__name__)
@@ -33,6 +34,7 @@ def resolve_status_code(exc: Exception) -> int:
         ForbiddenException: status.HTTP_403_FORBIDDEN,
         NotFoundException: status.HTTP_404_NOT_FOUND,
         ConflictException: status.HTTP_409_CONFLICT,
+        PayloadTooLargeException: status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
         InternalServerErrorException: status.HTTP_500_INTERNAL_SERVER_ERROR,
         IntegrityException: status.HTTP_500_INTERNAL_SERVER_ERROR,
         InternalException: status.HTTP_500_INTERNAL_SERVER_ERROR,

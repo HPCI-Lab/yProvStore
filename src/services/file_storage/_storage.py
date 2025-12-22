@@ -177,6 +177,17 @@ class LocalFileStorageServiceImpl(FileStorageService):
                 except Exception:
                     pass
 
+    async def get_file_size(self, storage_id: str, bucket: str | None = None) -> int:
+        bucket_path = TMP_PATH / bucket if bucket else self.documents_path
+        file_path = bucket_path / storage_id
+        if not file_path.exists():
+            raise NotFoundException(f"File with ID '{storage_id}' not found.")
+        try:
+            return file_path.stat().st_size
+        except Exception as e:
+            logger.error(f"Error getting size for file {storage_id}: {e}")
+            raise ServiceUnavailableException("Failed to get file size.")
+
     async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> AsyncIterator[bytes]:
         if ignore_compression and skip_decompression:
             raise ValueError("Cannot set both ignore_compression and skip_decompression to True.")
@@ -445,6 +456,22 @@ class MinioFileStorageServiceImpl(FileStorageService):
                     os.unlink(tmp_path)
                 except Exception:
                     pass
+
+    async def get_file_size(self, storage_id: str, bucket: str | None = None) -> int:
+        """
+        Get the size of a stored file in bytes.
+        """
+        try:
+            stat = self.client.stat_object(bucket or self.bucket, storage_id)
+            return stat.size
+        except Exception as e:
+            if isinstance(e, getattr(self, "_S3Error", tuple())):
+                if getattr(e, "code", "") in ("NoSuchKey", "NoSuchObject", "NotFound"):
+                    raise NotFoundException(f"File with ID '{storage_id}' not found.")
+                logger.error(f"MinIO stat_object error for {storage_id}: {e}")
+                raise ServiceUnavailableException("Failed to access stored file.")
+            logger.error(f"Unexpected error accessing file {storage_id}: {e}")
+            raise ServiceUnavailableException("Failed to access stored file.")
 
     async def retrieve_file(self, storage_id: str, skip_decompression: bool = False, ignore_compression: bool = False, bucket: str | None = None) -> AsyncIterator[bytes]:
         """
