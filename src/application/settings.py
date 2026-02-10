@@ -62,11 +62,11 @@ ARTIFACTS_PUBLIC_MINIO_ENDPOINT = os.getenv("ARTIFACTS_PUBLIC_MINIO_ENDPOINT", N
 
 # EGI Check-in Settings
 USE_EGI_CHECKIN_AUTH = os.getenv("USE_EGI_CHECKIN_AUTH", "False").lower() in ("true", "1", "yes")
-EGI_CHECKIN_INTROSPECTION_ENDPOINT = os.environ['EGI_CHECKIN_INTROSPECTION_ENDPOINT']
-EGI_CHECKIN_CLIENT_ID = os.environ['EGI_CHECKIN_CLIENT_ID']
-EGI_CHECKIN_CLIENT_SECRET = os.environ['EGI_CHECKIN_CLIENT_SECRET']
+EGI_CHECKIN_INTROSPECTION_ENDPOINT = os.getenv("EGI_CHECKIN_INTROSPECTION_ENDPOINT")
+EGI_CHECKIN_CLIENT_ID = os.getenv("EGI_CHECKIN_CLIENT_ID")
+EGI_CHECKIN_CLIENT_SECRET = os.getenv("EGI_CHECKIN_CLIENT_SECRET")
 # List of required entitlements (access granted if ANY match)
-EGI_CHECKIN_REQUIRED_ENTITLEMENTS = os.environ['EGI_CHECKIN_REQUIRED_ENTITLEMENTS'].split(',')
+EGI_CHECKIN_REQUIRED_ENTITLEMENTS = os.getenv("EGI_CHECKIN_REQUIRED_ENTITLEMENTS", "").split(',')
 
 # If False, yProvStore will proxy artifact storage requests and use the storage (local or MinIO) directly
 PROXY_ARTIFACT_STORAGE = os.getenv("PROXY_ARTIFACT_STORAGE", "True").lower() in ("true", "1", "yes")
