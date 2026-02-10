@@ -46,7 +46,8 @@ def resolve_status_code(exc: Exception) -> int:
     error_mapping.update({
         TimeoutError: status.HTTP_429_TOO_MANY_REQUESTS,
         OperationalError: status.HTTP_429_TOO_MANY_REQUESTS,
-        InterfaceError: status.HTTP_503_SERVICE_UNAVAILABLE
+        InterfaceError: status.HTTP_503_SERVICE_UNAVAILABLE,
+        NotImplementedError: status.HTTP_501_NOT_IMPLEMENTED,
     })
 
     return error_mapping.get(type(exc), status.HTTP_500_INTERNAL_SERVER_ERROR)  # type: ignore

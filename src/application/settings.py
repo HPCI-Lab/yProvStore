@@ -60,6 +60,14 @@ ARTIFACTS_MINIO_REGION = os.getenv("ARTIFACTS_MINIO_REGION", None)
 # URL of MinIO endpoint exposed to clients (used only if PROXY_ARTIFACT_STORAGE is False to generate presigned URLs for artifact upload/download)
 ARTIFACTS_PUBLIC_MINIO_ENDPOINT = os.getenv("ARTIFACTS_PUBLIC_MINIO_ENDPOINT", None)  # Set it if different from ARTIFACTS_MINIO_ENDPOINT (which may only be internal)
 
+# EGI Check-in Settings
+USE_EGI_CHECKIN_AUTH = os.getenv("USE_EGI_CHECKIN_AUTH", "False").lower() in ("true", "1", "yes")
+EGI_CHECKIN_INTROSPECTION_ENDPOINT = os.environ['EGI_CHECKIN_INTROSPECTION_ENDPOINT']
+EGI_CHECKIN_CLIENT_ID = os.environ['EGI_CHECKIN_CLIENT_ID']
+EGI_CHECKIN_CLIENT_SECRET = os.environ['EGI_CHECKIN_CLIENT_SECRET']
+# List of required entitlements (access granted if ANY match)
+EGI_CHECKIN_REQUIRED_ENTITLEMENTS = eval(os.environ['EGI_CHECKIN_REQUIRED_ENTITLEMENTS'])
+
 # If False, yProvStore will proxy artifact storage requests and use the storage (local or MinIO) directly
 PROXY_ARTIFACT_STORAGE = os.getenv("PROXY_ARTIFACT_STORAGE", "True").lower() in ("true", "1", "yes")
 if USE_LOCAL_FILE_STORAGE_SERVICE and not PROXY_ARTIFACT_STORAGE:
