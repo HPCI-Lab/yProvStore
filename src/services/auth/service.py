@@ -229,9 +229,9 @@ class AuthServiceProvider(Provider):
                 logger.warning("EGI Check-in authentication is enabled but some required settings are missing. Please check your configuration.")
 
     @provide
-    def provide_auth_service(self) -> AuthService:
+    def provide_auth_service(self, user_service: UserStorageService, request: Request) -> AuthService:
         """
         Provides an instance of the AuthService.
         This method is used to inject the AuthService into other components.
         """
-        return AuthService() if not USE_EGI_CHECKIN_AUTH else EGIAuthService()
+        return JWTAuthService(user_storage=user_service, request=request) if not USE_EGI_CHECKIN_AUTH else EGIAuthService(user_service)
