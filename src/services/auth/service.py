@@ -1,6 +1,8 @@
 import logging
+import base64
 import requests
 from abc import abstractmethod
+import secrets
 
 from passlib.context import CryptContext
 from dishka import Provider, provide, Scope
@@ -134,10 +136,12 @@ class JWTAuthService(AuthService):
 
 class EGIAuthService(AuthService):
 
-    def __init__(self, user_storage: UserStorageService):
+    def __init__(self, user_storage: UserStorageService, request: Request):
         super().__init__()
         self.user_storage = user_storage
-        self.auth_header = f"Bearer {EGI_CHECKIN_CLIENT_ID}:{EGI_CHECKIN_CLIENT_SECRET}"
+        self.request = request
+        # self.auth_header = f"Bearer {EGI_CHECKIN_CLIENT_ID}:{EGI_CHECKIN_CLIENT_SECRET}"
+        self.auth_header = "Basic " + base64.b64encode(f"{EGI_CHECKIN_CLIENT_ID}:{EGI_CHECKIN_CLIENT_SECRET}".encode()).decode()
 
     async def register_user(self, email: str, password: str) -> User:
         """
@@ -156,9 +160,10 @@ class EGIAuthService(AuthService):
         EGI AAI authentication is handled through token introspection.
         This method validates the provided token and checks for required entitlements.
         """
+
         token = None
-        if token.split(" ")[0] == "Bearer":
-            token = token.split(" ")[1]
+        if "Authorization" in self.request.headers:
+            token = self.request.headers["Authorization"].split(" ")[1]
 
         if not token:
             raise UnauthorizedException("No valid token provided.")
@@ -189,15 +194,17 @@ class EGIAuthService(AuthService):
             if not email:
                 email = username
 
-            # TODO: remove these logs
-            print(list(introspection_response.keys()))
-            print(f"Token is valid. User: {username}, Entitlements: {entitlements_str}")
+            #TODO: remove these logs
+            # print(list(introspection_response.keys()))
+            # print(f"Token is valid. User: {username}, Entitlements: {entitlements_str}")
 
             existing_user = await self.user_storage.get_user_by_email(email, raise_not_found=False)
             if not existing_user:
+                secret = secrets.token_urlsafe(48)
+                newPWD = self._hash_password(secret)
                 # Create user if it doesn't exist
                 logger.info(f"Creating new user for {username} after successful login.")
-                existing_user = User(email=email, password_hash="", id=_id)
+                existing_user = User(email=email, password_hash=newPWD, id=_id)
                 await self.user_storage.save_user(existing_user)
             return existing_user
 
@@ -229,9 +236,13 @@ class AuthServiceProvider(Provider):
                 logger.warning("EGI Check-in authentication is enabled but some required settings are missing. Please check your configuration.")
 
     @provide
-    def provide_auth_service(self, user_service: UserStorageService, request: Request) -> AuthService:
-        """
-        Provides an instance of the AuthService.
-        This method is used to inject the AuthService into other components.
-        """
-        return JWTAuthService(user_storage=user_service, request=request) if not USE_EGI_CHECKIN_AUTH else EGIAuthService(user_service)
+    def provide_auth_service(
+        self,
+        user_service: UserStorageService,
+        request: Request
+    ) -> AuthService:
+        return (
+            JWTAuthService(user_storage=user_service, request=request)
+            if not USE_EGI_CHECKIN_AUTH
+            else EGIAuthService(user_service, request)
+        )
