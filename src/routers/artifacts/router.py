@@ -5,6 +5,7 @@ from ._proxy_download import router as download_router
 from ._proxy_upload import router as upload_router
 from ._upload_url import router as upload_url_router
 from ._download_url import router as download_url_router
+from ._related import router as related_router
 
 __all__ = ("artifacts_router",)
 
@@ -29,6 +30,7 @@ upload_download_router.include_router(upload_url_router)
 # Include the sub-routers for downloading artifacts
 upload_download_router.include_router(download_router)
 upload_download_router.include_router(download_url_router)
+upload_download_router.include_router(related_router)
 
 
 # Include the sub-routers for retrieving a artifact

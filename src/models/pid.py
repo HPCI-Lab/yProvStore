@@ -43,6 +43,9 @@ class PidRecord:
     latest_document_pid: str | None = None
     latest_version: int | None = None
 
+    # Attributes for PID linking
+    related_pids: list[str] | None = None
+
     __other: dict[str, Any] | None = None
     
     def __init__(self, pid: str, type: PidType | str, **kwargs):
@@ -52,6 +55,9 @@ class PidRecord:
         self.type = type
         for key, value in kwargs.items():
             if hasattr(self, key):
+                if key == "related_pids" and isinstance(value, str):
+                    # Convert string to list if it is a string
+                    value = value.split("|") if value else None
                 setattr(self, key, value)
             else:
                 if self.__other is None:
@@ -65,6 +71,8 @@ class PidRecord:
             self.version = int(self.version)
         if isinstance(self.latest_version, str):
             self.latest_version = int(self.latest_version)
+        if self.related_pids and isinstance(self.related_pids, str):
+            self.related_pids = self.related_pids.split("|") if self.related_pids else None
         required_fields = {
             PidType.LINEAGE: ["first_document_pid", "latest_document_pid", "latest_version"],
             PidType.DOCUMENT: ["url", "version"],
@@ -121,5 +129,6 @@ class PidRecord:
             "first_document_pid": self.first_document_pid,
             "latest_document_pid": self.latest_document_pid,
             "latest_version": self.latest_version,
+            "related_pids": "|".join(self.related_pids) if self.related_pids else None,
             **(({k: v for k, v in self.other.items() if v} or {}) if self.other else {}),
         }

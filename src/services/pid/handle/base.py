@@ -26,6 +26,9 @@ class HandleValueType(Enum):
     LATEST_DOCUMENT_PID = "LATEST_DOCUMENT_PID"
     LATEST_VERSION = "LATEST_VERSION"
 
+    # Linking PID record attributes
+    RELATED_PIDS = "RELATED_PIDS"
+
     # Metadata attributes
     TITLE = "TITLE"
     DESCRIPTION = "DESCRIPTION"
