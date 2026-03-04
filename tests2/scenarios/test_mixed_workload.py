@@ -77,8 +77,8 @@ def _seed(host: str, auth: AuthHelper):
                 continue
             if upload_url.startswith("/"):
                 upload_url = f"{host}{upload_url}"
-            files = {"file": (f"seed_{i}.bin", io.BytesIO(data), "application/octet-stream")}
-            r2 = req.put(upload_url, files=files, timeout=Config.REQUEST_TIMEOUT)
+            files = {"document_file": (f"seed_{i}.bin", io.BytesIO(data), "application/octet-stream")}
+            r2 = req.put(upload_url, files=files, params={"pid": pid}, timeout=Config.REQUEST_TIMEOUT)
             if r2.status_code in (200, 201):
                 _artifact_pids.append(pid)
 
@@ -172,9 +172,9 @@ class ArtifactWriter(HttpUser):
             if not upload_url:
                 return
 
-        files = {"file": (fname, io.BytesIO(data), "application/octet-stream")}
+        files = {"document_file": (fname, io.BytesIO(data), "application/octet-stream")}
         with self.client.put(
-            upload_url, files=files, name="mixed_artifact_upload",
+            upload_url, files=files, params={"pid": pid}, name="mixed_artifact_upload",
             timeout=Config.REQUEST_TIMEOUT, catch_response=True,
         ) as resp:
             if resp.status_code in (200, 201):

@@ -80,6 +80,7 @@ class ArtifactUploadUser(HttpUser):
             resp.success()
             body = resp.json()
             upload_url = body.get("upload_url") or body.get("url")
+            pid = body.get("pid")
             if not upload_url:
                 resp.failure("No upload_url in response")
                 return
@@ -87,10 +88,11 @@ class ArtifactUploadUser(HttpUser):
         # Step 2: PUT file to the proxy upload URL
         # The upload_url may be a relative path (/artifacts/proxy/upload/{token})
         # or absolute; Locust client handles relative paths against self.host.
-        files = {"file": (filename, io.BytesIO(data), "application/octet-stream")}
+        files = {"document_file": (filename, io.BytesIO(data), "application/octet-stream")}
         with self.client.put(
             upload_url,
             files=files,
+            params={"pid": pid},
             name=f"artifact_proxy_upload_{tier}",
             timeout=Config.REQUEST_TIMEOUT,
             catch_response=True,

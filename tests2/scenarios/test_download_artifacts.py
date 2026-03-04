@@ -66,8 +66,8 @@ def _seed_artifacts(host: str, auth: AuthHelper, count_per_tier: int = 3):
                     upload_url = f"{host}{upload_url}"
 
                 # Step 2: PUT file
-                files = {"file": (f"seed_{tier}_{i}.bin", io.BytesIO(data), "application/octet-stream")}
-                r2 = req.put(upload_url, files=files, timeout=Config.REQUEST_TIMEOUT)
+                files = {"document_file": (f"seed_{tier}_{i}.bin", io.BytesIO(data), "application/octet-stream")}
+                r2 = req.put(upload_url, files=files, params={"pid": pid}, timeout=Config.REQUEST_TIMEOUT)
                 if r2.status_code in (200, 201):
                     _pids[tier].append(pid)
         _seeded = True
