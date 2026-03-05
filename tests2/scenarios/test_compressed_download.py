@@ -91,6 +91,14 @@ class UncompressedDownloadUser(HttpUser):
     def download_xlarge(self):
         self._download("xlarge")
 
+    @task(1)
+    def download_xxl(self):
+        self._download("xxl")
+
+    @task(1)
+    def download_xxxl(self):
+        self._download("xxxl")
+
     def _download(self, tier: str):
         pids = _pids.get(tier, [])
         if not pids:
@@ -141,6 +149,14 @@ class CompressedDownloadUser(HttpUser):
     @task(1)
     def download_xlarge(self):
         self._download("xlarge")
+
+    @task(1)
+    def download_xxl(self):
+        self._download("xxl")
+
+    @task(1)
+    def download_xxxl(self):
+        self._download("xxxl")
 
     def _download(self, tier: str):
         pids = _pids.get(tier, [])

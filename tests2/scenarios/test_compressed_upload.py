@@ -67,6 +67,14 @@ class UncompressedUploadUser(HttpUser):
     def upload_xlarge(self):
         self._upload("xlarge")
 
+    @task(1)
+    def upload_xxl(self):
+        self._upload("xxl")
+
+    @task(1)
+    def upload_xxxl(self):
+        self._upload("xxxl")
+
     def _upload(self, tier: str):
         payload = _raw[tier]
         files = {"document_file": (f"doc_{tier}.json", io.BytesIO(payload), "application/json")}
@@ -109,6 +117,14 @@ class CompressedUploadUser(HttpUser):
     @task(1)
     def upload_xlarge(self):
         self._upload("xlarge")
+
+    @task(1)
+    def upload_xxl(self):
+        self._upload("xxl")
+
+    @task(1)
+    def upload_xxxl(self):
+        self._upload("xxxl")
 
     def _upload(self, tier: str):
         payload = _compressed[tier]

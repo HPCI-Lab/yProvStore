@@ -101,6 +101,82 @@ def analyze_size_impact(csv_path: str) -> None:
         print(f"{tier:<10} {op:<12} {comp:<12} {n:>6} {avg:>10.4f} {p50:>10.4f} {p95:>10.4f}")
 
 
+def analyze_compression_comparison(csv_path: str) -> None:
+    """Print summary of the T13 compression comparison CSV."""
+    with open(csv_path, newline="") as f:
+        reader = csv.DictReader(f)
+        rows = list(reader)
+
+    # Group by (tier, method, level)
+    groups: dict[tuple, list[dict]] = {}
+    for row in rows:
+        key = (row["tier"], row["method"], row["level"])
+        groups.setdefault(key, []).append(row)
+
+    print(f"\n{'Tier':<10} {'Method':<10} {'Level':>5} {'Count':>6} {'Ratio':>8} "
+          f"{'Comp(s)':>10} {'Upload(s)':>10} {'Download(s)':>10}")
+    print("-" * 90)
+
+    for key, entries in sorted(groups.items()):
+        tier, method, level = key
+        n = len(entries)
+        avg_ratio = sum(float(e["ratio"]) for e in entries) / n
+        avg_comp = sum(float(e["compress_time_s"]) for e in entries) / n
+        avg_up = sum(float(e["upload_time_s"]) for e in entries) / n
+        avg_dl = sum(float(e["download_time_s"]) for e in entries) / n
+        print(f"{tier:<10} {method:<10} {level:>5} {n:>6} {avg_ratio:>8.4f} "
+              f"{avg_comp:>10.4f} {avg_up:>10.4f} {avg_dl:>10.4f}")
+
+
+def analyze_max_throughput(csv_path: str) -> None:
+    """Print summary of the T14 max-throughput sweep CSV."""
+    with open(csv_path, newline="") as f:
+        reader = csv.DictReader(f)
+        rows = list(reader)
+
+    # Filter to Aggregated rows
+    agg_rows = [r for r in rows if r.get("Name", "").strip() == "Aggregated"]
+    if not agg_rows:
+        print("  No 'Aggregated' rows found.")
+        return
+
+    rps_key = "Requests/s" if "Requests/s" in agg_rows[0] else "Current RPS"
+    p95_key = "95%" if "95%" in agg_rows[0] else "95%"
+    req_key = "Request Count" if "Request Count" in agg_rows[0] else "# Requests"
+    fail_key = "Failure Count" if "Failure Count" in agg_rows[0] else "# Failures"
+
+    print(f"\n{'Users':>8} {'RPS':>10} {'p50(ms)':>10} {'p95(ms)':>10} {'p99(ms)':>10} {'Error%':>10}")
+    print("-" * 65)
+
+    baseline_p95 = None
+    breaking_point = None
+
+    for row in agg_rows:
+        users = row.get("user_count", "?")
+        rps = float(row.get(rps_key, 0))
+        p50 = float(row.get("50%", 0))
+        p95 = float(row.get(p95_key, 0))
+        p99 = float(row.get("99%", 0))
+        total = int(row.get(req_key, 0))
+        fails = int(row.get(fail_key, 0))
+        err_pct = (fails / total * 100) if total > 0 else 0
+
+        if baseline_p95 is None:
+            baseline_p95 = p95
+
+        marker = ""
+        if breaking_point is None and (err_pct > 1.0 or p95 > baseline_p95 * 3):
+            breaking_point = users
+            marker = " ← BREAKING POINT"
+
+        print(f"{users:>8} {rps:>10.1f} {p50:>10.0f} {p95:>10.0f} {p99:>10.0f} {err_pct:>9.2f}%{marker}")
+
+    if breaking_point:
+        print(f"\n  🔴  Breaking point at {breaking_point} concurrent users")
+    else:
+        print(f"\n  🟢  No breaking point detected")
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -109,6 +185,8 @@ if __name__ == "__main__":
     parser.add_argument("--sweep-dir", help="Directory containing scalability CSV files")
     parser.add_argument("--prefix", default="scalability", help="Filename prefix for sweep merge")
     parser.add_argument("--size-impact", help="Path to T11 size_impact.csv")
+    parser.add_argument("--compression", help="Path to T13 compression_comparison.csv")
+    parser.add_argument("--max-throughput", help="Path to T14 max_throughput_merged.csv")
     args = parser.parse_args()
 
     if args.stats:
@@ -121,5 +199,11 @@ if __name__ == "__main__":
     if args.size_impact:
         analyze_size_impact(args.size_impact)
 
-    if not any([args.stats, args.sweep_dir, args.size_impact]):
+    if args.compression:
+        analyze_compression_comparison(args.compression)
+
+    if args.max_throughput:
+        analyze_max_throughput(args.max_throughput)
+
+    if not any([args.stats, args.sweep_dir, args.size_impact, args.compression, args.max_throughput]):
         parser.print_help()

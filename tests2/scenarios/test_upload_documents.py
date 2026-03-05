@@ -66,6 +66,14 @@ class DocumentUploadUser(HttpUser):
     def upload_xlarge(self):
         self._upload("xlarge")
 
+    @task(1)
+    def upload_xxl(self):
+        self._upload("xxl")
+
+    @task(1)
+    def upload_xxxl(self):
+        self._upload("xxxl")
+
     # ── internal ────────────────────────────────────────────────────────
     def _upload(self, tier: str):
         payload = _payloads[tier]

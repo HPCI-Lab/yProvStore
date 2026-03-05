@@ -38,6 +38,9 @@ All variables have sensible defaults. Override as needed:
 | `SUSTAINED_RUN_TIME` | `30m` | Duration for sustained load test |
 | `SWEEP_RUN_TIME` | `3m` | Duration per step in scalability sweep |
 | `SWEEP_SPAWN_RATE` | `10` | Spawn rate for scalability sweep |
+| `COMPRESSION_METHODS` | `gzip,brotli,zstd` | Algorithms for T13 comparison |
+| `MAX_RPS_USER_COUNTS` | `10,25,50,100,150,200,300,400,500` | User counts for T14 sweep |
+| `MAX_RPS_STEP_DURATION` | `2m` | Duration per step in T14 sweep |
 
 ## Test Scenarios
 
@@ -120,6 +123,32 @@ Moderate traffic over 30–60 minutes to detect degradation, memory leaks, conne
 locust -f scenarios/test_sustained_load.py --headless -u 25 -r 5 --run-time 30m --csv=results/sustained
 ```
 
+### T13 — Compression Algorithm Comparison
+Sequential test comparing gzip, brotli, and zstd at multiple compression levels.
+Measures compression ratio, compression time, upload latency, and download+decompression time across all size tiers.
+```bash
+python scenarios/test_compression_comparison.py --iterations 20 --output results/compression_comparison.csv
+```
+
+Limit to specific tiers (useful for quick runs):
+```bash
+python scenarios/test_compression_comparison.py --iterations 10 --tiers small,medium,large
+```
+
+### T14 — Maximum Throughput / Breaking Point
+Discovers the maximum RPS the application can sustain before errors or latency degrade.
+Uses zero wait time to apply maximum pressure at each user count.
+
+**Single point:**
+```bash
+locust -f scenarios/test_max_throughput.py --headless -u 100 -r 20 --run-time 2m --csv=results/max_rps_100
+```
+
+**Full sweep** (automated, iterates through all user counts):
+```bash
+python scenarios/run_max_throughput_sweep.py
+```
+
 ## Analyzing Results
 
 ### Text summary of a single test
@@ -137,6 +166,16 @@ python analysis/analyze_results.py --sweep-dir results/ --prefix scalability
 python analysis/analyze_results.py --size-impact results/size_impact.csv
 ```
 
+### Analyze T13 compression comparison
+```bash
+python analysis/analyze_results.py --compression results/compression_comparison.csv
+```
+
+### Analyze T14 max throughput
+```bash
+python analysis/analyze_results.py --max-throughput results/max_throughput_merged.csv
+```
+
 ## Generating Plots
 
 ```bash
@@ -151,6 +190,12 @@ python analysis/plot_results.py --size-impact results/size_impact.csv
 
 # Sustained load timeline
 python analysis/plot_results.py --sustained results/sustained_stats_history.csv
+
+# Compression algorithm comparison (T13)
+python analysis/plot_results.py --compression results/compression_comparison.csv
+
+# Max throughput / breaking point (T14)
+python analysis/plot_results.py --max-throughput results/max_throughput_merged.csv
 ```
 
 Plots are saved to `results/plots/` as PNG files.
@@ -163,6 +208,8 @@ Plots are saved to `results/plots/` as PNG files.
 | `medium` | ~64 KB | PROV-JSON with ~200 activities/entities |
 | `large` | ~1 MB | PROV-JSON with ~3000 activities/entities |
 | `xlarge` | ~10 MB | PROV-JSON with ~30000 activities/entities |
+| `xxl` | ~50 MB | PROV-JSON with ~150000 activities/entities |
+| `xxxl` | ~100 MB | PROV-JSON with ~300000 activities/entities |
 
 Valid PROV-JSON is used instead of random bytes to give realistic zstd compression ratios (~60-85% savings on structured JSON, vs ~0% on random data).
 

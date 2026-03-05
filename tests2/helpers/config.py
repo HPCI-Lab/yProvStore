@@ -15,10 +15,12 @@ class Config:
 
     # ── Document sizes (bytes) ──────────────────────────────────────────────
     DOC_SIZES: dict[str, int] = {
-        "small":  1_024,       # ~1 KB
-        "medium": 65_536,      # ~64 KB
-        "large":  1_048_576,   # ~1 MB
-        "xlarge": 10_485_760,  # ~10 MB
+        "small":  1_024,        # ~1 KB
+        "medium": 65_536,       # ~64 KB
+        "large":  1_048_576,    # ~1 MB
+        "xlarge": 10_485_760,   # ~10 MB
+        "xxl":    52_428_800,   # ~50 MB
+        "xxxl":   104_857_600,  # ~100 MB
     }
 
     # ── Artifact sizes (bytes) ──────────────────────────────────────────────
@@ -27,6 +29,8 @@ class Config:
         "medium": 65_536,
         "large":  1_048_576,
         "xlarge": 10_485_760,
+        "xxl":    52_428_800,
+        "xxxl":   104_857_600,
     }
 
     # ── Scalability sweep user counts ──────────────────────────────────────
@@ -36,6 +40,21 @@ class Config:
 
     # ── Compression ─────────────────────────────────────────────────────────
     ZSTD_LEVEL: int = int(os.getenv("ZSTD_LEVEL", "1"))
+    # Algorithms to compare in T13 (gzip, brotli, zstd)
+    COMPRESSION_METHODS: list[str] = [
+        m.strip() for m in os.getenv("COMPRESSION_METHODS", "gzip,brotli,zstd").split(",")
+    ]
+    COMPRESSION_LEVELS: dict[str, list[int]] = {
+        "gzip":   [1, 6, 9],
+        "brotli": [1, 6, 11],
+        "zstd":   [1, 3, 9],
+    }
+
+    # ── Max throughput test ──────────────────────────────────────────────────
+    MAX_RPS_USER_COUNTS: list[int] = [
+        int(x) for x in os.getenv("MAX_RPS_USER_COUNTS", "10,25,50,100,150,200,300,400,500").split(",")
+    ]
+    MAX_RPS_STEP_DURATION: str = os.getenv("MAX_RPS_STEP_DURATION", "2m")
 
     # ── Locust wait times (seconds) ─────────────────────────────────────────
     WAIT_TIME_MIN: float = float(os.getenv("WAIT_TIME_MIN", "0.2"))
