@@ -16,6 +16,8 @@ To deploy the application using Docker, follow these steps:
 
     ```
     # ================ Required environment variables ================
+    # General
+    APP_PORT=8000
     # PID Service
     PID_PRIVATE_KEY_PATH=./keys/user_private.pem  # Path to the PID private key file
     # MinIO
@@ -30,7 +32,6 @@ To deploy the application using Docker, follow these steps:
     # General
     JWT_SECRET_KEY=your_secret_key  # Change this to a secure random value
     APP_HOST=myserver.com  # default: 127.0.0.1
-    APP_PORT=80  # default: 8000 (this is the public host port, where the API will be accessible)
     APP_PROTOCOL=https  # default: http
     # PID Service
     PID_PREFIX=21.T11961  # default: 21.T11961

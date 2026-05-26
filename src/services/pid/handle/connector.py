@@ -11,7 +11,7 @@ from Cryptodome.Hash import SHA256
 from Cryptodome.PublicKey import RSA
 
 from application.settings import PID_SERVER_URL, PID_ADMIN_HANDLE, PID_PRIVATE_KEY_PATH, PID_ADMIN_HANDLE_INDEX
-from application.exceptions.types import IntegrityException, ConflictException
+from application.exceptions.types import IntegrityException, ConflictException, NotFoundException
 
 
 logger = logging.getLogger(__name__)
@@ -60,25 +60,34 @@ class HandleConnector:
             return response.json()
         except httpx.HTTPStatusError as e:
             # Re-raise with more context from the server's response if available
-            error_details = e.response.json()
+            try:
+                error_details = e.response.json()
+            except json.JSONDecodeError:
+                error_details = {"message": "Failed to decode error response from Handle Server"}
             logger.debug(f"Handle Server response details: {error_details}")
             response_code = error_details.get("responseCode", "Unknown")
             message = error_details.get("message", "No message provided")
             logger.error(f"Handle Server Error: {e.response.status_code} - {response_code}: {message}")
             if str(response_code) == "101":
                 raise ConflictException("Handle already exists")
+            elif str(response_code) == "100":
+                raise NotFoundException("Handle not found")
+            self.session_id = None  # Clear session on auth-related errors to force re-authentication
             raise IntegrityException("Failed to communicate with Handle Server")
         except httpx.RequestError as e:
             logger.error(f"HTTP Request Error: {e}")
             logger.error(f"Error type: {type(e).__name__}")
             if hasattr(e, 'message'):
                 logger.error(f"Error message: {e.message}")
+            self.session_id = None  # Clear session on auth-related errors to force re-authentication
             raise IntegrityException("Failed to communicate with Handle Server")
         except json.JSONDecodeError as e:
             logger.error(f"JSON Decode Error decoding handle server response: {e}")
+            self.session_id = None  # Clear session on auth-related errors to force re-authentication
             raise IntegrityException("Failed to decode response from Handle Server")
         except Exception as e:
             logger.error(f"Unexpected error during HTTP request to handle server: {e}")
+            self.session_id = None  # Clear session on auth-related errors to force re-authentication
             raise IntegrityException("Failed to communicate with Handle Server")
 
     async def _authenticate(self):
