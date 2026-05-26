@@ -58,7 +58,6 @@ documentation = {
 @router.get("/list", **documentation)
 async def list_graphs(
     pid: str,
-    prefix: str,
     graph_service: FromDishka[GraphService],
     document_storage_service: FromDishka[DocumentRecordStorageService],
     entity_types: list[str] = Query(None, description="List of entity types to filter the results."),
@@ -73,8 +72,6 @@ async def list_graphs(
         entity_ids = []
     if entity_types is None:
         entity_types = []
-
-    pid = f"{prefix}/{pid}"
 
     document_record = await document_storage_service.get_document_by_pid(pid)
 
