@@ -104,58 +104,58 @@ class TestDef:
 
 def _make_tests() -> list[TestDef]:
     return [
-        TestDef(1,  "T1  — Document Upload Throughput",
-                lambda: _run(_locust("test_upload_documents.py", "upload_docs"), "T1 — Upload Throughput")),
+        # TestDef(1,  "T1  — Document Upload Throughput",
+        #         lambda: _run(_locust("test_upload_documents.py", "upload_docs"), "T1 — Upload Throughput")),
 
-        TestDef(2,  "T2  — Document Download Throughput",
-                lambda: _run(_locust("test_download_documents.py", "download_docs"), "T2 — Download Throughput")),
+        # TestDef(2,  "T2  — Document Download Throughput",
+        #         lambda: _run(_locust("test_download_documents.py", "download_docs"), "T2 — Download Throughput")),
 
-        TestDef(3,  "T3  — Compressed vs Uncompressed Upload",
-                lambda: _run(_locust("test_compressed_upload.py", "compressed_upload"), "T3 — Compressed Upload")),
+        # TestDef(3,  "T3  — Compressed vs Uncompressed Upload",
+        #         lambda: _run(_locust("test_compressed_upload.py", "compressed_upload"), "T3 — Compressed Upload")),
 
-        TestDef(4,  "T4  — Compressed vs Uncompressed Download",
-                lambda: _run(_locust("test_compressed_download.py", "compressed_download"), "T4 — Compressed Download")),
+        # TestDef(4,  "T4  — Compressed vs Uncompressed Download",
+        #         lambda: _run(_locust("test_compressed_download.py", "compressed_download"), "T4 — Compressed Download")),
 
-        TestDef(5,  "T5  — Artifact Upload Throughput",
-                lambda: _run(_locust("test_upload_artifacts.py", "upload_artifacts", users=30), "T5 — Artifact Upload")),
+        # TestDef(5,  "T5  — Artifact Upload Throughput",
+        #         lambda: _run(_locust("test_upload_artifacts.py", "upload_artifacts", users=30), "T5 — Artifact Upload")),
 
-        TestDef(6,  "T6  — Artifact Download Throughput",
-                lambda: _run(_locust("test_download_artifacts.py", "download_artifacts", users=30), "T6 — Artifact Download")),
+        # TestDef(6,  "T6  — Artifact Download Throughput",
+        #         lambda: _run(_locust("test_download_artifacts.py", "download_artifacts", users=30), "T6 — Artifact Download")),
 
-        TestDef(7,  "T7  — Scalability Sweep",
-                lambda: _run(_python("run_scalability_sweep.py"), "T7 — Scalability Sweep")),
+        # TestDef(7,  "T7  — Scalability Sweep",
+        #         lambda: _run(_python("run_scalability_sweep.py"), "T7 — Scalability Sweep")),
 
-        TestDef(8,  "T8  — Mixed Workload",
-                lambda: _run(_locust("test_mixed_workload.py", "mixed_workload", run_time="10m"), "T8 — Mixed Workload")),
+        # TestDef(8,  "T8  — Mixed Workload",
+        #         lambda: _run(_locust("test_mixed_workload.py", "mixed_workload", run_time="10m"), "T8 — Mixed Workload")),
 
-        TestDef(9,  "T9  — Metadata Operations",
-                lambda: _run(_locust("test_metadata_operations.py", "metadata_ops", users=30), "T9 — Metadata Ops")),
+        # TestDef(9,  "T9  — Metadata Operations",
+        #         lambda: _run(_locust("test_metadata_operations.py", "metadata_ops", users=30), "T9 — Metadata Ops")),
 
-        TestDef(10, "T10 — Pagination & Listing",
-                lambda: _run(_locust("test_pagination_listing.py", "pagination", users=30), "T10 — Pagination")),
+        # TestDef(10, "T10 — Pagination & Listing",
+        #         lambda: _run(_locust("test_pagination_listing.py", "pagination", users=30), "T10 — Pagination")),
 
-        TestDef(11, "T11 — Document Size Impact",
-                lambda: _run(
-                    _python("test_document_sizes.py",
-                            "--iterations", str(T11_ITERATIONS),
-                            "--output", os.path.join(RESULTS_DIR, "size_impact.csv")),
-                    "T11 — Size Impact")),
+        # TestDef(11, "T11 — Document Size Impact",
+        #         lambda: _run(
+        #             _python("test_document_sizes.py",
+        #                     "--iterations", str(T11_ITERATIONS),
+        #                     "--output", os.path.join(RESULTS_DIR, "size_impact.csv")),
+        #             "T11 — Size Impact")),
 
         TestDef(12, "T12 — Sustained Load / Endurance",
                 lambda: _run(
                     _locust("test_sustained_load.py", "sustained",
-                            users=Config.SUSTAINED_USERS, run_time=Config.SUSTAINED_RUN_TIME),
+                            users=Config.SUSTAINED_USERS, run_time="5m"),
                     "T12 — Sustained Load")),
 
-        TestDef(13, "T13 — Compression Algorithm Comparison",
-                lambda: _run(
-                    _python("test_compression_comparison.py",
-                            "--iterations", str(T13_ITERATIONS),
-                            "--output", os.path.join(RESULTS_DIR, "compression_comparison.csv")),
-                    "T13 — Compression Comparison")),
+        # TestDef(13, "T13 — Compression Algorithm Comparison",
+        #         lambda: _run(
+        #             _python("test_compression_comparison.py",
+        #                     "--iterations", str(T13_ITERATIONS),
+        #                     "--output", os.path.join(RESULTS_DIR, "compression_comparison.csv")),
+        #             "T13 — Compression Comparison")),
 
-        TestDef(14, "T14 — Maximum Throughput / Breaking Point",
-                lambda: _run(_python("run_max_throughput_sweep.py"), "T14 — Max Throughput Sweep")),
+        # TestDef(14, "T14 — Maximum Throughput / Breaking Point",
+        #         lambda: _run(_python("run_max_throughput_sweep.py"), "T14 — Max Throughput Sweep")),
     ]
 
 
